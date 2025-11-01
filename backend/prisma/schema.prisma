@@ -1,6 +1,6 @@
 generator client {
-    provider        = "prisma-client"
-    output          = "../generated/prisma"
+    provider = "prisma-client"
+    output   = "../generated/prisma"
 }
 
 datasource db {
@@ -13,4 +13,37 @@ model User {
     email    String  @unique
     name     String?
     password String
+    Quiz     Quiz[]
+}
+
+model Quiz {
+    id          Int        @id @default(autoincrement())
+    userId      Int        @map("user_id")
+    title       String
+    description String?
+    coverUrl    String?    @map("cover_url")
+    createdAt   DateTime   @default(now()) @map("created_at")
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Question    Question[]
+}
+
+model Question {
+    id        Int      @id @default(autoincrement())
+    quizId    Int      @map("quiz_id")
+    text      String?
+    timeLimit Int?     @map("time_limit")
+    points    Int      @default(1)
+    imageUrl  String?  @map("image_url")
+    sortOrder Int      @map("sort_order")
+    quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    Option    Option[]
+}
+
+model Option {
+    id         Int      @id @default(autoincrement())
+    questionId Int      @map("question_id")
+    text       String?
+    isCorrect  Boolean  @default(false) @map("is_correct")
+    sortOrder  Int      @map("sort_order")
+    question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
