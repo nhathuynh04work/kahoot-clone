@@ -35,7 +35,7 @@ export class AuthService {
         return result;
     }
 
-    async login(payload: LoginUserDto): Promise<{ accessToken: string }> {
+    async login(payload: LoginUserDto): Promise<string> {
         const user = await this.userService.getUser({
             email: payload.email,
         });
@@ -55,8 +55,7 @@ export class AuthService {
             email: user.email,
         };
 
-        const token = await this.jwtService.signAsync(jwtPayload);
-        return { accessToken: token };
+        return this.jwtService.signAsync(jwtPayload);
     }
 
     async getProfile(id: number) {
