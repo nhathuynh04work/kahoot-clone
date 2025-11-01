@@ -2,6 +2,7 @@
 
 import axios, { AxiosError } from "axios";
 import { cookies } from "next/headers";
+import { AppError } from "./app-error";
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -19,8 +20,11 @@ export const apiServer = async () => {
 	api.interceptors.response.use(
 		(response) => response,
 		(error: AxiosError) => {
-			console.error(`[API Server Error] ${error.response?.data}`);
-			return Promise.reject(error);
+			const data: any = error.response?.data;
+			const errorMessage = data?.message || "Unknown API Error";
+			const errorStatus = error.status || 500;
+
+			return Promise.reject(new AppError(errorMessage, errorStatus));
 		}
 	);
 

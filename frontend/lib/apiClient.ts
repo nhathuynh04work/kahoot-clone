@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import axios, { AxiosError } from "axios";
@@ -14,8 +13,6 @@ apiClient.interceptors.response.use(
 		// Cast 'data' to 'any' to bypass the 'unknown' type check
 		const data: any = error.response?.data;
 		const errorMessage = data?.message || "An error occurred";
-
-		console.log(errorMessage);
 
 		// 401 Unauthorized
 		if (error.response && error.response.status === 401) {

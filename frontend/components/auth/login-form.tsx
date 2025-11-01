@@ -27,7 +27,6 @@ export default function LoginForm() {
 		try {
 			await apiClient.post("/auth/login", values);
 			router.push("/");
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			setApiError(error?.message);
 		}

@@ -29,7 +29,6 @@ export default function RegisterForm() {
 		try {
 			await apiClient.post("/auth/register", values);
 			router.push("/auth/login");
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			setApiError(error?.message);
 		}
