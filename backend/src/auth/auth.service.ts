@@ -5,6 +5,7 @@ import { UserResponseDto } from "./dto/user-response.dto.js";
 import { RegisterUserDto } from "./dto/register-user.dto.js";
 import { LoginUserDto } from "./dto/login-user.dto.js";
 import { JwtService } from "@nestjs/jwt";
+import { JwtPayloadDto } from "./dto/jwt-payload.dto.js";
 
 @Injectable()
 export class AuthService {
@@ -14,7 +15,7 @@ export class AuthService {
     ) {}
 
     async register(payload: RegisterUserDto): Promise<UserResponseDto> {
-        const user = await this.userService.user({
+        const user = await this.userService.getUser({
             email: payload.email,
         });
 
@@ -35,7 +36,7 @@ export class AuthService {
     }
 
     async login(payload: LoginUserDto): Promise<{ accessToken: string }> {
-        const user = await this.userService.user({
+        const user = await this.userService.getUser({
             email: payload.email,
         });
 
@@ -49,12 +50,24 @@ export class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
-        const jwtPayload = {
+        const jwtPayload: JwtPayloadDto = {
             sub: user.id,
             email: user.email,
         };
 
         const token = await this.jwtService.signAsync(jwtPayload);
         return { accessToken: token };
+    }
+
+    async getProfile(id: number) {
+        const user = await this.userService.getUser({ id });
+
+        if (!user) {
+            throw new BadRequestException("User not found");
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, ...result } = user;
+        return result;
     }
 }
