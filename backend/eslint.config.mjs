@@ -1,9 +1,10 @@
 // @ts-check
 import eslint from "@eslint/js";
 import globals from "globals";
-import tseslint from "typescript-eslint";
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default defineConfig(
     {
         ignores: ["eslint.config.mjs"],
     },
@@ -15,7 +16,7 @@ export default tseslint.config(
                 ...globals.node,
                 ...globals.jest,
             },
-            sourceType: "commonjs",
+            sourceType: "module",
             parserOptions: {
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
@@ -29,6 +30,7 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-argument": "warn",
             "@typescript-eslint/no-unsafe-call": "off",
             "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unused-vars": "off"
         },
     },
 );

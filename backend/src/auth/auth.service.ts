@@ -30,7 +30,6 @@ export class AuthService {
             password: hash,
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...result } = newUser;
         return result;
     }
@@ -65,7 +64,6 @@ export class AuthService {
             throw new BadRequestException("User not found");
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...result } = user;
         return result;
     }

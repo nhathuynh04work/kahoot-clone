@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma, Quiz } from "../../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { QuizFullDetails, QuizWithQuestions } from "./dto/quiz.dto.js";
 
 @Injectable()
 export class QuizService {
@@ -12,7 +11,17 @@ export class QuizService {
         private userService: UserService,
     ) {}
 
-    async getQuizzes(userId: number): Promise<Quiz[]> {
+    async getQuiz(id: number, userId: number): Promise<QuizFullDetails | null> {
+        const user = await this.userService.getUser({ id: userId });
+        if (!user) throw new BadRequestException("User not found");
+
+        return this.prisma.quiz.findUnique({
+            where: { id, userId },
+            include: { questions: { include: { options: true } } },
+        });
+    }
+
+    async getQuizzes(userId: number): Promise<QuizWithQuestions[]> {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");
 
