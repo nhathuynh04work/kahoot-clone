@@ -16,14 +16,18 @@ export class QuizService {
         private userService: UserService,
     ) {}
 
-    async getQuiz(id: number, userId: number): Promise<QuizFullDetails | null> {
-        const user = await this.userService.getUser({ id: userId });
-        if (!user) throw new BadRequestException("User not found");
-
-        return this.prisma.quiz.findUnique({
-            where: { id, userId },
+    async getQuiz(id: number, userId: number): Promise<QuizFullDetails> {
+        const quiz = await this.prisma.quiz.findUnique({
+            where: { id },
             include: { questions: { include: { options: true } } },
         });
+
+        if (!quiz) throw new NotFoundException("Quiz not found");
+
+        if (quiz.userId !== userId)
+            throw new ForbiddenException("Not allowed to see this quiz details");
+
+        return quiz;
     }
 
     async getQuizzes(userId: number): Promise<QuizWithQuestions[]> {
@@ -75,5 +79,18 @@ export class QuizService {
             data,
             include: { questions: { include: { options: true } } },
         });
+    }
+
+    async delete(id: number, userId: number) {
+        const user = await this.userService.getUser({ id: userId });
+        if (!user) throw new BadRequestException("User not found");
+
+        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
+        if (!quiz) throw new NotFoundException("Quiz not found");
+
+        if (userId !== quiz.userId)
+            throw new ForbiddenException("Cannot delete others' quizzes");
+
+        await this.prisma.quiz.delete({ where: { id } });
     }
 }

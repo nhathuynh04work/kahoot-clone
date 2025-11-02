@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     ParseIntPipe,
@@ -40,5 +41,11 @@ export class QuizController {
         @User() user: JwtUser,
     ) {
         return this.quizService.update({ id, userId: user.id, data });
+    }
+
+    @Delete("/:id")
+    async delete(@Param("id", ParseIntPipe) id: number, @User() user: JwtUser) {
+        await this.quizService.delete(id, user.id);
+        return { success: true };
     }
 }
