@@ -14,7 +14,7 @@ import { type JwtUser, User } from "../auth/user.decorator.js";
 import { JwtAuthGuard } from "../auth/guard/jwt-auth.guard.js";
 import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
 
-@Controller("quizzes")
+@Controller("quiz")
 @UseGuards(JwtAuthGuard)
 export class QuizController {
     constructor(private quizService: QuizService) {}
