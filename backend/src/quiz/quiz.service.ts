@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common";
 import { Prisma, Quiz } from "../../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -45,5 +50,30 @@ export class QuizService {
         };
 
         return this.prisma.quiz.create({ data: payload });
+    }
+
+    async update({
+        id,
+        userId,
+        data,
+    }: {
+        id: number;
+        userId: number;
+        data: Prisma.QuizUpdateInput;
+    }): Promise<QuizFullDetails> {
+        const user = await this.userService.getUser({ id: userId });
+        if (!user) throw new BadRequestException("User not found");
+
+        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
+        if (!quiz) throw new NotFoundException("Quiz not found");
+
+        if (userId !== quiz.userId)
+            throw new ForbiddenException("Cannot update others' quizzes");
+
+        return this.prisma.quiz.update({
+            where: { id },
+            data,
+            include: { questions: { include: { options: true } } },
+        });
     }
 }

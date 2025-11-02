@@ -1,15 +1,17 @@
 import {
+    Body,
     Controller,
     Get,
     Param,
     ParseIntPipe,
+    Patch,
     Post,
     UseGuards,
 } from "@nestjs/common";
 import { QuizService } from "./quiz.service.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { JwtAuthGuard } from "../auth/guard/jwt-auth.guard.js";
-import { Quiz } from "../../generated/prisma/client.js";
+import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
 
 @Controller("quizzes")
 @UseGuards(JwtAuthGuard)
@@ -29,5 +31,14 @@ export class QuizController {
     @Post()
     create(@User() user: JwtUser) {
         return this.quizService.create(user.id);
+    }
+
+    @Patch("/:id")
+    update(
+        @Body() data: UpdateQuizDto,
+        @Param("id", ParseIntPipe) id: number,
+        @User() user: JwtUser,
+    ) {
+        return this.quizService.update({ id, userId: user.id, data });
     }
 }
