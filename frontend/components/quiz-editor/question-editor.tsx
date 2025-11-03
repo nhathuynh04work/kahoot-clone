@@ -1,8 +1,13 @@
 "use client";
 
+import { updateQuestion } from "@/app/actions/quiz";
+import { UpdateQuestionDto } from "@/lib/dtos/quiz.dto";
 import { QuestionWithOptions } from "@/lib/types/quiz";
+import { useMutation } from "@tanstack/react-query";
 import { Image as LucideImage, CheckCircle, Circle } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { FocusEvent } from "react";
 
 interface QuestionEditorProps {
 	question: QuestionWithOptions | undefined;
@@ -16,6 +21,30 @@ const optionColors = [
 ];
 
 export default function QuestionEditor({ question }: QuestionEditorProps) {
+	const router = useRouter();
+
+	const { mutate: mutateQuestion } = useMutation({
+		mutationFn: (payload: UpdateQuestionDto) => {
+			if (!question) throw new Error("No question selected");
+			return updateQuestion({
+				questionId: question.id,
+				quizId: question.quizId,
+				payload,
+			});
+		},
+		onSuccess: () => {
+			router.refresh();
+		},
+		onError: (err) => console.error("Failed to update question", err),
+	});
+
+	function handleQuestionTextBlur(e: FocusEvent<HTMLInputElement>) {
+		const newText = e.target.value;
+		if (newText !== question?.text) {
+			mutateQuestion({ text: newText });
+		}
+	}
+
 	if (!question) {
 		return (
 			<div className="col-span-7 col-start-3 h-full flex flex-col items-center justify-center bg-gray-800 text-gray-400">
@@ -38,6 +67,8 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 					className="w-full p-4 bg-gray-900 border border-gray-700 rounded-md text-white text-xl text-center font-semibold"
 					placeholder="Start typing your question..."
 					defaultValue={question.text || ""}
+					onBlur={handleQuestionTextBlur}
+					key={question.id}
 				/>
 			</div>
 
@@ -66,7 +97,7 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 				{question.options.map((option, index) => (
 					<div
 						key={option.id}
-						className={`p-4 rounded-md border border-gray-700 flex items-center gap-3`}>
+						className={`p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3`}>
 						<div
 							className={`w-10 h-10 rounded-md ${
 								optionColors[index % 4]
