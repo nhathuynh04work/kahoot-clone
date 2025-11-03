@@ -10,11 +10,15 @@ import { Plus } from "lucide-react";
 interface QuestionNavListProps {
 	questions: QuestionWithOptions[];
 	quizId: number;
+	activeQuestionId: number;
+	onQuestionSelect: (id: number) => void;
 }
 
 export default function QuestionNavList({
 	questions,
 	quizId,
+	activeQuestionId,
+	onQuestionSelect,
 }: QuestionNavListProps) {
 	const router = useRouter();
 
@@ -30,16 +34,23 @@ export default function QuestionNavList({
 	});
 
 	return (
-		<div className="col-span-2 flex flex-col overflow-y-auto border-r border-gray-700">
-			{questions.map((q) => (
-				<QuestionNavItem key={q.id} question={q} />
-			))}
+		<div className="flex-1 flex flex-col h-full">
+			<div className="grow overflow-y-auto">
+				{questions.map((q) => (
+					<div key={q.id} onClick={() => onQuestionSelect(q.id)}>
+						<QuestionNavItem
+							question={q}
+							isActive={q.id === activeQuestionId}
+						/>
+					</div>
+				))}
+			</div>
 
-			<div className="w-full p-4">
+			<div className="shrink-0 w-full p-4">
 				<button
 					onClick={() => mutate()}
 					disabled={isPending}
-					className="flex items-center justify-center gap-2 w-full font-semibold text-white bg-indigo-800 hover:bg-indigo-900 disabled:bg-indigo-800 disabled:opacity-75 transition-colors py-4 rounded-md">
+					className="flex items-center justify-center gap-2 w-full font-semibold text-white bg-indigo-800 hover:bg-indigo-900 disabled:bg-indigo-800 disabled:opacity-75 transition-colors py-4 rounded-md cursor-pointer">
 					{isPending ? (
 						"Adding..."
 					) : (
