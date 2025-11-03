@@ -1,7 +1,7 @@
 "use server";
 
 import { apiServer } from "@/lib/apiServer";
-import { QuizFullDetails, QuizWithQuestions } from "@/lib/types/quiz";
+import { Question, QuizFullDetails, QuizWithQuestions } from "@/lib/types/quiz";
 import { redirect } from "next/navigation";
 
 export async function getQuiz(id: string): Promise<QuizFullDetails> {
@@ -20,4 +20,10 @@ export async function createQuiz() {
 	const api = await apiServer();
 	const { data } = await api.post("/quiz");
 	redirect(`/quiz/edit/${data.id}`);
+}
+
+export async function addQuestion(quizId: number | string): Promise<Question> {
+	const api = await apiServer();
+	const { data } = await api.post(`/quiz/${quizId}/questions`);
+	return data;
 }

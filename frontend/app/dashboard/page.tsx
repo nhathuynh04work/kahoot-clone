@@ -63,7 +63,7 @@ export default async function DashboardPage() {
 								</h3>
 								<p className="text-gray-600 mb-4">
 									{quiz.questions.length}{" "}
-									{quiz.questions.length === 1
+									{quiz.questions.length < 2
 										? "question"
 										: "questions"}
 								</p>

@@ -27,6 +27,6 @@ export type Option = {
 
 export type QuizWithQuestions = Quiz & { questions: Question[] };
 
-export type QuizFullDetails = Quiz & {
-	questions: (Question & { options: Option[] })[];
-};
+export type QuestionWithOptions = Question & { options: Option[] };
+
+export type QuizFullDetails = Quiz & { questions: QuestionWithOptions[] };
