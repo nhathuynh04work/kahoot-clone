@@ -25,7 +25,9 @@ export class QuizService {
         if (!quiz) throw new NotFoundException("Quiz not found");
 
         if (quiz.userId !== userId)
-            throw new ForbiddenException("Not allowed to see this quiz details");
+            throw new ForbiddenException(
+                "Not allowed to see this quiz details",
+            );
 
         return quiz;
     }
@@ -92,5 +94,26 @@ export class QuizService {
             throw new ForbiddenException("Cannot delete others' quizzes");
 
         await this.prisma.quiz.delete({ where: { id } });
+    }
+
+    async getQuizMetadata(
+        id: number,
+        userId: number,
+    ): Promise<{ quiz: Quiz; questionCount: number }> {
+        const quiz = await this.prisma.quiz.findUnique({
+            where: { id },
+            include: {
+                _count: {
+                    select: { questions: true },
+                },
+            },
+        });
+
+        if (!quiz) throw new NotFoundException("Quiz not found");
+
+        if (quiz.userId !== userId)
+            throw new ForbiddenException("Not allowed to access this quiz");
+
+        return { quiz, questionCount: quiz._count.questions };
     }
 }

@@ -31,7 +31,7 @@ model Question {
     id        Int      @id @default(autoincrement())
     quizId    Int      @map("quiz_id")
     text      String?
-    timeLimit Int?     @map("time_limit")
+    timeLimit Int      @default(2000) @map("time_limit")
     points    Int      @default(1)
     imageUrl  String?  @map("image_url")
     sortOrder Int      @map("sort_order")

@@ -7,5 +7,6 @@ import { UserModule } from "../user/user.module.js";
     imports: [UserModule],
     controllers: [QuizController],
     providers: [QuizService],
+    exports: [QuizService],
 })
 export class QuizModule {}

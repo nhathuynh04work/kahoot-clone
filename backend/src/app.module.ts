@@ -6,6 +6,7 @@ import { UserModule } from "./user/user.module.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
 import { QuizModule } from './quiz/quiz.module.js';
+import { QuestionModule } from "./question/question.module.js";
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { QuizModule } from './quiz/quiz.module.js';
         UserModule,
         PrismaModule,
         QuizModule,
+        QuestionModule,
     ],
     controllers: [AppController],
     providers: [AppService],
