@@ -53,6 +53,28 @@ export class QuizService {
                     id: userId,
                 },
             },
+            questions: {
+                create: [
+                    {
+                        text: "",
+                        sortOrder: 0,
+                        options: {
+                            create: [
+                                {
+                                    text: "Option 1",
+                                    isCorrect: true,
+                                    sortOrder: 0,
+                                },
+                                {
+                                    text: "Option 2",
+                                    isCorrect: false,
+                                    sortOrder: 1,
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
         };
 
         return this.prisma.quiz.create({ data: payload });

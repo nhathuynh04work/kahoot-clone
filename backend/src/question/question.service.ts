@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { QuizService } from "../quiz/quiz.service.js";
 import { Prisma, Question } from "../../generated/prisma/client.js";
+import { QuestionWithOptions } from "./dto/question.dto.js";
 
 @Injectable()
 export class QuestionService {
@@ -16,7 +17,7 @@ export class QuestionService {
     }: {
         quizId: number;
         userId: number;
-    }): Promise<Question> {
+    }): Promise<QuestionWithOptions> {
         // This perform checking quiz existence and the quiz ownership
         const { questionCount } = await this.quizService.getQuizMetadata(
             quizId,
@@ -30,8 +31,55 @@ export class QuestionService {
                     id: quizId,
                 },
             },
+            options: {
+                create: [
+                    {
+                        text: "Option 1",
+                        isCorrect: true,
+                        sortOrder: 0,
+                    },
+                    {
+                        text: "Option 2",
+                        isCorrect: false,
+                        sortOrder: 1,
+                    },
+                ],
+            },
         };
 
-        return this.prisma.question.create({ data: payload });
+        return this.prisma.question.create({
+            data: payload,
+            include: { options: true },
+        });
+    }
+
+    async update(data: {
+        questionId: number;
+        quizId: number;
+        userId: number;
+        payload: Prisma.QuestionUpdateInput;
+    }): Promise<QuestionWithOptions> {
+        // This perform checking quiz existence and the quiz ownership
+        await this.quizService.getQuizMetadata(data.quizId, data.userId);
+
+        try {
+            return this.prisma.question.update({
+                where: {
+                    id: data.questionId,
+                    quizId: data.quizId,
+                },
+                data: data.payload,
+                include: {
+                    options: true,
+                },
+            });
+        } catch (error) {
+            if (error.code === "P2025")
+                throw new NotFoundException(
+                    "Question not found or it does not belong to this quiz.",
+                );
+
+            throw error;
+        }
     }
 }
