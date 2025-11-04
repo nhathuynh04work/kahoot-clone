@@ -23,8 +23,8 @@ export default function QuestionNavItem({
                            transition-all
                            ${
 								isActive
-									? "bg-gray-700 ring-2 ring-indigo-400" // Active: bg-700 + ring
-									: "bg-gray-800 ring-1 ring-gray-600 group-hover:ring-2 group-hover:ring-gray-500" // Default: bg-800 + ring
+									? "bg-gray-700 ring-2 ring-indigo-400"
+									: "bg-gray-800 ring-1 ring-gray-600 group-hover:ring-2 group-hover:ring-gray-500"
 							}`}>
 				<p
 					className="w-full max-w-xs font-medium truncate text-center text-gray-200 text-xs"
@@ -51,17 +51,19 @@ export default function QuestionNavItem({
 
 				<div
 					className={`w-full max-w-xs grid grid-cols-2 gap-1 mt-1 h-5`}>
-					{question.options.map((option) => (
-						<div
-							key={option.id}
-							className={`h-${
-								question.options.length > 3 ? "2" : "5"
-							} rounded-xs border border-gray-600 flex items-center justify-end pr-2`}>
-							{option.isCorrect && (
-								<CheckCircle2 className="w-2 h-2 text-green-400" />
-							)}
-						</div>
-					))}
+					{question.options
+						.sort((a, b) => a.sortOrder - b.sortOrder)
+						.map((option) => (
+							<div
+								key={option.id}
+								className={`h-${
+									question.options.length > 2 ? "2" : "5"
+								} rounded-xs border border-gray-600 flex items-center justify-end pr-2`}>
+								{option.isCorrect && (
+									<CheckCircle2 className="w-2 h-2 text-green-400" />
+								)}
+							</div>
+						))}
 				</div>
 			</div>
 		</div>

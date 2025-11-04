@@ -5,3 +5,12 @@ export interface UpdateQuestionDto {
 	sortOrder?: number;
 	points?: number;
 }
+
+export interface CreateOptionDto {
+	text: string;
+}
+
+export interface UpdateOptionDto {
+	text?: string;
+	isCorrect?: boolean;
+}

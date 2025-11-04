@@ -2,9 +2,7 @@
 
 import { getCurrentUser } from "@/app/actions/auth";
 import { getQuiz } from "@/app/actions/quiz";
-import QuestionNavList from "@/components/quiz-editor/question-nav-list";
 import QuizEditor from "@/components/quiz-editor/quiz-editor";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 interface QuizEditPageProps {
