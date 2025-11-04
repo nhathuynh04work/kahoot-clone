@@ -36,10 +36,11 @@ export default function QuestionNavList({
 	return (
 		<div className="flex-1 flex flex-col h-full">
 			<div className="grow overflow-y-auto">
-				{questions.map((q) => (
+				{questions.map((q, i) => (
 					<div key={q.id} onClick={() => onQuestionSelect(q.id)}>
 						<QuestionNavItem
 							question={q}
+							index={i}
 							isActive={q.id === activeQuestionId}
 						/>
 					</div>

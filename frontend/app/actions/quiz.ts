@@ -1,7 +1,11 @@
 "use server";
 
 import { apiServer } from "@/lib/apiServer";
-import { CreateOptionDto, UpdateOptionDto, UpdateQuestionDto } from "@/lib/dtos/quiz.dto";
+import {
+	CreateOptionDto,
+	UpdateOptionDto,
+	UpdateQuestionDto,
+} from "@/lib/dtos/quiz.dto";
 import {
 	Option,
 	Question,
@@ -29,27 +33,35 @@ export async function createQuiz() {
 	redirect(`/quiz/edit/${data.id}`);
 }
 
-export async function addQuestion(quizId: number | string): Promise<Question> {
+export async function addQuestion(quizId: number): Promise<Question> {
 	const api = await apiServer();
 	const { data } = await api.post(`/quiz/${quizId}/questions`);
 	return data;
 }
 
-export async function updateQuestion({
-	questionId,
-	quizId,
-	payload,
-}: {
+export async function updateQuestion(params: {
 	questionId: number;
 	quizId: number;
 	payload: UpdateQuestionDto;
 }) {
+	const { questionId, quizId, payload } = params;
+
 	const api = await apiServer();
 	const { data } = await api.patch(
 		`/quiz/${quizId}/questions/${questionId}`,
 		payload
 	);
 	return data;
+}
+
+export async function deleteQuestion(params: {
+	questionId: number;
+	quizId: number;
+}) {
+	const { questionId, quizId } = params;
+	const api = await apiServer();
+	await api.delete(`/quiz/${quizId}/questions/${questionId}`);
+	revalidatePath(`/quiz/edit/${quizId}`);
 }
 
 export async function addOption(params: {
@@ -84,4 +96,19 @@ export async function updateOption(params: {
 
 	revalidatePath(`/quiz/edit/${quizId}`);
 	return data;
+}
+
+export async function deleteOption(params: {
+	quizId: number;
+	questionId: number;
+	optionId: number;
+}) {
+	const { quizId, questionId, optionId } = params;
+
+	const api = await apiServer();
+	await api.delete(
+		`/quiz/${quizId}/questions/${questionId}/options/${optionId}`
+	);
+
+	revalidatePath(`/quiz/edit/${quizId}`);
 }

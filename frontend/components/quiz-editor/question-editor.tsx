@@ -20,10 +20,6 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 	const { mutate: addOption, isPending: isAddingOption } =
 		useAddOption(question);
 
-	if (!question) {
-		return <NoQuestionSelected />;
-	}
-
 	return (
 		<div className="h-full flex flex-col items-center p-8 overflow-y-auto bg-gray-800">
 			<QuestionTextInput
@@ -41,15 +37,6 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 				onAddOptionMutate={addOption}
 				isAddingOption={isAddingOption}
 			/>
-		</div>
-	);
-}
-
-function NoQuestionSelected() {
-	return (
-		<div className="h-full flex flex-col items-center justify-center bg-gray-800 text-gray-400">
-			<p className="text-xl font-semibold">No Question Selected</p>
-			<p>Select a question from the list to start editing.</p>
 		</div>
 	);
 }

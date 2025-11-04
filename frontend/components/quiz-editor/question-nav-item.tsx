@@ -6,11 +6,13 @@ import Image from "next/image";
 
 interface QuestionNavItemProps {
 	question: QuestionWithOptions;
+	index: number;
 	isActive: boolean;
 }
 
 export default function QuestionNavItem({
 	question,
+	index,
 	isActive,
 }: QuestionNavItemProps) {
 	return (
@@ -29,7 +31,7 @@ export default function QuestionNavItem({
 				<p
 					className="w-full max-w-xs font-medium truncate text-center text-gray-200 text-xs"
 					title={question.text || "Question"}>
-					{question.sortOrder + 1}. {question.text || "Question"}
+					{index + 1}. {question.text || "Question"}
 				</p>
 
 				<div className="w-12 h-8 rounded border border-dashed border-gray-500 flex items-center justify-center">

@@ -1,11 +1,12 @@
 "use client";
 
 import { QuizFullDetails } from "@/lib/types/quiz";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import QuestionNavList from "./question-nav-list";
 import QuestionEditor from "./question-editor";
 import QuestionSettingsSidebar from "./question-settings-sidebar";
 import Header from "./header";
+import { useDeleteQuestion } from "@/app/hooks/quiz-mutation";
 
 interface QuizEditorProps {
 	quiz: QuizFullDetails;
@@ -17,9 +18,35 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 	);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(true);
 
-	const activeQuestion = quiz.questions.find(
-		(q) => q.id === activeQuestionId
+	const sortedQuestions = useMemo(() => {
+		return [...quiz.questions].sort((a, b) => a.sortOrder - b.sortOrder);
+	}, [quiz.questions]);
+
+	const activeQuestion =
+		sortedQuestions.find((q) => q.id === activeQuestionId) ||
+		sortedQuestions[0];
+
+	const { mutate: deleteQuestion, isPending: isDeleting } = useDeleteQuestion(
+		activeQuestion,
+		{
+			onSuccess: () => {
+				const currentIndex = sortedQuestions.findIndex(
+					(q) => q.id === activeQuestionId
+				);
+				let nextQuestion;
+
+				if (currentIndex > 0) {
+					nextQuestion = sortedQuestions[currentIndex - 1];
+				} else {
+					nextQuestion = sortedQuestions[currentIndex + 1];
+				}
+
+				setActiveQuestionId(nextQuestion.id);
+			},
+		}
 	);
+
+	const canDelete = sortedQuestions.length > 1;
 
 	return (
 		<div className="flex flex-col h-screen text-white">
@@ -28,9 +55,7 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 			<div className="flex-1 grid grid-cols-6 grid-rows-1 overflow-hidden">
 				<div className="col-span-1 flex flex-col border-r border-gray-700 bg-gray-800">
 					<QuestionNavList
-						questions={quiz.questions.sort(
-							(a, b) => a.sortOrder - b.sortOrder
-						)}
+						questions={sortedQuestions}
 						quizId={quiz.id}
 						activeQuestionId={activeQuestionId}
 						onQuestionSelect={setActiveQuestionId}
@@ -46,6 +71,9 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 						question={activeQuestion}
 						isOpen={isSettingsOpen}
 						onToggle={() => setIsSettingsOpen(!isSettingsOpen)}
+						onDelete={deleteQuestion}
+						isDeleting={isDeleting}
+						canDelete={canDelete}
 					/>
 				</div>
 			</div>
