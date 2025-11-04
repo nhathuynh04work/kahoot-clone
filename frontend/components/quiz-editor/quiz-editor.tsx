@@ -50,7 +50,7 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 
 	return (
 		<div className="flex flex-col h-screen text-white">
-			<Header title={quiz.title} />
+			<Header quiz={quiz} />
 
 			<div className="flex-1 grid grid-cols-6 grid-rows-1 overflow-hidden">
 				<div className="col-span-1 flex flex-col border-r border-gray-700 bg-gray-800">

@@ -110,9 +110,8 @@ export function PlaceholderOptionCard({
 							disabled ? "opacity-30 cursor-not-allowed" : ""
 						}`}>
 			<div
-				className={`w-10 h-10 rounded-md ${
-					optionColors[index % 4]
-				}`}></div>
+				className={`w-10 h-10 rounded-md ${optionColors[index % 4]}`}
+			/>
 
 			<input
 				type="text"

@@ -5,10 +5,12 @@ import {
 	CreateOptionDto,
 	UpdateOptionDto,
 	UpdateQuestionDto,
+	UpdateQuizDto,
 } from "@/lib/dtos/quiz.dto";
 import {
 	Option,
 	Question,
+	Quiz,
 	QuizFullDetails,
 	QuizWithQuestions,
 } from "@/lib/types/quiz";
@@ -31,6 +33,20 @@ export async function createQuiz() {
 	const api = await apiServer();
 	const { data } = await api.post("/quiz");
 	redirect(`/quiz/edit/${data.id}`);
+}
+
+export async function updateQuiz(params: {
+	quizId: number;
+	payload: UpdateQuizDto;
+}): Promise<Quiz> {
+	const { quizId, payload } = params;
+	const api = await apiServer();
+	const { data } = await api.patch(`/quiz/${quizId}`, payload);
+
+	revalidatePath(`/quiz/edit/${quizId}`);
+	revalidatePath("/dashboard");
+
+	return data;
 }
 
 export async function addQuestion(quizId: number): Promise<Question> {

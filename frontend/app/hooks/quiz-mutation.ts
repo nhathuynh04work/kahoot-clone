@@ -3,12 +3,15 @@
 import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 import * as quizApi from "../actions/quiz";
 import { useRouter } from "next/navigation";
-import { QuestionWithOptions, Option } from "@/lib/types/quiz";
+import { QuestionWithOptions, Option, Quiz } from "@/lib/types/quiz";
 import {
 	UpdateOptionDto,
 	UpdateQuestionDto,
 	CreateOptionDto,
+	UpdateQuizDto,
 } from "@/lib/dtos/quiz.dto";
+
+type UpdateQuizOptions = UseMutationOptions<Quiz, Error, UpdateQuizDto>;
 
 type UpdateQuestionOptions = UseMutationOptions<
 	QuestionWithOptions,
@@ -31,6 +34,29 @@ type DeleteOptionOptions = UseMutationOptions<
 	Error,
 	{ optionId: number }
 >;
+
+export function useUpdateQuiz(
+	quizId: number,
+	options?: Pick<UpdateQuizOptions, "onSuccess" | "onError">
+) {
+	const router = useRouter();
+
+	return useMutation({
+		mutationFn: (payload: UpdateQuizDto) =>
+			quizApi.updateQuiz({
+				quizId,
+				payload,
+			}),
+		onSuccess: (data, variables, result, context) => {
+			options?.onSuccess?.(data, variables, result, context);
+			router.refresh();
+		},
+		onError: (error, variables, result, context) => {
+			options?.onError?.(error, variables, result, context);
+			console.error("Failed to update quiz", error);
+		},
+	});
+}
 
 export function useUpdateQuestion(
 	question: QuestionWithOptions,

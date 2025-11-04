@@ -1,3 +1,9 @@
+export interface UpdateQuizDto {
+	title?: string;
+	description?: string;
+	coverUrl?: string;
+}
+
 export interface UpdateQuestionDto {
 	text?: string;
 	imageUrl?: string;

@@ -1,9 +1,10 @@
 "use server";
 
 import { apiServer } from "@/lib/apiServer";
+import { User } from "@/lib/types/user";
 import { redirect } from "next/navigation";
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<User> {
 	const api = await apiServer();
 	let user = null;
 
