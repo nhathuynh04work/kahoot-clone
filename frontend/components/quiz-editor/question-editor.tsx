@@ -3,6 +3,7 @@
 import { QuestionWithOptions } from "@/lib/types/quiz";
 import {
 	useAddOption,
+	useDeleteOption, // 1. Import useDeleteOption
 	useUpdateOption,
 	useUpdateQuestion,
 } from "@/app/hooks/quiz-mutation";
@@ -19,6 +20,7 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 	const { mutate: updateOption } = useUpdateOption(question);
 	const { mutate: addOption, isPending: isAddingOption } =
 		useAddOption(question);
+	const { mutate: deleteOption } = useDeleteOption(question);
 
 	return (
 		<div className="h-full flex flex-col items-center p-8 overflow-y-auto bg-gray-800">
@@ -36,6 +38,7 @@ export default function QuestionEditor({ question }: QuestionEditorProps) {
 				onOptionMutate={updateOption}
 				onAddOptionMutate={addOption}
 				isAddingOption={isAddingOption}
+				onOptionDelete={deleteOption}
 			/>
 		</div>
 	);

@@ -2,15 +2,7 @@
 
 import { Option } from "@/lib/types/quiz";
 import { CreateOptionDto, UpdateOptionDto } from "@/lib/dtos/quiz.dto";
-import RealOptionCard from "./real-option-card";
-import PlaceholderOptionCard from "./placeholder-option-card";
-
-export const optionColors = [
-	"bg-red-800",
-	"bg-blue-800",
-	"bg-yellow-800",
-	"bg-green-800",
-];
+import { PlaceholderOptionCard, RealOptionCard } from "./option-card";
 
 interface OptionsGridProps {
 	options: Option[];
@@ -20,6 +12,7 @@ interface OptionsGridProps {
 	}) => void;
 	onAddOptionMutate: (payload: CreateOptionDto) => void;
 	isAddingOption: boolean;
+	onOptionDelete: (data: { optionId: number }) => void;
 }
 
 export default function OptionsGrid({
@@ -27,6 +20,7 @@ export default function OptionsGrid({
 	onOptionMutate,
 	onAddOptionMutate,
 	isAddingOption,
+	onOptionDelete,
 }: OptionsGridProps) {
 	return (
 		<div className="w-full grid grid-cols-2 gap-4">
@@ -37,6 +31,8 @@ export default function OptionsGrid({
 					option={option}
 					index={index}
 					onMutate={onOptionMutate}
+					onDelete={onOptionDelete}
+					optionsCount={options.length}
 				/>
 			))}
 
@@ -52,5 +48,3 @@ export default function OptionsGrid({
 		</div>
 	);
 }
-
-
