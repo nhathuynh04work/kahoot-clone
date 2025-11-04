@@ -82,4 +82,24 @@ export class QuestionService {
             throw error;
         }
     }
+
+    async delete(data: { questionId: number; quizId: number; userId: number }) {
+        await this.quizService.getQuizMetadata(data.quizId, data.userId);
+
+        try {
+            return await this.prisma.question.delete({
+                where: {
+                    id: data.questionId,
+                    quizId: data.quizId,
+                },
+            });
+        } catch (error) {
+            if (error.code === "P2025")
+                throw new NotFoundException(
+                    "Question not found or it does not belong to this quiz.",
+                );
+
+            throw error;
+        }
+    }
 }

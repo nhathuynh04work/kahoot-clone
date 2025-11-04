@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Param,
     ParseIntPipe,
     Patch,
@@ -37,6 +38,19 @@ export class QuestionController {
             quizId,
             userId: user.id,
             payload,
+        });
+    }
+
+    @Delete("/:questionId")
+    delete(
+        @User() user: JwtUser,
+        @Param("quizId", ParseIntPipe) quizId: number,
+        @Param("questionId", ParseIntPipe) questionId: number,
+    ) {
+        return this.questionService.delete({
+            questionId,
+            quizId,
+            userId: user.id,
         });
     }
 }
