@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { QuizService } from "../quiz/quiz.service.js";
 import { Prisma, Question } from "../../generated/prisma/client.js";
@@ -18,14 +22,28 @@ export class QuestionService {
         quizId: number;
         userId: number;
     }): Promise<QuestionWithOptions> {
-        // This perform checking quiz existence and the quiz ownership
-        const { questionCount } = await this.quizService.getQuizMetadata(
-            quizId,
-            userId,
-        );
+        const quiz = await this.prisma.quiz.findFirst({
+            where: {
+                id: quizId,
+                userId: userId,
+            },
+            include: {
+                questions: {
+                    orderBy: {
+                        sortOrder: "desc",
+                    },
+                    take: 1, // Only get the one with the highest sortOrder
+                },
+            },
+        });
+
+        if (!quiz)
+            throw new NotFoundException(
+                "Quiz not found or you do not have permission.",
+            );
 
         const payload: Prisma.QuestionCreateInput = {
-            sortOrder: questionCount,
+            sortOrder: quiz.questions[0].sortOrder + 1,
             quiz: {
                 connect: {
                     id: quizId,
@@ -83,11 +101,23 @@ export class QuestionService {
         }
     }
 
-    async delete(data: { questionId: number; quizId: number; userId: number }) {
-        await this.quizService.getQuizMetadata(data.quizId, data.userId);
+    async delete(data: {
+        questionId: number;
+        quizId: number;
+        userId: number;
+    }): Promise<Question> {
+        const { questionCount } = await this.quizService.getQuizMetadata(
+            data.quizId,
+            data.userId,
+        );
+
+        if (questionCount < 2)
+            throw new BadRequestException(
+                "Not allowed to delete all questions",
+            );
 
         try {
-            return await this.prisma.question.delete({
+            return this.prisma.question.delete({
                 where: {
                     id: data.questionId,
                     quizId: data.quizId,

@@ -42,15 +42,17 @@ export class QuestionController {
     }
 
     @Delete("/:questionId")
-    delete(
+    async delete(
         @User() user: JwtUser,
         @Param("quizId", ParseIntPipe) quizId: number,
         @Param("questionId", ParseIntPipe) questionId: number,
     ) {
-        return this.questionService.delete({
+        await this.questionService.delete({
             questionId,
             quizId,
             userId: user.id,
         });
+
+        return { success: true };
     }
 }
