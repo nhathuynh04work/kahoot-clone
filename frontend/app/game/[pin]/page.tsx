@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { socket } from "@/lib/socket";
 
 type GameState = "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
@@ -9,6 +9,7 @@ type GameState = "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
 export default function GamePage() {
 	const params = useParams();
 	const pin = params.pin as string;
+	const router = useRouter();
 
 	const [gameState, setGameState] = useState<GameState>("WAITING");
 	const [currentQuestion, setCurrentQuestion] = useState<any>(null);
@@ -37,14 +38,22 @@ export default function GamePage() {
 			setError("Lost connection to the game.");
 		});
 
+		socket.on("lobbyClosed", () => {
+			setError("The host has left the game. Redirecting you to home...");
+			setTimeout(() => {
+				router.push("/");
+			}, 3000);
+		});
+
 		// Clean up listeners when the component unmounts
 		return () => {
 			socket.off("newQuestion");
 			socket.off("showLeaderboard");
 			socket.off("gameFinished");
 			socket.off("disconnect");
+			socket.off("lobbyClosed");
 		};
-	}, []);
+	}, [router]);
 
 	if (error) {
 		return <div className="text-center p-10 text-red-400">{error}</div>;

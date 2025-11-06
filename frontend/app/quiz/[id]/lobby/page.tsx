@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useSocket } from "@/contexts/socket-context";
 import { Play, Loader2 } from "lucide-react";
 import { socket } from "@/lib/socket";
 
@@ -24,26 +23,33 @@ export default function GameLobby({ params }: GameLobbyPageProps) {
 				player,
 			]);
 		}
+
+		function handlePlayerLeft(player: { id: number; nickname: string }) {
+			setPlayers((prev) => prev.filter((p) => p.id !== player.id));
+		}
+
 		socket.on("playerJoined", handlePlayerJoined);
+		socket.on("playerLeft", handlePlayerLeft);
 
 		// LOBBY CREATION (only run if pin has not been created)
-		if (!pin) {
-			socket.emit("createLobby", { quizId }, (response: any) => {
-				setLoading(false);
+		if (pin) return;
 
-				if (!response.success) {
-					setError(response.error || "Failed to create lobby.");
-					return;
-				}
+		socket.emit("createLobby", { quizId }, (response: any) => {
+			setLoading(false);
 
-				setPin(response.pin);
-				setError(null);
-				setPlayers([{ nickname: "Host", isHost: true, id: socket.id }]);
-			});
-		}
+			if (!response.success) {
+				setError(response.error || "Failed to create lobby.");
+				return;
+			}
+
+			setPin(response.pin);
+			setError(null);
+			setPlayers([{ nickname: "Host", isHost: true, id: socket.id }]);
+		});
 
 		return () => {
 			socket.off("playerJoined", handlePlayerJoined);
+			socket.off("playerLeft", handlePlayerLeft);
 		};
 	}, [pin, quizId]);
 
