@@ -33,7 +33,7 @@ export default function Header({ quiz }: HeaderProps) {
 			<div className="flex items-center px-4 py-2 border-b border-gray-700 bg-gray-800">
 				<Link
 					href="/dashboard"
-					className="text-3xl mr-24 uppercase font-semibold">
+					className="text-3xl mr-24 font-semibold">
 					Kahoot!
 				</Link>
 

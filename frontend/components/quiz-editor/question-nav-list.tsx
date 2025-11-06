@@ -3,7 +3,7 @@
 import { QuestionWithOptions } from "@/lib/types/quiz";
 import QuestionNavItem from "./question-nav-item";
 import { useMutation } from "@tanstack/react-query";
-import { addQuestion } from "@/app/actions/quiz";
+import { addQuestion } from "@/actions/quiz";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 

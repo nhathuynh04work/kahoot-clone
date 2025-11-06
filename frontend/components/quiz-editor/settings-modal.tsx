@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useUpdateQuiz } from "@/app/hooks/quiz-mutation";
 import { X } from "lucide-react";
 import { QuizFullDetails } from "@/lib/types/quiz";
 import { UpdateQuizDto } from "@/lib/dtos/quiz.dto";
+import { useUpdateQuiz } from "@/hooks/quiz-mutation";
 
 interface SettingsModalProps {
 	quiz: QuizFullDetails;

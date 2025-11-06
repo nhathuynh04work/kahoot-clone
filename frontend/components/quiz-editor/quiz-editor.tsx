@@ -6,7 +6,7 @@ import QuestionNavList from "./question-nav-list";
 import QuestionEditor from "./question-editor";
 import QuestionSettingsSidebar from "./question-settings-sidebar";
 import Header from "./header";
-import { useDeleteQuestion } from "@/app/hooks/quiz-mutation";
+import { useDeleteQuestion } from "@/hooks/quiz-mutation";
 
 interface QuizEditorProps {
 	quiz: QuizFullDetails;

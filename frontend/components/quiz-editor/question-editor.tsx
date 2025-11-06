@@ -1,15 +1,15 @@
 "use client";
 
 import { QuestionWithOptions } from "@/lib/types/quiz";
-import {
-	useAddOption,
-	useDeleteOption, // 1. Import useDeleteOption
-	useUpdateOption,
-	useUpdateQuestion,
-} from "@/app/hooks/quiz-mutation";
 import QuestionTextInput from "./question-text-input";
 import ImageUploader from "./image-uploader";
 import OptionsGrid from "./options-grid";
+import {
+	useAddOption,
+	useDeleteOption,
+	useUpdateOption,
+	useUpdateQuestion,
+} from "@/hooks/quiz-mutation";
 
 interface QuestionEditorProps {
 	question: QuestionWithOptions;

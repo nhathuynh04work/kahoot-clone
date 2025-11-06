@@ -3,7 +3,7 @@
 import { User } from "@/lib/types/user";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { createQuiz } from "@/app/actions/quiz";
+import { createQuiz } from "@/actions/quiz";
 
 const getInitials = (email: string) => {
 	return email[0]?.toUpperCase() || "?";
@@ -13,9 +13,7 @@ export default function TopBar({ user }: { user: User }) {
 	return (
 		<div className="flex items-center px-4 py-3 border-b border-gray-700 bg-gray-800 text-white">
 			{/* Logo */}
-			<Link
-				href="/dashboard"
-				className="text-3xl mr-24 uppercase font-semibold">
+			<Link href="/dashboard" className="text-3xl mr-24 font-semibold">
 				Kahoot!
 			</Link>
 

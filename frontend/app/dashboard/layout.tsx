@@ -1,5 +1,5 @@
 import TopBar from "@/components/layout/top-bar";
-import { getCurrentUser } from "../actions/auth";
+import { getCurrentUser } from "../../actions/auth";
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 

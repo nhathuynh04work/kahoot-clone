@@ -1,6 +1,12 @@
+import { getCurrentUser } from "@/actions/auth";
 import LoginForm from "@/components/auth/login-form";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
+	const user = await getCurrentUser();
+
+	if (user) redirect("/dashboard");
+
 	return (
 		<div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
 			<div className="w-full max-w-md">

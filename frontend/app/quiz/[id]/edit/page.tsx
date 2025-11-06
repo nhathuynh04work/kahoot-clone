@@ -1,7 +1,7 @@
 "use server";
 
-import { getCurrentUser } from "@/app/actions/auth";
-import { getQuiz } from "@/app/actions/quiz";
+import { getCurrentUser } from "@/actions/auth";
+import { getQuiz } from "@/actions/quiz";
 import QuizEditor from "@/components/quiz-editor/quiz-editor";
 import { notFound, redirect } from "next/navigation";
 
