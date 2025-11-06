@@ -9,22 +9,24 @@ datasource db {
 }
 
 model User {
-    id       Int     @id @default(autoincrement())
-    email    String  @unique
-    name     String?
-    password String
-    quizzes  Quiz[]
+    id          Int         @id @default(autoincrement())
+    email       String      @unique
+    name        String?
+    password    String
+    quizzes     Quiz[]
+    gameLobbies GameLobby[]
 }
 
 model Quiz {
-    id          Int        @id @default(autoincrement())
-    userId      Int        @map("user_id")
+    id          Int         @id @default(autoincrement())
+    userId      Int         @map("user_id")
     title       String
     description String?
-    coverUrl    String?    @map("cover_url")
-    createdAt   DateTime   @default(now()) @map("created_at")
-    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    coverUrl    String?     @map("cover_url")
+    createdAt   DateTime    @default(now()) @map("created_at")
+    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
     questions   Question[]
+    GameLobby   GameLobby[]
 }
 
 model Question {
@@ -37,6 +39,8 @@ model Question {
     sortOrder Int      @map("sort_order")
     quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
     options   Option[]
+
+    @@unique([quizId, sortOrder])
 }
 
 model Option {
@@ -46,4 +50,38 @@ model Option {
     isCorrect  Boolean  @default(false) @map("is_correct")
     sortOrder  Int      @map("sort_order")
     question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@unique([questionId, sortOrder])
+}
+
+model GameLobby {
+    id                Int         @id @default(autoincrement())
+    pin               String      @db.Char(6)
+    quizId            Int
+    hostId            Int
+    status            LobbyStatus
+    createdAt         DateTime    @default(now())
+    activeHostQuizKey String?     @unique
+
+    players GamePlayer[]
+    host    User         @relation(fields: [hostId], references: [id])
+    quiz    Quiz         @relation(fields: [quizId], references: [id])
+}
+
+enum LobbyStatus {
+    WAITING
+    IN_PROGRESS
+    FINISHED
+    CLOSED
+}
+
+model GamePlayer {
+    id       Int       @id @default(autoincrement())
+    nickname String
+    socketId String    @unique
+    score    Int       @default(0)
+    lobbyId  Int
+    lobby    GameLobby @relation(fields: [lobbyId], references: [id])
+
+    @@unique([lobbyId, nickname])
 }

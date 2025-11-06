@@ -3,9 +3,9 @@ import { AuthService } from "./auth.service.js";
 import { RegisterUserDto } from "./dto/register-user.dto.js";
 import { LoginUserDto } from "./dto/login-user.dto.js";
 import { UserResponseDto } from "./dto/user-response.dto.js";
-import { JwtAuthGuard } from "./guard/jwt-auth.guard.js";
 import { type JwtUser, User } from "./user.decorator.js";
 import { type Response } from "express";
+import { JwtHttpGuard } from "./guard/jwt-http.guard.js";
 
 @Controller("auth")
 export class AuthController {
@@ -32,7 +32,7 @@ export class AuthController {
         return { success: true };
     }
 
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtHttpGuard)
     @Get("/me")
     getProfile(@User() user: JwtUser) {
         return this.authService.getProfile(user.id);

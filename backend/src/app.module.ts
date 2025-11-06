@@ -8,6 +8,7 @@ import { PrismaModule } from "./prisma/prisma.module.js";
 import { QuizModule } from './quiz/quiz.module.js';
 import { QuestionModule } from "./question/question.module.js";
 import { OptionModule } from "./option/option.module.js";
+import { GameModule } from "./game/game.module.js";
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { OptionModule } from "./option/option.module.js";
         QuizModule,
         QuestionModule,
         OptionModule,
+        GameModule,
     ],
     controllers: [AppController],
     providers: [AppService],

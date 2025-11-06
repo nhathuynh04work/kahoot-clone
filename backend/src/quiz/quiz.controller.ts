@@ -11,11 +11,11 @@ import {
 } from "@nestjs/common";
 import { QuizService } from "./quiz.service.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
-import { JwtAuthGuard } from "../auth/guard/jwt-auth.guard.js";
+import { JwtHttpGuard } from "../auth/guard/jwt-http.guard.js";
 import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
 
 @Controller("quiz")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtHttpGuard)
 export class QuizController {
     constructor(private quizService: QuizService) {}
 

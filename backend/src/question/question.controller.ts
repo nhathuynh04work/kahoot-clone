@@ -9,11 +9,11 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import { QuestionService } from "./question.service.js";
-import { JwtAuthGuard } from "../auth/guard/jwt-auth.guard.js";
+import { JwtHttpGuard } from "../auth/guard/jwt-http.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { UpdateQuestionDto } from "./dto/update-question.dto.js";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtHttpGuard)
 @Controller("quiz/:quizId/questions")
 export class QuestionController {
     constructor(private questionService: QuestionService) {}

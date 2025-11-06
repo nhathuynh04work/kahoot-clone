@@ -9,12 +9,12 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import { OptionService } from "./option.service.js";
-import { JwtAuthGuard } from "../auth/guard/jwt-auth.guard.js";
+import { JwtHttpGuard } from "../auth/guard/jwt-http.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { CreateOptionDto } from "./dto/create-option.dto.js";
 import { UpdateOptionDto } from "./dto/update-option.dto.js";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtHttpGuard)
 @Controller("quiz/:quizId/questions/:questionId/options")
 export class OptionController {
     constructor(private optionService: OptionService) {}
