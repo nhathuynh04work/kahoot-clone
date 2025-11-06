@@ -37,8 +37,46 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Handle a client disconnection
-    handleDisconnect(client: Socket) {
+    async handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
+
+        // Player disconnected
+        try {
+            const removedPlayerData = await this.gameService.removePlayer(
+                client.id,
+            );
+
+            if (removedPlayerData) {
+                this.server.to(removedPlayerData.pin).emit("playerLeft", {
+                    id: removedPlayerData.playerId,
+                    nickname: removedPlayerData.nickname,
+                });
+            }
+        } catch (error) {
+            this.logger.error(
+                `Error removing player for socket ${client.id}`,
+                error,
+            );
+        }
+
+        // Host disconnected
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        setTimeout(async () => {
+            try {
+                const closedLobbyPin = await this.gameService.closeStaleLobby(
+                    client.id,
+                );
+
+                if (closedLobbyPin) {
+                    this.server.to(closedLobbyPin).emit("lobbyClosed");
+                }
+            } catch (error) {
+                this.logger.error(
+                    `Error closing stale lobby for socket ${client.id}`,
+                    error,
+                );
+            }
+        }, 60000);
     }
 
     @UseGuards(JwtWsGuard)
@@ -52,10 +90,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             // This will check ownership and existence
             await this.quizService.getQuiz(payload.quizId, user.id);
 
-            const pin = await this.gameService.createLobby(
-                payload.quizId,
-                user.id,
-            );
+            const pin = await this.gameService.createLobby({
+                quizId: payload.quizId,
+                hostId: user.id,
+                socketId: client.id,
+            });
 
             client.join(pin);
 

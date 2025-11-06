@@ -9,7 +9,7 @@ import { LobbyStatus } from "../../generated/prisma/enums.js";
 
 @Injectable()
 export class GameService {
-    private logger = new Logger("GAME SERVICE");
+    private logger = new Logger("GameService");
 
     constructor(private prisma: PrismaService) {}
 
@@ -33,7 +33,12 @@ export class GameService {
         return lobby;
     }
 
-    async createLobby(quizId: number, hostId: number): Promise<string> {
+    async createLobby(params: {
+        quizId: number;
+        hostId: number;
+        socketId: string;
+    }): Promise<string> {
+        const { quizId, hostId, socketId } = params;
         const uniqueKey = `${hostId}-${quizId}`;
 
         // Check if an active game lobby already exists
@@ -41,14 +46,13 @@ export class GameService {
             where: { activeHostQuizKey: uniqueKey },
         });
 
+        // CASE: Lobby exists (Host rejoining lobby)
         if (lobby) {
-            this.logger.log(
-                `Host ${hostId} already has active lobby for quiz ${quizId}. Returning existing PIN.`,
-            );
+            this.logger.log(`Host ${hostId} is rejoining lobby ${lobby.pin}`);
             return lobby.pin;
         }
 
-        // If no active lobby exists, generate a unique active PIN
+        // CASE: Lobby doesn't exist (Host create new lobby)
         let pin = "000000";
         let isPinInUse = true;
 
@@ -74,6 +78,7 @@ export class GameService {
                     hostId,
                     status: LobbyStatus.WAITING,
                     activeHostQuizKey: uniqueKey,
+                    hostSocketId: socketId,
                 },
             });
             return newLobby.pin;
@@ -92,6 +97,44 @@ export class GameService {
             }
             throw error;
         }
+    }
+
+    async closeStaleLobby(hostSocketId: string) {
+        const lobby = await this.prisma.gameLobby.findFirst({
+            where: {
+                hostSocketId: hostSocketId,
+                status: LobbyStatus.WAITING,
+            },
+        });
+
+        // CASE: No lobby found (ex: host reconnected with new socket)
+        if (!lobby) return false;
+
+        // CASE: Host truly gone. Remove the lobby
+        await this.prisma.gameLobby.update({
+            where: { id: lobby.id },
+            data: {
+                status: LobbyStatus.CLOSED,
+                activeHostQuizKey: null,
+            },
+        });
+
+        this.logger.log(`Closed stale lobby with PIN ${lobby.pin}`);
+        return lobby.pin;
+    }
+
+    async endLobby(pin: string, hostId: number) {
+        await this.prisma.gameLobby.updateMany({
+            where: {
+                pin: pin,
+                hostId: hostId,
+                status: LobbyStatus.IN_PROGRESS,
+            },
+            data: {
+                status: LobbyStatus.FINISHED,
+                activeHostQuizKey: null,
+            },
+        });
     }
 
     async addPlayerToLobby(params: {
@@ -131,17 +174,29 @@ export class GameService {
         }
     }
 
-    async endLobby(pin: string, hostId: number) {
-        await this.prisma.gameLobby.updateMany({
-            where: {
-                pin: pin,
-                hostId: hostId,
-                status: LobbyStatus.IN_PROGRESS,
-            },
-            data: {
-                status: LobbyStatus.FINISHED,
-                activeHostQuizKey: null,
-            },
+    async removePlayer(socketId: string) {
+        const player = await this.prisma.gamePlayer.findUnique({
+            where: { socketId },
+            include: { lobby: true },
         });
+
+        // CASE: Player not found (e.g., it was a host or just a visitor), do nothing.
+        if (!player) return null;
+
+        // CASE: Player found, delete them
+        await this.prisma.gamePlayer.delete({
+            where: { id: player.id },
+        });
+
+        this.logger.log(
+            `Removed player ${player.nickname} (ID: ${player.id}) from lobby ${player.lobby.pin}`,
+        );
+
+        // 4. Return the necessary info to notify the room
+        return {
+            pin: player.lobby.pin,
+            playerId: player.id,
+            nickname: player.nickname,
+        };
     }
 }

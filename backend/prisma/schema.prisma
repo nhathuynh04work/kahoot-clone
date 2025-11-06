@@ -59,6 +59,7 @@ model GameLobby {
     pin               String      @db.Char(6)
     quizId            Int
     hostId            Int
+    hostSocketId      String?
     status            LobbyStatus
     createdAt         DateTime    @default(now())
     activeHostQuizKey String?     @unique
