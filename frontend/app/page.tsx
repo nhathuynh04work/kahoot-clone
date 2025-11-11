@@ -1,5 +1,4 @@
-
-import { PinEntryForm } from "@/components/game/pin-entry-form";
+import { PinEntryForm } from "@/components/game/entry/pin-entry-form";
 import Link from "next/link";
 
 export default async function Home() {

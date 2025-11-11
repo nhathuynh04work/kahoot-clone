@@ -26,7 +26,7 @@ export default function LoginForm() {
 
 		try {
 			await apiClient.post("/auth/login", values);
-			router.push("/");
+			router.push("/dashboard");
 		} catch (error: any) {
 			setApiError(error?.message);
 		}

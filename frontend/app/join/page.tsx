@@ -1,5 +1,5 @@
 import { getValidLobby } from "@/actions/game";
-import { NicknameEntryForm } from "@/components/game/nickname-entry-form";
+import { NicknameEntryForm } from "@/components/game/entry/nickname-entry-form";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 

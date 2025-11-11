@@ -8,7 +8,7 @@ interface QuizCardProps {
 
 export function QuizCard({ quiz }: QuizCardProps) {
 	const editHref = `/quiz/${quiz.id}/edit`;
-	const lobbyHref = `/quiz/${quiz.id}/lobby`;
+	const lobbyHref = `/quiz/${quiz.id}/game`;
 
 	return (
 		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-indigo-600">
