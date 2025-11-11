@@ -34,6 +34,10 @@ export default function HostGame({ params }: HostGameProps) {
 		);
 	}
 
+	function handleShowResults() {
+		socket.emit("showResults", { gamePin: state.pin });
+	}
+
 	useSocketEvent("connect", () =>
 		dispatch({ type: "SET_CONNECTED", payload: true })
 	);
@@ -52,6 +56,10 @@ export default function HostGame({ params }: HostGameProps) {
 
 	useSocketEvent("newQuestion", (question: QuestionWithOptions) => {
 		dispatch({ type: "NEW_QUESTION", payload: question });
+	});
+
+	useSocketEvent("updateAnswerCount", (data: { count: number }) => {
+		dispatch({ type: "UPDATE_ANSWER_COUNT", payload: data.count });
 	});
 
 	useEffect(() => {
@@ -79,7 +87,15 @@ export default function HostGame({ params }: HostGameProps) {
 
 	switch (state.gameState) {
 		case "QUESTION":
-			return <QuestionScreen question={state.currentQuestion} />;
+			return (
+				<QuestionScreen
+					key={state.currentQuestion.id}
+					answerCount={state.answerCount}
+					totalPlayers={state.players.filter((p) => !p.isHost).length}
+					question={state.currentQuestion}
+					onNext={handleShowResults}
+				/>
+			);
 
 		case "WAITING":
 		default:

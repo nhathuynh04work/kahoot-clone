@@ -10,6 +10,7 @@ export interface HostGameState {
 	error: string | null;
 	loading: boolean;
 	isConnected: boolean;
+	answerCount: number;
 }
 
 export const initialState: HostGameState = {
@@ -20,6 +21,7 @@ export const initialState: HostGameState = {
 	error: null,
 	loading: true,
 	isConnected: socket.connected,
+	answerCount: 0,
 };
 
 export type HostGameAction =
@@ -29,7 +31,8 @@ export type HostGameAction =
 	| { type: "PLAYER_JOINED"; payload: Player }
 	| { type: "PLAYER_LEFT"; payload: Player }
 	| { type: "NEW_QUESTION"; payload: any }
-	| { type: "GAME_STARTED" };
+	| { type: "GAME_STARTED" }
+	| { type: "UPDATE_ANSWER_COUNT"; payload: number };
 
 function gameReducer(
 	state: HostGameState,
@@ -75,6 +78,13 @@ function gameReducer(
 				...state,
 				gameState: "QUESTION",
 				currentQuestion: action.payload,
+				answerCount: 0,
+			};
+
+		case "UPDATE_ANSWER_COUNT":
+			return {
+				...state,
+				answerCount: action.payload,
 			};
 
 		default:

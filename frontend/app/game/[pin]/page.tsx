@@ -8,6 +8,7 @@ import FinishScreen from "@/components/game/player/finish-screen";
 import ResultScreen from "@/components/game/player/result-screen";
 import { usePlayerReducer } from "@/hooks/use-player-reducer";
 import { QuestionWithOptions } from "@/lib/types/quiz";
+import { socket } from "@/lib/socket";
 
 export default function GamePage() {
 	const params = useParams();
@@ -15,6 +16,14 @@ export default function GamePage() {
 	const router = useRouter();
 
 	const [state, dispatch] = usePlayerReducer();
+
+	function handleSelectOption(optionId: number) {
+		socket.emit("submitAnswer", {
+			optionId,
+			questionId: state.currentQuestion.id,
+			pin,
+		});
+	}
 
 	useSocketEvent("connect", () =>
 		dispatch({ type: "SET_CONNECTED", payload: true })
@@ -39,7 +48,13 @@ export default function GamePage() {
 
 	switch (state.gameState) {
 		case "QUESTION":
-			return <QuestionScreen question={state.currentQuestion} />;
+			return (
+				<QuestionScreen
+					key={state.currentQuestion.id}
+					onSelect={handleSelectOption}
+					question={state.currentQuestion}
+				/>
+			);
 
 		case "RESULTS":
 			return <ResultScreen />;
