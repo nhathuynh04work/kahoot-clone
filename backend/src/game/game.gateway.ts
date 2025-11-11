@@ -49,19 +49,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
         // Player disconnected
         try {
-            const removedPlayerData = await this.gameService.removePlayer(
+            const disconnectedPlayer = await this.gameService.disconnectPlayer(
                 client.id,
             );
 
-            if (removedPlayerData) {
-                this.server.to(removedPlayerData.pin).emit("playerLeft", {
-                    id: removedPlayerData.playerId,
-                    nickname: removedPlayerData.nickname,
+            if (disconnectedPlayer) {
+                this.server.to(disconnectedPlayer.pin).emit("playerLeft", {
+                    id: disconnectedPlayer.playerId,
+                    nickname: disconnectedPlayer.nickname,
                 });
             }
         } catch (error) {
             this.logger.error(
-                `Error removing player for socket ${client.id}`,
+                `Error handling player disconnect for socket ${client.id}`,
                 error,
             );
         }
@@ -181,6 +181,45 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    }
+
+    @SubscribeMessage("submitAnswer")
+    async handleSubmitAnswer(
+        @MessageBody()
+        payload: { pin: string; questionId: number; optionId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
+        const { pin, optionId, questionId } = payload;
+
+        try {
+            const playerAnswer = await this.gameService.savePlayerAnswer({
+                socketId: client.id,
+                questionId,
+                optionId,
+            });
+
+            const answerCount =
+                await this.gameService.getAnswerCountForQuestion(
+                    playerAnswer.lobbyId,
+                    questionId,
+                );
+
+            this.logger.log(`Player ${client.id} submitted their answer`);
+
+            this.server.to(pin).emit("updateAnswerCount", {
+                count: answerCount,
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.error(
+                `Answer submission failed for ${client.id}: ${error.message}`,
+            );
+            return {
+                success: false,
+                message: error.message || "Failed to submit answer.",
+            };
         }
     }
 }

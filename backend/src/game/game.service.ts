@@ -6,12 +6,16 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { LobbyStatus } from "../../generated/prisma/enums.js";
+import { QuestionService } from "../question/question.service.js";
 
 @Injectable()
 export class GameService {
     private logger = new Logger("GameService");
 
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private questionService: QuestionService,
+    ) {}
 
     private generateHostQuizKey(hostId: number, quizId: number) {
         return `${hostId}-${quizId}`;
@@ -178,8 +182,32 @@ export class GameService {
                 `Game PIN "${pin}" not found or is not waiting.`,
             );
 
+        const existingPlayer = await this.prisma.gamePlayer.findUnique({
+            where: {
+                lobbyId_nickname: {
+                    lobbyId: lobby.id,
+                    nickname: nickname,
+                },
+            },
+        });
+
+        if (existingPlayer) {
+            if (existingPlayer.socketId === null) {
+                this.logger.log(`Player ${nickname} is rejoining lobby ${pin}`);
+
+                return this.prisma.gamePlayer.update({
+                    where: { id: existingPlayer.id },
+                    data: { socketId: socketId },
+                });
+            }
+
+            throw new ConflictException(
+                `Nickname "${nickname}" is already taken in this lobby.`,
+            );
+        }
+
         try {
-            return await this.prisma.gamePlayer.create({
+            return this.prisma.gamePlayer.create({
                 data: {
                     nickname,
                     socketId,
@@ -196,7 +224,7 @@ export class GameService {
         }
     }
 
-    async removePlayer(socketId: string) {
+    async disconnectPlayer(socketId: string) {
         const player = await this.prisma.gamePlayer.findUnique({
             where: { socketId },
             include: { lobby: true },
@@ -205,20 +233,71 @@ export class GameService {
         // CASE: Player not found (e.g., it was a host or just a visitor), do nothing.
         if (!player) return null;
 
-        // CASE: Player found, delete them
-        await this.prisma.gamePlayer.delete({
+        // CASE: Player found, disconnect them
+        await this.prisma.gamePlayer.update({
             where: { id: player.id },
+            data: { socketId: null },
         });
 
         this.logger.log(
-            `Removed player ${player.nickname} (ID: ${player.id}) from lobby ${player.lobby.pin}`,
+            `Player ${player.nickname} (ID: ${player.id}) disconnected from lobby ${player.lobby.pin}`,
         );
 
-        // 4. Return the necessary info to notify the room
         return {
             pin: player.lobby.pin,
             playerId: player.id,
             nickname: player.nickname,
         };
+    }
+
+    async savePlayerAnswer(params: {
+        socketId: string;
+        questionId: number;
+        optionId: number;
+    }) {
+        const { socketId, questionId, optionId } = params;
+
+        const player = await this.prisma.gamePlayer.findUnique({
+            where: { socketId },
+            include: { lobby: true },
+        });
+
+        if (!player) throw new NotFoundException("Player not found");
+
+        if (player.lobby.status !== LobbyStatus.IN_PROGRESS)
+            throw new Error(
+                "Cannot save answer for lobby that is not in progress.",
+            );
+
+        const { isCorrect, points } = await this.questionService.gradeAnswer({
+            questionId,
+            optionId,
+        });
+
+        const [playerAnswer] = await this.prisma.$transaction([
+            this.prisma.playerAnswer.create({
+                data: {
+                    playerId: player.id,
+                    lobbyId: player.lobby.id,
+                    questionId,
+                    optionId,
+                    isCorrect,
+                    scoreEarned: points,
+                },
+            }),
+
+            this.prisma.gamePlayer.update({
+                where: { id: player.id },
+                data: { score: { increment: points } },
+            }),
+        ]);
+
+        return playerAnswer;
+    }
+
+    getAnswerCountForQuestion(lobbyId: number, questionId: number) {
+        return this.prisma.playerAnswer.count({
+            where: { lobbyId, questionId },
+        });
     }
 }

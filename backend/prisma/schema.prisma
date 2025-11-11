@@ -9,12 +9,12 @@ datasource db {
 }
 
 model User {
-    id          Int         @id @default(autoincrement())
-    email       String      @unique
-    name        String?
-    password    String
-    quizzes     Quiz[]
-    gameLobbies GameLobby[]
+    id       Int         @id @default(autoincrement())
+    email    String      @unique
+    name     String?
+    password String
+    quizzes  Quiz[]
+    lobbies  GameLobby[]
 }
 
 model Quiz {
@@ -26,30 +26,34 @@ model Quiz {
     createdAt   DateTime    @default(now()) @map("created_at")
     user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
     questions   Question[]
-    GameLobby   GameLobby[]
+    lobby       GameLobby[]
 }
 
 model Question {
-    id        Int      @id @default(autoincrement())
-    quizId    Int      @map("quiz_id")
+    id        Int     @id @default(autoincrement())
+    quizId    Int     @map("quiz_id")
     text      String?
-    timeLimit Int      @default(2000) @map("time_limit")
-    points    Int      @default(1)
-    imageUrl  String?  @map("image_url")
-    sortOrder Int      @map("sort_order")
-    quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-    options   Option[]
+    timeLimit Int     @default(2000) @map("time_limit")
+    points    Int     @default(1)
+    imageUrl  String? @map("image_url")
+    sortOrder Int     @map("sort_order")
+
+    quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    options Option[]
+    answers PlayerAnswer[]
 
     @@unique([quizId, sortOrder])
 }
 
 model Option {
-    id         Int      @id @default(autoincrement())
-    questionId Int      @map("question_id")
+    id         Int     @id @default(autoincrement())
+    questionId Int     @map("question_id")
     text       String?
-    isCorrect  Boolean  @default(false) @map("is_correct")
-    sortOrder  Int      @map("sort_order")
-    question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    isCorrect  Boolean @default(false) @map("is_correct")
+    sortOrder  Int     @map("sort_order")
+
+    question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    answers  PlayerAnswer[]
 
     @@unique([questionId, sortOrder])
 }
@@ -65,8 +69,9 @@ model GameLobby {
     activeHostQuizKey String?     @unique
 
     players GamePlayer[]
-    host    User         @relation(fields: [hostId], references: [id])
-    quiz    Quiz         @relation(fields: [quizId], references: [id])
+    host    User           @relation(fields: [hostId], references: [id])
+    quiz    Quiz           @relation(fields: [quizId], references: [id])
+    answers PlayerAnswer[]
 }
 
 enum LobbyStatus {
@@ -77,12 +82,30 @@ enum LobbyStatus {
 }
 
 model GamePlayer {
-    id       Int       @id @default(autoincrement())
+    id       Int            @id @default(autoincrement())
     nickname String
-    socketId String    @unique
-    score    Int       @default(0)
+    socketId String?        @unique
+    score    Int            @default(0)
     lobbyId  Int
-    lobby    GameLobby @relation(fields: [lobbyId], references: [id])
+    lobby    GameLobby      @relation(fields: [lobbyId], references: [id])
+    answers  PlayerAnswer[]
 
     @@unique([lobbyId, nickname])
+}
+
+model PlayerAnswer {
+    id          Int     @id @default(autoincrement())
+    playerId    Int
+    lobbyId     Int
+    questionId  Int
+    optionId    Int
+    isCorrect   Boolean
+    scoreEarned Int     @default(0)
+
+    player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+    lobby    GameLobby  @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+    question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+    @@unique([playerId, questionId])
 }
