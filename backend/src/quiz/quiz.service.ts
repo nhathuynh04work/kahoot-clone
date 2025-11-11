@@ -19,7 +19,12 @@ export class QuizService {
     async getQuiz(id: number, userId: number): Promise<QuizFullDetails> {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },
-            include: { questions: { include: { options: true } } },
+            include: {
+                questions: {
+                    include: { options: true },
+                    orderBy: { sortOrder: "asc" },
+                },
+            },
         });
 
         if (!quiz) throw new NotFoundException("Quiz not found");

@@ -13,6 +13,10 @@ export class GameService {
 
     constructor(private prisma: PrismaService) {}
 
+    private generateHostQuizKey(hostId: number, quizId: number) {
+        return `${hostId}-${quizId}`;
+    }
+
     async getValidLobby(pin: string) {
         const lobby = await this.prisma.gameLobby.findFirst({
             where: { pin },
@@ -39,11 +43,11 @@ export class GameService {
         socketId: string;
     }): Promise<string> {
         const { quizId, hostId, socketId } = params;
-        const uniqueKey = `${hostId}-${quizId}`;
+        const key = this.generateHostQuizKey(hostId, quizId);
 
         // Check if an active game lobby already exists
         const lobby = await this.prisma.gameLobby.findUnique({
-            where: { activeHostQuizKey: uniqueKey },
+            where: { activeHostQuizKey: key },
         });
 
         // CASE: Lobby exists (Host rejoining lobby)
@@ -77,7 +81,7 @@ export class GameService {
                     quizId,
                     hostId,
                     status: LobbyStatus.WAITING,
-                    activeHostQuizKey: uniqueKey,
+                    activeHostQuizKey: key,
                     hostSocketId: socketId,
                 },
             });
@@ -90,7 +94,7 @@ export class GameService {
                 );
 
                 const lobby = await this.prisma.gameLobby.findUnique({
-                    where: { activeHostQuizKey: uniqueKey },
+                    where: { activeHostQuizKey: key },
                 });
 
                 if (lobby) return lobby.pin;
@@ -121,6 +125,24 @@ export class GameService {
 
         this.logger.log(`Closed stale lobby with PIN ${lobby.pin}`);
         return lobby.pin;
+    }
+
+    async changeLobbyStatus(params: {
+        quizId: number;
+        hostId: number;
+        status: LobbyStatus;
+    }) {
+        const { quizId, hostId, status } = params;
+        const key = this.generateHostQuizKey(hostId, quizId);
+
+        return this.prisma.gameLobby.update({
+            where: {
+                activeHostQuizKey: key,
+            },
+            data: {
+                status: status,
+            },
+        });
     }
 
     async endLobby(pin: string, hostId: number) {

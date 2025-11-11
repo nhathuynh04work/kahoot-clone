@@ -8,11 +8,17 @@ import {
     ConnectedSocket,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { Logger, UseGuards } from "@nestjs/common";
+import {
+    BadRequestException,
+    Logger,
+    NotFoundException,
+    UseGuards,
+} from "@nestjs/common";
 import { QuizService } from "../quiz/quiz.service.js";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { GameService } from "./game.service.js";
+import { LobbyStatus } from "../../generated/prisma/enums.js";
 
 @WebSocketGateway({
     cors: {
@@ -34,6 +40,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Handle a new client connection
     handleConnection(client: Socket, ...args: any[]) {
         this.logger.log(`Client connected: ${client.id}`);
+        // this.logger.log(`Count: ${this.server.engine.clientsCount}`);
     }
 
     // Handle a client disconnection
@@ -141,8 +148,39 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         } catch (error) {
             return {
                 success: false,
-                message: error.message || "Failed to join lobby.",
+                error: error.message || "Failed to join lobby.",
             };
+        }
+    }
+
+    @UseGuards(JwtWsGuard)
+    @SubscribeMessage("startGame")
+    async handleStartGame(
+        @User() user: JwtUser,
+        @MessageBody() payload: { pin: string; quizId: number },
+    ) {
+        const { pin, quizId } = payload;
+
+        try {
+            const quiz = await this.quizService.getQuiz(quizId, user.id);
+
+            if (!quiz) throw new NotFoundException("Quiz not found");
+
+            if (quiz.questions.length < 1)
+                throw new BadRequestException("Quiz has no question");
+
+            await this.gameService.changeLobbyStatus({
+                quizId,
+                hostId: user.id,
+                status: LobbyStatus.IN_PROGRESS,
+            });
+
+            this.logger.log(`Host: ${user.email} start game for lobby ${pin}`);
+            this.server.to(pin).emit("newQuestion", quiz.questions[0]);
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
 }
