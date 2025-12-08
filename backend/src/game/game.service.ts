@@ -5,7 +5,7 @@ import {
     NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
-import { LobbyStatus } from "../../generated/prisma/enums.js";
+import { LobbyStatus } from "../generated/prisma/enums.js";
 import { QuestionService } from "../question/question.service.js";
 
 @Injectable()

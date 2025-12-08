@@ -18,7 +18,7 @@ import { QuizService } from "../quiz/quiz.service.js";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { GameService } from "./game.service.js";
-import { LobbyStatus } from "../../generated/prisma/enums.js";
+import { LobbyStatus } from "../generated/prisma/enums.js";
 
 @WebSocketGateway({
     cors: {
