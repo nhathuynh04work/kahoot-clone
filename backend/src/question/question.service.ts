@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { QuizService } from "../quiz/quiz.service.js";
-import { Prisma, Question } from "../../generated/prisma/client.js";
+import { Prisma, Question } from "../generated/prisma/client.js";
 import { QuestionWithOptions } from "./dto/question.dto.js";
 
 @Injectable()

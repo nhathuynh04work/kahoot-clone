@@ -5,7 +5,7 @@ import {
     BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
-import { Option, Prisma } from "../../generated/prisma/client.js";
+import { Option, Prisma } from "../generated/prisma/client.js";
 import { CreateOptionDto } from "./dto/create-option.dto.js";
 import { UpdateOptionDto } from "./dto/update-option.dto.js";
 
