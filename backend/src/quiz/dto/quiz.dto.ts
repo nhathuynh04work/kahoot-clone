@@ -1,5 +1,4 @@
-import { Question, Quiz } from "../../generated/prisma/client.js";
-import { QuestionWithOptions } from "../../question/dto/question.dto.js";
+import { Option, Question, Quiz } from "../../generated/prisma/client.js";
 
 export type QuizWithQuestions = Quiz & {
     questions: Question[];
@@ -8,3 +7,5 @@ export type QuizWithQuestions = Quiz & {
 export type QuizFullDetails = Quiz & {
     questions: QuestionWithOptions[];
 };
+
+export type QuestionWithOptions = Question & { options: Option[] };

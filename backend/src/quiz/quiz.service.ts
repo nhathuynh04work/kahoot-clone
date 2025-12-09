@@ -4,10 +4,11 @@ import {
     Injectable,
     NotFoundException,
 } from "@nestjs/common";
-import { Prisma, Quiz } from "../generated/prisma/client.js";
+import { Prisma, Question, Quiz } from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { QuizFullDetails, QuizWithQuestions } from "./dto/quiz.dto.js";
+import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
 
 @Injectable()
 export class QuizService {
@@ -92,21 +93,100 @@ export class QuizService {
     }: {
         id: number;
         userId: number;
-        data: Prisma.QuizUpdateInput;
+        data: UpdateQuizDto;
     }): Promise<QuizFullDetails> {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");
 
-        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
-        if (!quiz) throw new NotFoundException("Quiz not found");
+        const existingQuiz = await this.prisma.quiz.findUnique({
+            where: { id },
+        });
+        if (!existingQuiz) throw new NotFoundException("Quiz not found");
 
-        if (userId !== quiz.userId)
+        if (userId !== existingQuiz.userId)
             throw new ForbiddenException("Cannot update others' quizzes");
 
-        return this.prisma.quiz.update({
+        const { questions, ...quizData } = data;
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.quiz.update({
+                where: { id },
+                data: quizData,
+            });
+
+            if (questions) {
+                const incomingQuestionIds = questions
+                    .filter((q) => q.id && q.id > 0)
+                    .map((q) => q.id);
+
+                await tx.question.deleteMany({
+                    where: {
+                        quizId: id,
+                        id: { notIn: incomingQuestionIds as number[] },
+                    },
+                });
+
+                for (const q of questions) {
+                    const { options, id: qId, ...qData } = q;
+                    let savedQuestion: Question;
+
+                    if (qId && qId > 0) {
+                        savedQuestion = await tx.question.update({
+                            where: { id: qId },
+                            data: qData,
+                        });
+                    } else {
+                        savedQuestion = await tx.question.create({
+                            data: {
+                                ...qData,
+                                sortOrder: qData.sortOrder ?? 0,
+                                quizId: id,
+                            },
+                        });
+                    }
+
+                    if (options) {
+                        const incomingOptionIds = options
+                            .filter((o) => o.id && o.id > 0)
+                            .map((o) => o.id);
+
+                        await tx.option.deleteMany({
+                            where: {
+                                questionId: savedQuestion.id,
+                                id: { notIn: incomingOptionIds as number[] },
+                            },
+                        });
+
+                        for (const o of options) {
+                            const { id: oId, ...oData } = o;
+                            if (oId && oId > 0) {
+                                await tx.option.update({
+                                    where: { id: oId },
+                                    data: oData,
+                                });
+                            } else {
+                                await tx.option.create({
+                                    data: {
+                                        ...oData,
+                                        sortOrder: oData.sortOrder ?? 0,
+                                        questionId: savedQuestion.id,
+                                    },
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        return this.prisma.quiz.findUniqueOrThrow({
             where: { id },
-            data,
-            include: { questions: { include: { options: true } } },
+            include: {
+                questions: {
+                    include: { options: true },
+                    orderBy: { sortOrder: "asc" },
+                },
+            },
         });
     }
 

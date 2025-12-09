@@ -1,6 +1,6 @@
 "use client";
 
-import { SocketProvider } from "@/contexts/socket-context";
+import { SocketProvider } from "@/features/game/context/socket-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
