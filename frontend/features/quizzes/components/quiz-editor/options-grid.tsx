@@ -9,7 +9,7 @@ interface OptionsGridProps {
 }
 
 export default function OptionsGrid({ questionIndex }: OptionsGridProps) {
-	const { control, getValues } = useFormContext<QuizFullDetails>();
+	const { control, getValues, setValue } = useFormContext<QuizFullDetails>();
 
 	const { fields, append, remove } = useFieldArray({
 		control,
@@ -20,16 +20,27 @@ export default function OptionsGrid({ questionIndex }: OptionsGridProps) {
 		append({
 			id: Date.now() * -1,
 			questionId: 0,
-			text: "",
+			text: "New Option",
 			isCorrect: false,
-			sortOrder: fields[fields.length - 1].sortOrder,
+			sortOrder: fields.length,
 		});
 	};
 
 	const handleRemoveOption = (index: number) => {
-		const currentOptions = getValues(`questions.${questionIndex}.options`);
+		if (fields.length <= 2) return;
 
-		if (currentOptions.length <= 2) return;
+		const currentOptions = getValues(`questions.${questionIndex}.options`);
+		const optionToRemove = currentOptions[index];
+
+		if (optionToRemove?.isCorrect) {
+			const newCorrectIndex = index === 0 ? 1 : 0;
+
+			setValue(
+				`questions.${questionIndex}.options.${newCorrectIndex}.isCorrect`,
+				true,
+				{ shouldDirty: true }
+			);
+		}
 
 		remove(index);
 	};

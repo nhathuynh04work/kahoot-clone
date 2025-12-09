@@ -18,11 +18,20 @@ export default function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 
 	return (
 		<div className="h-full flex flex-col items-center p-8 overflow-y-auto bg-gray-800">
-			<QuestionTextInput questionIndex={questionIndex} />
+			<QuestionTextInput
+				key={`text-${questionIndex}`}
+				questionIndex={questionIndex}
+			/>
 
-			<ImageUploader questionIndex={questionIndex} />
+			<ImageUploader
+				key={`image-${questionIndex}`}
+				questionIndex={questionIndex}
+			/>
 
-			<OptionsGrid questionIndex={questionIndex} />
+			<OptionsGrid
+				key={`options-${questionIndex}`}
+				questionIndex={questionIndex}
+			/>
 		</div>
 	);
 }

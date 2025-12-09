@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { CheckCircle, Circle, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, Circle, Plus } from "lucide-react";
 import { QuizFullDetails } from "@/features/quizzes/types";
 
 const optionColors = [
@@ -30,8 +30,18 @@ export function RealOptionCard({
 	);
 	const colorClass = optionColors[optionIndex % 4];
 
+	const { onChange, onBlur, name, ref } = register(
+		`questions.${questionIndex}.options.${optionIndex}.text`
+	);
+
 	const handleToggleCorrect = () => {
 		if (isCorrect) {
+			setValue(
+				`questions.${questionIndex}.options.${optionIndex}.isCorrect`,
+				false,
+				{ shouldDirty: true }
+			);
+
 			return;
 		}
 
@@ -55,22 +65,25 @@ export function RealOptionCard({
 	};
 
 	return (
-		<div className="p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3 shadow-sm group">
-			{/* Shape/Color Icon */}
+		<div className="p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3 shadow-sm group transition-colors focus-within:border-gray-500">
 			<div className={`w-10 h-10 rounded-md shrink-0 ${colorClass}`} />
 
-			{/* Registered Input */}
 			<input
 				type="text"
-				{...register(
-					`questions.${questionIndex}.options.${optionIndex}.text`
-				)}
+				name={name}
+				ref={ref}
+				onChange={onChange}
+				onBlur={(e) => {
+					onBlur(e);
+					if (!e.target.value.trim()) {
+						onDelete();
+					}
+				}}
 				placeholder={`Option ${optionIndex + 1}`}
 				className="grow bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none"
 				autoComplete="off"
 			/>
 
-			{/* Toggle Correct Answer */}
 			<button
 				type="button"
 				onClick={handleToggleCorrect}
@@ -82,29 +95,19 @@ export function RealOptionCard({
 					<Circle className="w-7 h-7 text-gray-600 hover:text-gray-400" />
 				)}
 			</button>
-
-			{/* Delete Button (visible on hover) */}
-			<button
-				type="button"
-				onClick={onDelete}
-				className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-400 transition-opacity">
-				<Trash2 className="w-5 h-5" />
-			</button>
 		</div>
 	);
-}
-
-interface PlaceholderOptionCardProps {
-	index: number;
-	onAdd: () => void;
-	disabled?: boolean;
 }
 
 export function PlaceholderOptionCard({
 	index,
 	onAdd,
 	disabled,
-}: PlaceholderOptionCardProps) {
+}: {
+	index: number;
+	onAdd: () => void;
+	disabled?: boolean;
+}) {
 	return (
 		<button
 			type="button"

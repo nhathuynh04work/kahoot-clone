@@ -79,14 +79,14 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 				{
 					id: Date.now() * -1 - 1,
 					questionId: newId,
-					text: "",
-					isCorrect: false,
+					text: "Option 1",
+					isCorrect: true,
 					sortOrder: 0,
 				},
 				{
 					id: Date.now() * -1 - 2,
 					questionId: newId,
-					text: "",
+					text: "Option 2",
 					isCorrect: false,
 					sortOrder: 1,
 				},

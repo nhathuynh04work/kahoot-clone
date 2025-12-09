@@ -1,8 +1,8 @@
 "use client";
 
-import { QuestionWithOptions } from "@/lib/types/quiz";
 import { CheckCircle2, Image as LucideImage } from "lucide-react";
 import Image from "next/image";
+import { QuestionWithOptions } from "../../types";
 
 interface QuestionNavItemProps {
 	question: QuestionWithOptions;
