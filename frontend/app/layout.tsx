@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
+import { Toaster } from "sonner";
 
 const montserrat = Montserrat({
 	variable: "--font-sans",
@@ -29,6 +30,11 @@ export default function RootLayout({
 			<body
 				className={`${montserrat.variable} ${geistMono.variable} antialiased`}>
 				<Providers>{children}</Providers>
+				<Toaster
+					theme="dark"
+					duration={3000}
+					position="bottom-center"
+				/>
 			</body>
 		</html>
 	);
