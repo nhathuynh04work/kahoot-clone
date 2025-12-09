@@ -1,28 +1,26 @@
 "use client";
 
-import { QuestionWithOptions } from "@/lib/types/quiz";
-import MutatingInput from "./mutating-input";
+import { useFormContext } from "react-hook-form";
 
 export default function QuestionTextInput({
-	question,
-	onMutate,
+	questionIndex,
 }: {
-	question: QuestionWithOptions;
-	onMutate: (text: string) => void;
+	questionIndex: number;
 }) {
+	const { register } = useFormContext();
+
 	return (
 		<div className="w-full mb-6">
-			<label htmlFor="questionText" className="sr-only">
+			<label htmlFor={`q-${questionIndex}-text`} className="sr-only">
 				Question Text
 			</label>
-			<MutatingInput
-				id="questionText"
+			<input
+				id={`q-${questionIndex}-text`}
 				type="text"
-				className="w-full p-4 bg-gray-900 border border-gray-700 rounded-md text-white text-xl text-center font-semibold"
+				className="w-full p-4 bg-gray-900 border border-gray-700 rounded-md text-white text-xl text-center font-semibold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
 				placeholder="Start typing your question..."
-				defaultValue={question.text || ""}
-				onMutate={onMutate}
-				key={`q-text-${question.id}`}
+				autoComplete="off"
+				{...register(`questions.${questionIndex}.text`)}
 			/>
 		</div>
 	);

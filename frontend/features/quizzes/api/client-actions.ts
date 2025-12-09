@@ -7,6 +7,7 @@ export const createQuiz = async () => {
 };
 
 export const updateQuiz = async (payload: QuizFullDetails) => {
-	const { data } = await api.patch(`/quiz/${payload.id}`, payload);
-	return data as QuizFullDetails;
+	console.log("saved");
+	// const { data } = await api.patch(`/quiz/${payload.id}`, payload);
+	// return data as QuizFullDetails;
 };

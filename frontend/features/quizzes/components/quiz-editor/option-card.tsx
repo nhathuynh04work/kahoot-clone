@@ -1,10 +1,8 @@
 "use client";
 
-import { Option } from "@/lib/types/quiz";
-import MutatingInput from "./mutating-input";
-import { CheckCircle, Circle, Plus } from "lucide-react";
-import { CreateOptionDto, UpdateOptionDto } from "@/lib/dtos/quiz.dto";
-import { useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { CheckCircle, Circle, Plus, Trash2 } from "lucide-react";
+import { QuizFullDetails } from "@/features/quizzes/types";
 
 const optionColors = [
 	"bg-red-800",
@@ -14,69 +12,83 @@ const optionColors = [
 ];
 
 interface RealOptionCardProps {
-	option: Option;
-	index: number;
-	onMutate: (data: { optionId: number; payload: UpdateOptionDto }) => void;
-	onDelete: (data: { optionId: number }) => void;
-	optionsCount: number;
+	questionIndex: number;
+	optionIndex: number;
+	onDelete: () => void;
 }
 
 export function RealOptionCard({
-	option,
-	index,
-	onMutate,
+	questionIndex,
+	optionIndex,
 	onDelete,
-	optionsCount,
 }: RealOptionCardProps) {
-	// If new value is an empty string,
-	// delete the option if there are > 2 options, otherwise just update it
-	function handleTextMutate(newValue: string) {
-		if (newValue === "" && optionsCount > 2) {
-			onDelete({ optionId: option.id });
-		} else {
-			onMutate({
-				optionId: option.id,
-				payload: { text: newValue },
-			});
+	const { register, watch, setValue, getValues } =
+		useFormContext<QuizFullDetails>();
+
+	const isCorrect = watch(
+		`questions.${questionIndex}.options.${optionIndex}.isCorrect`
+	);
+	const colorClass = optionColors[optionIndex % 4];
+
+	const handleToggleCorrect = () => {
+		if (isCorrect) {
+			return;
 		}
-	}
+
+		const currentOptions = getValues(`questions.${questionIndex}.options`);
+
+		currentOptions.forEach((_, idx) => {
+			if (idx !== optionIndex) {
+				setValue(
+					`questions.${questionIndex}.options.${idx}.isCorrect`,
+					false,
+					{ shouldDirty: true }
+				);
+			}
+		});
+
+		setValue(
+			`questions.${questionIndex}.options.${optionIndex}.isCorrect`,
+			true,
+			{ shouldDirty: true }
+		);
+	};
 
 	return (
-		<div
-			className={`p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3`}>
-			<div
-				className={`w-10 h-10 rounded-md ${
-					optionColors[index % 4]
-				}`}></div>
+		<div className="p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3 shadow-sm group">
+			{/* Shape/Color Icon */}
+			<div className={`w-10 h-10 rounded-md shrink-0 ${colorClass}`} />
 
-			<MutatingInput
+			{/* Registered Input */}
+			<input
 				type="text"
+				{...register(
+					`questions.${questionIndex}.options.${optionIndex}.text`
+				)}
+				placeholder={`Option ${optionIndex + 1}`}
 				className="grow bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none"
-				placeholder={`Option ${index + 1}`}
-				defaultValue={option.text || ""}
-				onMutate={handleTextMutate}
-				key={`opt-text-${option.id}`}
+				autoComplete="off"
 			/>
 
+			{/* Toggle Correct Answer */}
 			<button
-				className="shrink-0 disabled:opacity-70"
-				title={option.isCorrect ? "Correct answer" : "Mark as correct"}
-				disabled={option.isCorrect}
-				onClick={() => {
-					if (!option.isCorrect) {
-						onMutate({
-							optionId: option.id,
-							payload: {
-								isCorrect: true,
-							},
-						});
-					}
-				}}>
-				{option.isCorrect ? (
-					<CheckCircle className="w-6 h-6 text-green-500" />
+				type="button"
+				onClick={handleToggleCorrect}
+				className="shrink-0 transition-transform active:scale-95"
+				title={isCorrect ? "Correct answer" : "Mark as correct"}>
+				{isCorrect ? (
+					<CheckCircle className="w-7 h-7 text-green-500" />
 				) : (
-					<Circle className="w-6 h-6 text-gray-600 hover:text-gray-400" />
+					<Circle className="w-7 h-7 text-gray-600 hover:text-gray-400" />
 				)}
+			</button>
+
+			{/* Delete Button (visible on hover) */}
+			<button
+				type="button"
+				onClick={onDelete}
+				className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-400 transition-opacity">
+				<Trash2 className="w-5 h-5" />
 			</button>
 		</div>
 	);
@@ -84,8 +96,8 @@ export function RealOptionCard({
 
 interface PlaceholderOptionCardProps {
 	index: number;
-	onAdd: (payload: CreateOptionDto) => void;
-	disabled: boolean;
+	onAdd: () => void;
+	disabled?: boolean;
 }
 
 export function PlaceholderOptionCard({
@@ -93,36 +105,22 @@ export function PlaceholderOptionCard({
 	onAdd,
 	disabled,
 }: PlaceholderOptionCardProps) {
-	const [text, setText] = useState("");
-
-	function handleBlur() {
-		const newText = text.trim();
-		if (newText) {
-			onAdd({ text: newText });
-			setText("");
-		}
-	}
-
 	return (
-		<div
-			className={`p-4 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-3 
-                       opacity-50 focus-within:opacity-100 hover:opacity-100 transition-opacity ${
-							disabled ? "opacity-30 cursor-not-allowed" : ""
-						}`}>
+		<button
+			type="button"
+			onClick={onAdd}
+			disabled={disabled}
+			className="w-full h-full p-4 rounded-md border border-gray-700 bg-gray-900/50 flex items-center gap-3 
+                       opacity-50 hover:opacity-100 hover:bg-gray-800 transition-all cursor-pointer group disabled:cursor-not-allowed">
 			<div
-				className={`w-10 h-10 rounded-md ${optionColors[index % 4]}`}
+				className={`w-10 h-10 rounded-md ${
+					optionColors[index % 4]
+				} opacity-50`}
 			/>
-
-			<input
-				type="text"
-				value={text}
-				onChange={(e) => setText(e.target.value)}
-				onBlur={handleBlur}
-				disabled={disabled}
-				className="grow bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none"
-				placeholder={disabled ? "Adding..." : "Add option"}
-			/>
-			{!text && <Plus className="w-5 h-5 text-gray-500 shrink-0" />}
-		</div>
+			<span className="text-gray-500 text-lg font-medium group-hover:text-gray-300">
+				Add option
+			</span>
+			<Plus className="ml-auto w-5 h-5 text-gray-500" />
+		</button>
 	);
 }

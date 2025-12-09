@@ -1,70 +1,42 @@
 "use client";
 
-import { QuestionWithOptions } from "@/lib/types/quiz";
+import { useFormContext } from "react-hook-form";
 import {
 	Clock,
 	Star,
 	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
+	Copy,
+	Trash2,
 } from "lucide-react";
+import { QuizFullDetails } from "@/features/quizzes/types";
 
 interface QuestionSettingsSidebarProps {
-	question: QuestionWithOptions;
+	questionIndex: number;
 	isOpen: boolean;
 	onToggle: () => void;
 	onDelete: () => void;
-	isDeleting: boolean;
 	canDelete: boolean;
 }
 
-function SettingsSelect({
-	label,
-	icon: Icon,
-	value,
-}: {
-	label: string;
-	icon: React.ElementType;
-	value: string;
-}) {
-	return (
-		<div className="mb-8">
-			<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
-				<Icon className="w-4 h-4 mr-2" />
-				{label}
-			</label>
-			<button className="w-full flex justify-between items-center p-3 bg-gray-700 rounded-md text-white">
-				<span>{value}</span>
-				<ChevronDown className="w-5 h-5" />
-			</button>
-		</div>
-	);
-}
-
 export default function QuestionSettingsSidebar({
-	question,
+	questionIndex,
 	isOpen,
 	onToggle,
 	onDelete,
-	isDeleting,
 	canDelete,
 }: QuestionSettingsSidebarProps) {
-	function handleDelete() {
-		onDelete();
-	}
+	const { register } = useFormContext<QuizFullDetails>();
 
 	return (
 		<div
-			className={`
-                relative shrink-0 bg-gray-800 border-l border-gray-700
-                transition-all duration-300 ease-in-out flex flex-col
-                ${isOpen ? "w-72" : "w-0"}
-            `}>
-			{/* Toggle button */}
+			className={`relative shrink-0 bg-gray-800 border-l border-gray-700 transition-all duration-300 ease-in-out flex flex-col ${
+				isOpen ? "w-72" : "w-0"
+			}`}>
 			<button
 				onClick={onToggle}
-				className="absolute top-1/2 left-0 z-10 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white rounded-full shadow-lg transition-colors"
-				title={isOpen ? "Close settings" : "Open settings"}>
+				className="absolute top-1/2 left-0 z-10 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white rounded-full shadow-lg transition-colors">
 				{isOpen ? (
 					<ChevronRight className="w-5 h-5" />
 				) : (
@@ -72,32 +44,72 @@ export default function QuestionSettingsSidebar({
 				)}
 			</button>
 
-			<div className="grow h-full p-6 overflow-y-auto min-w-72">
-				<SettingsSelect
-					label="Time limit"
-					icon={Clock}
-					value="20 seconds"
-				/>
-				<SettingsSelect
-					label="Points"
-					icon={Star}
-					value="Standard (1000)"
-				/>
+			<div
+				className={`grow h-full p-6 overflow-y-auto min-w-[18rem] ${
+					!isOpen && "hidden"
+				}`}>
+				{/* Time Limit Select */}
+				<div className="mb-8">
+					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+						<Clock className="w-4 h-4 mr-2" />
+						Time limit
+					</label>
+					<div className="relative">
+						<select
+							{...register(
+								`questions.${questionIndex}.timeLimit`,
+								{ valueAsNumber: true }
+							)}
+							className="w-full appearance-none p-3 bg-gray-700 rounded-md text-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+							<option value={5}>5 seconds</option>
+							<option value={10}>10 seconds</option>
+							<option value={20}>20 seconds</option>
+							<option value={30}>30 seconds</option>
+							<option value={60}>1 minute</option>
+							<option value={120}>2 minutes</option>
+						</select>
+						<ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+					</div>
+				</div>
+
+				{/* Points Select */}
+				<div className="mb-8">
+					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+						<Star className="w-4 h-4 mr-2" />
+						Points
+					</label>
+					<div className="relative">
+						<select
+							{...register(`questions.${questionIndex}.points`, {
+								valueAsNumber: true,
+							})}
+							className="w-full appearance-none p-3 bg-gray-700 rounded-md text-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+							<option value={0}>No points (0)</option>
+							<option value={1000}>Standard (1000)</option>
+							<option value={2000}>Double points (2000)</option>
+						</select>
+						<ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+					</div>
+				</div>
 			</div>
 
-			{/* Sticky bottom buttons */}
-			<div className="min-w-72 p-4 border-t border-gray-700">
+			{/* Bottom Actions */}
+			<div
+				className={`min-w-[18rem] p-4 border-t border-gray-700 ${
+					!isOpen && "hidden"
+				}`}>
 				<div className="flex items-center gap-4">
 					<button
-						onClick={handleDelete}
-						disabled={isDeleting || !question || !canDelete}
-						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-700 transition-colors flex-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-						{isDeleting ? "Deleting..." : "Delete"}
+						onClick={onDelete}
+						disabled={!canDelete}
+						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-900/50 hover:text-red-200 transition-colors flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
+						<Trash2 className="w-4 h-4" />
+						Delete
 					</button>
-
 					<button
-						disabled={!question}
-						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-800 hover:bg-indigo-900 transition-colors flex-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-800 hover:bg-indigo-900 transition-colors flex-1 disabled:opacity-50"
+						title="Duplicate (Coming Soon)">
+						<Copy className="w-4 h-4" />
 						Duplicate
 					</button>
 				</div>

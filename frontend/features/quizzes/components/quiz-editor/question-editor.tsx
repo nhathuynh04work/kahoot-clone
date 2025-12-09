@@ -1,45 +1,28 @@
 "use client";
 
-import { QuestionWithOptions } from "@/lib/types/quiz";
+import { useFormContext } from "react-hook-form";
 import QuestionTextInput from "./question-text-input";
 import ImageUploader from "./image-uploader";
 import OptionsGrid from "./options-grid";
-import {
-	useAddOption,
-	useDeleteOption,
-	useUpdateOption,
-	useUpdateQuestion,
-} from "@/hooks/quiz-mutation";
+import { QuizFullDetails } from "@/features/quizzes/types";
 
 interface QuestionEditorProps {
-	question: QuestionWithOptions;
+	questionIndex: number;
 }
 
-export default function QuestionEditor({ question }: QuestionEditorProps) {
-	const { mutate: updateQuestion } = useUpdateQuestion(question);
-	const { mutate: updateOption } = useUpdateOption(question);
-	const { mutate: addOption, isPending: isAddingOption } =
-		useAddOption(question);
-	const { mutate: deleteOption } = useDeleteOption(question);
+export default function QuestionEditor({ questionIndex }: QuestionEditorProps) {
+	const { watch } = useFormContext<QuizFullDetails>();
+	const question = watch(`questions.${questionIndex}`);
+
+	if (!question) return null;
 
 	return (
 		<div className="h-full flex flex-col items-center p-8 overflow-y-auto bg-gray-800">
-			<QuestionTextInput
-				question={question}
-				onMutate={(text) => updateQuestion({ text })}
-			/>
+			<QuestionTextInput questionIndex={questionIndex} />
 
-			<ImageUploader question={question} />
+			<ImageUploader questionIndex={questionIndex} />
 
-			<OptionsGrid
-				options={question.options.sort(
-					(a, b) => a.sortOrder - b.sortOrder
-				)}
-				onOptionMutate={updateOption}
-				onAddOptionMutate={addOption}
-				isAddingOption={isAddingOption}
-				onOptionDelete={deleteOption}
-			/>
+			<OptionsGrid questionIndex={questionIndex} />
 		</div>
 	);
 }

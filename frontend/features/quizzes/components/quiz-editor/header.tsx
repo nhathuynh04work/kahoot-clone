@@ -1,30 +1,25 @@
 "use client";
 
-import { useIsMutating } from "@tanstack/react-query";
 import Link from "next/link";
-import { CloudCheck } from "lucide-react";
+import { CloudCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { QuizFullDetails } from "@/lib/types/quiz";
+import { useFormContext } from "react-hook-form";
+import { QuizFullDetails } from "@/features/quizzes/types";
 import SettingsModal from "./settings-modal";
 
 interface HeaderProps {
-	quiz: QuizFullDetails;
+	isSaving: boolean;
 }
 
-export default function Header({ quiz }: HeaderProps) {
-	const isMutatingCount = useIsMutating();
-	const isPending = isMutatingCount > 0;
+export default function Header({ isSaving }: HeaderProps) {
+	const { watch } = useFormContext<QuizFullDetails>();
+	const title = watch("title");
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [focusOn, setFocusOn] = useState<"title" | null>(null);
 
 	function openTitleModal() {
 		setFocusOn("title");
-		setIsModalOpen(true);
-	}
-
-	function openSettingsModal() {
-		setFocusOn(null);
 		setIsModalOpen(true);
 	}
 
@@ -37,43 +32,49 @@ export default function Header({ quiz }: HeaderProps) {
 					Kahoot!
 				</Link>
 
-				<div className="border border-gray-700 bg-gray-900 rounded-md pl-5 pr-2 py-2 flex items-center gap-10 hover:border-gray-500">
-					<p
-						onClick={openTitleModal}
-						className={`${
-							quiz.title ? "" : "text-gray-300"
-						} font-semibold`}>
-						{quiz.title ? quiz.title : "Enter quiz title..."}
-					</p>
+				<div className="border border-gray-700 bg-gray-900 rounded-md pl-5 pr-2 py-2 flex items-center gap-10 hover:border-gray-500 transition-colors">
 					<button
-						onClick={openSettingsModal}
-						className="bg-gray-300 text-black px-3 py-1 rounded-sm text-sm font-semibold cursor-pointer">
+						onClick={openTitleModal}
+						className={`font-semibold text-left truncate max-w-[300px] ${
+							title ? "text-white" : "text-gray-400"
+						}`}>
+						{title || "Enter quiz title..."}
+					</button>
+					<button
+						onClick={() => {
+							setFocusOn(null);
+							setIsModalOpen(true);
+						}}
+						className="bg-gray-300 hover:bg-white text-black px-3 py-1 rounded-sm text-sm font-semibold transition-colors">
 						Settings
 					</button>
 				</div>
 
 				<div className="ml-auto flex items-center gap-4">
 					<div className="text-sm text-gray-400 flex items-center gap-2">
-						{isPending ? (
+						{isSaving ? (
 							<>
-								<div className="w-4 h-4 border-2 border-dashed border-gray-400 rounded-full animate-spin"></div>
+								<Loader2 className="w-4 h-4 animate-spin" />
 								<span>Saving...</span>
 							</>
 						) : (
-							<CloudCheck className="mr-4" />
+							<>
+								<CloudCheck className="w-4 h-4 text-gray-400" />
+								<span>Saved</span>
+							</>
 						)}
 					</div>
+
 					<Link
-						href={"/dashboard"}
-						className="font-semibold text-white bg-indigo-800 rounded-md px-8 py-3">
-						Save
+						href="/dashboard"
+						className="font-semibold text-white bg-indigo-800 hover:bg-indigo-900 rounded-md px-8 py-3 transition-colors">
+						Done
 					</Link>
 				</div>
 			</div>
 
 			{isModalOpen && (
 				<SettingsModal
-					quiz={quiz}
 					focusOn={focusOn}
 					onClose={() => setIsModalOpen(false)}
 				/>

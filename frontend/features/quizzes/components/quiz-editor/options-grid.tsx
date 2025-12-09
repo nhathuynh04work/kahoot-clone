@@ -1,48 +1,56 @@
 "use client";
 
-import { Option } from "@/lib/types/quiz";
-import { CreateOptionDto, UpdateOptionDto } from "@/lib/dtos/quiz.dto";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { PlaceholderOptionCard, RealOptionCard } from "./option-card";
+import { QuizFullDetails } from "@/features/quizzes/types";
 
 interface OptionsGridProps {
-	options: Option[];
-	onOptionMutate: (data: {
-		optionId: number;
-		payload: UpdateOptionDto;
-	}) => void;
-	onAddOptionMutate: (payload: CreateOptionDto) => void;
-	isAddingOption: boolean;
-	onOptionDelete: (data: { optionId: number }) => void;
+	questionIndex: number;
 }
 
-export default function OptionsGrid({
-	options,
-	onOptionMutate,
-	onAddOptionMutate,
-	isAddingOption,
-	onOptionDelete,
-}: OptionsGridProps) {
+export default function OptionsGrid({ questionIndex }: OptionsGridProps) {
+	const { control, getValues } = useFormContext<QuizFullDetails>();
+
+	const { fields, append, remove } = useFieldArray({
+		control,
+		name: `questions.${questionIndex}.options`,
+	});
+
+	const handleAddOption = () => {
+		append({
+			id: Date.now() * -1,
+			questionId: 0,
+			text: "",
+			isCorrect: false,
+			sortOrder: fields[fields.length - 1].sortOrder,
+		});
+	};
+
+	const handleRemoveOption = (index: number) => {
+		const currentOptions = getValues(`questions.${questionIndex}.options`);
+
+		if (currentOptions.length <= 2) return;
+
+		remove(index);
+	};
+
 	return (
 		<div className="w-full grid grid-cols-2 gap-4">
-			{/* render real options */}
-			{options.map((option, index) => (
-				<RealOptionCard
-					key={option.id}
-					option={option}
-					index={index}
-					onMutate={onOptionMutate}
-					onDelete={onOptionDelete}
-					optionsCount={options.length}
-				/>
+			{fields.map((field, index) => (
+				<div key={field.id} className="relative">
+					<RealOptionCard
+						questionIndex={questionIndex}
+						optionIndex={index}
+						onDelete={() => handleRemoveOption(index)}
+					/>
+				</div>
 			))}
 
-			{/* render placeholder */}
-			{options.length < 4 && (
+			{fields.length < 4 && (
 				<PlaceholderOptionCard
-					key="placeholder"
-					index={options.length}
-					onAdd={onAddOptionMutate}
-					disabled={isAddingOption}
+					index={fields.length}
+					onAdd={handleAddOption}
+					disabled={false}
 				/>
 			)}
 		</div>
