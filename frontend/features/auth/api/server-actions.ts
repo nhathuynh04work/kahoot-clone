@@ -1,9 +1,9 @@
 "use server";
 
 import { apiServer } from "@/lib/apiServer";
-import { User } from "@/lib/types/user";
+import { User } from "@/features/auth/types";
 
-export async function getCurrentUser(): Promise<User> {
+export const getCurrentUser = async () => {
 	const api = await apiServer();
 	let user = null;
 
@@ -14,5 +14,5 @@ export async function getCurrentUser(): Promise<User> {
 		console.log(error);
 	}
 
-	return user;
-}
+	return user as User;
+};

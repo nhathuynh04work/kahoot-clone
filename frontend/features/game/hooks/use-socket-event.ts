@@ -1,6 +1,6 @@
 "use client";
 
-import { socket } from "@/lib/socket";
+import { socket } from "@/features/game/lib/socket";
 import { useEffect, useRef } from "react";
 
 export function useSocketEvent(

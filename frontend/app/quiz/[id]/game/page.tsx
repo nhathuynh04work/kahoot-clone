@@ -1,15 +1,15 @@
 "use client";
 
 import { use, useEffect } from "react";
-import { socket } from "@/lib/socket";
-import { useSocketEvent } from "@/hooks/use-socket-event";
-import { Player } from "@/lib/types/game";
+import { socket } from "@/features/game/lib/socket";
+import { useSocketEvent } from "@/features/game/hooks/use-socket-event";
 import Loading from "@/components/common/loading";
 import Error from "@/components/common/error";
-import { useHostReducer } from "@/hooks/use-host-reducer";
-import WaitingScreen from "@/components/game/host/waiting-screen";
-import { QuestionWithOptions } from "@/lib/types/quiz";
-import QuestionScreen from "@/components/game/host/question-screen";
+import { useHostReducer } from "@/features/game/hooks/use-host-reducer";
+import { Player } from "@/features/game/types";
+import { QuestionWithOptions } from "@/features/quizzes/types";
+import QuestionScreen from "@/features/game/components/host/question-screen";
+import WaitingScreen from "@/features/game/components/host/waiting-screen";
 
 interface HostGameProps {
 	params: Promise<{ id: string }>;

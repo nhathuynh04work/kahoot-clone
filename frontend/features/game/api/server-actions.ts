@@ -1,6 +1,6 @@
+import { Quiz } from "@/features/quizzes/types";
 import { apiServer } from "@/lib/apiServer";
-import { GameLobby } from "@/lib/types/game";
-import { Quiz } from "@/lib/types/quiz";
+import { GameLobby } from "../types";
 
 export async function getValidLobby(
 	pin: string

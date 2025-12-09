@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { socket } from "@/lib/socket";
+import { socket } from "@/features/game/lib/socket";
 
 interface NicknameEntryFormProps {
 	pin: string;

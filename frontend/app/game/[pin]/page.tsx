@@ -1,14 +1,14 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useSocketEvent } from "@/hooks/use-socket-event";
-import WaitingScreen from "@/components/game/player/waiting-screen";
-import QuestionScreen from "@/components/game/player/question-screen";
-import FinishScreen from "@/components/game/player/finish-screen";
-import ResultScreen from "@/components/game/player/result-screen";
-import { usePlayerReducer } from "@/hooks/use-player-reducer";
-import { QuestionWithOptions } from "@/lib/types/quiz";
-import { socket } from "@/lib/socket";
+import { useSocketEvent } from "@/features/game/hooks/use-socket-event";
+import { usePlayerReducer } from "@/features/game/hooks/use-player-reducer";
+import { socket } from "@/features/game/lib/socket";
+import { QuestionWithOptions } from "@/features/quizzes/types";
+import QuestionScreen from "@/features/game/components/player/question-screen";
+import ResultScreen from "@/features/game/components/player/result-screen";
+import FinishScreen from "@/features/game/components/player/finish-screen";
+import WaitingScreen from "@/features/game/components/player/waiting-screen";
 
 export default function GamePage() {
 	const params = useParams();

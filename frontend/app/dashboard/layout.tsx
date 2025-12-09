@@ -1,7 +1,7 @@
 import TopBar from "@/components/layout/top-bar";
-import { getCurrentUser } from "../../actions/auth";
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/features/auth/api/server-actions";
 
 export default async function Layout({ children }: { children: ReactNode }) {
 	const user = await getCurrentUser();

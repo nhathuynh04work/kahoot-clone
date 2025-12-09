@@ -1,5 +1,5 @@
-import { QuizCard } from "@/components/dashboard/quiz-card";
-import { getQuizzes } from "../../actions/quiz";
+import { getQuizzes } from "@/features/quizzes/api/server-actions";
+import { QuizCard } from "@/features/quizzes/components/quiz-card";
 
 export default async function DashboardPage() {
 	const quizzes = await getQuizzes();

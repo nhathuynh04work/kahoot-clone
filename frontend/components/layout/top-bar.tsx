@@ -1,12 +1,12 @@
 "use client";
 
-import { User } from "@/lib/types/user";
+import { User } from "@/features/auth/types";
 import Link from "next/link";
 
 import { Plus, Loader2 } from "lucide-react";
-import { useCreateQuiz } from "@/features/quizzes/mutations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 
 const getInitials = (email: string) => {
 	return email[0]?.toUpperCase() || "?";

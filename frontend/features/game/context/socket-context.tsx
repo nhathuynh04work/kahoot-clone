@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { socket } from "@/lib/socket";
+import { socket } from "@/features/game/lib/socket";
 
 interface SocketContextType {
 	isConnected: boolean;

@@ -1,4 +1,4 @@
-import { socket } from "@/lib/socket";
+import { socket } from "@/features/game/lib/socket";
 import { Player } from "@/lib/types/game";
 import { useReducer } from "react";
 

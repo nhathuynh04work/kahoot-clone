@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer } from "react";
-import { socket } from "@/lib/socket";
+import { socket } from "@/features/game/lib/socket";
 
 export interface PlayerGameState {
 	gameState: "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";

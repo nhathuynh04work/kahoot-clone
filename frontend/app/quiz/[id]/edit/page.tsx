@@ -1,8 +1,8 @@
 "use server";
 
-import { getCurrentUser } from "@/actions/auth";
-import { getQuiz } from "@/actions/quiz";
-import QuizEditor from "@/components/quiz-editor/quiz-editor";
+import { getCurrentUser } from "@/features/auth/api/server-actions";
+import { getQuiz } from "@/features/quizzes/api/server-actions";
+import QuizEditor from "@/features/quizzes/components/quiz-editor/quiz-editor";
 import { notFound, redirect } from "next/navigation";
 
 interface QuizEditPageProps {
