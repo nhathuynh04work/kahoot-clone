@@ -10,6 +10,7 @@ import { Player } from "@/features/game/types";
 import { QuestionWithOptions } from "@/features/quizzes/types";
 import QuestionScreen from "@/features/game/components/host/question-screen";
 import WaitingScreen from "@/features/game/components/host/waiting-screen";
+import HostResultScreen from "@/features/game/components/host/result-screen";
 
 interface HostGameProps {
 	params: Promise<{ id: string }>;
@@ -54,13 +55,27 @@ export default function HostGame({ params }: HostGameProps) {
 		dispatch({ type: "PLAYER_LEFT", payload: player });
 	});
 
-	useSocketEvent("newQuestion", (question: QuestionWithOptions) => {
-		dispatch({ type: "NEW_QUESTION", payload: question });
-	});
+	useSocketEvent(
+		"newQuestion",
+		(data: {
+			question: QuestionWithOptions;
+			questionIndex: number;
+			totalQuestions: number;
+			timeLimit: number;
+			endsAt: number;
+		}) => dispatch({ type: "NEW_QUESTION", payload: data })
+	);
 
 	useSocketEvent("updateAnswerCount", (data: { count: number }) => {
 		dispatch({ type: "UPDATE_ANSWER_COUNT", payload: data.count });
 	});
+
+	useSocketEvent(
+		"questionTimeUp",
+		(data: { stats: Record<number, number>; correctOptionId: number }) => {
+			dispatch({ type: "QUESTION_TIME_UP", payload: data });
+		}
+	);
 
 	useEffect(() => {
 		if (state.pin || !state.isConnected) return;
@@ -93,6 +108,10 @@ export default function HostGame({ params }: HostGameProps) {
 					answerCount={state.answerCount}
 					totalPlayers={state.players.filter((p) => !p.isHost).length}
 					question={state.currentQuestion}
+					questionIndex={state.questionIndex}
+					totalQuestions={state.totalQuestions}
+					timeLimit={state.timeLimit}
+					endsAt={state.endsAt}
 					onNext={handleShowResults}
 				/>
 			);
@@ -104,6 +123,20 @@ export default function HostGame({ params }: HostGameProps) {
 					players={state.players}
 					onStartGame={handleStartGame}
 					pin={state.pin}
+				/>
+			);
+
+		case "RESULTS":
+			if (!state.currentQuestion || !state.questionResults)
+				return <Loading />;
+			return (
+				<HostResultScreen
+					question={state.currentQuestion}
+					stats={state.questionResults.stats}
+					correctOptionId={state.questionResults.correctOptionId}
+					onNext={() => {
+						socket.emit("nextQuestion", { pin: state.pin });
+					}}
 				/>
 			);
 	}

@@ -61,12 +61,12 @@ export default function QuestionSettingsSidebar({
 								{ valueAsNumber: true }
 							)}
 							className="w-full appearance-none p-3 bg-gray-700 rounded-md text-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-							<option value={5}>5 seconds</option>
-							<option value={10}>10 seconds</option>
-							<option value={20}>20 seconds</option>
-							<option value={30}>30 seconds</option>
-							<option value={60}>1 minute</option>
-							<option value={120}>2 minutes</option>
+							<option value={5000}>5 seconds</option>
+							<option value={10000}>10 seconds</option>
+							<option value={20000}>20 seconds</option>
+							<option value={30000}>30 seconds</option>
+							<option value={60000}>1 minute</option>
+							<option value={120000}>2 minutes</option>
 						</select>
 						<ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 					</div>

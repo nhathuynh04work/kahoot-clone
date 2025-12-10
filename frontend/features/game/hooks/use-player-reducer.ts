@@ -8,6 +8,13 @@ export interface PlayerGameState {
 	currentQuestion: any | null;
 	error: string | null;
 	isConnected: boolean;
+	selectedOptionId: number | null;
+	correctOptionId: number | null;
+	isCorrect: boolean | null;
+	questionIndex: number;
+	totalQuestions: number;
+	timeLimit: number;
+	endsAt: number;
 }
 
 export const initialState: PlayerGameState = {
@@ -15,13 +22,30 @@ export const initialState: PlayerGameState = {
 	currentQuestion: null,
 	error: null,
 	isConnected: socket.connected,
+	selectedOptionId: null,
+	correctOptionId: null,
+	isCorrect: null,
+	questionIndex: 0,
+	totalQuestions: 0,
+	timeLimit: 0,
+	endsAt: 0,
 };
 
 export type PlayerAction =
 	| { type: "SET_CONNECTED"; payload: boolean }
 	| { type: "SET_ERROR"; payload: string }
-	| { type: "NEW_QUESTION"; payload: any }
-	| { type: "SHOW_RESULTS" }
+	| {
+			type: "NEW_QUESTION";
+			payload: {
+				question: any;
+				questionIndex: number;
+				totalQuestions: number;
+				timeLimit: number;
+				endsAt: number;
+			};
+	  }
+	| { type: "SUBMIT_ANSWER"; payload: number }
+	| { type: "QUESTION_TIME_UP"; payload: { correctOptionId: number } }
 	| { type: "GAME_FINISHED" };
 
 function playerReducer(
@@ -39,11 +63,31 @@ function playerReducer(
 			return {
 				...state,
 				gameState: "QUESTION",
-				currentQuestion: action.payload,
+				currentQuestion: action.payload.question,
+				questionIndex: action.payload.questionIndex,
+				totalQuestions: action.payload.totalQuestions,
+				timeLimit: action.payload.timeLimit,
+				endsAt: action.payload.endsAt,
+				selectedOptionId: null,
+				correctOptionId: null,
+				isCorrect: null,
 			};
 
-		case "SHOW_RESULTS":
-			return { ...state, gameState: "RESULTS" };
+		case "SUBMIT_ANSWER":
+			return {
+				...state,
+				selectedOptionId: action.payload,
+			};
+
+		case "QUESTION_TIME_UP":
+			const isCorrect =
+				state.selectedOptionId === action.payload.correctOptionId;
+			return {
+				...state,
+				gameState: "RESULTS",
+				correctOptionId: action.payload.correctOptionId,
+				isCorrect,
+			};
 
 		case "GAME_FINISHED":
 			return { ...state, gameState: "FINISHED" };

@@ -1,16 +1,24 @@
 import { socket } from "@/features/game/lib/socket";
-import { Player } from "@/lib/types/game";
 import { useReducer } from "react";
+import { Player } from "../types";
 
 export interface HostGameState {
 	gameState: "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
 	pin: string | null;
 	players: Player[];
 	currentQuestion: any | null;
+	questionIndex: number;
+	totalQuestions: number;
+	timeLimit: number;
+	endsAt: number;
 	error: string | null;
 	loading: boolean;
 	isConnected: boolean;
 	answerCount: number;
+	questionResults: {
+		stats: Record<number, number>;
+		correctOptionId: number;
+	} | null;
 }
 
 export const initialState: HostGameState = {
@@ -18,10 +26,15 @@ export const initialState: HostGameState = {
 	pin: null,
 	players: [],
 	currentQuestion: null,
+	questionIndex: 0,
+	totalQuestions: 0,
+	timeLimit: 0,
+	endsAt: 0,
 	error: null,
 	loading: true,
 	isConnected: socket.connected,
 	answerCount: 0,
+	questionResults: null,
 };
 
 export type HostGameAction =
@@ -30,9 +43,25 @@ export type HostGameAction =
 	| { type: "SET_ERROR"; payload: string }
 	| { type: "PLAYER_JOINED"; payload: Player }
 	| { type: "PLAYER_LEFT"; payload: Player }
-	| { type: "NEW_QUESTION"; payload: any }
+	| {
+			type: "NEW_QUESTION";
+			payload: {
+				question: any;
+				questionIndex: number;
+				totalQuestions: number;
+				timeLimit: number;
+				endsAt: number;
+			};
+	  }
 	| { type: "GAME_STARTED" }
-	| { type: "UPDATE_ANSWER_COUNT"; payload: number };
+	| { type: "UPDATE_ANSWER_COUNT"; payload: number }
+	| {
+			type: "QUESTION_TIME_UP";
+			payload: {
+				stats: Record<number, number>;
+				correctOptionId: number;
+			};
+	  };
 
 function gameReducer(
 	state: HostGameState,
@@ -77,14 +106,26 @@ function gameReducer(
 			return {
 				...state,
 				gameState: "QUESTION",
-				currentQuestion: action.payload,
+				currentQuestion: action.payload.question,
+				questionIndex: action.payload.questionIndex,
+				totalQuestions: action.payload.totalQuestions,
+				timeLimit: action.payload.timeLimit,
+				endsAt: action.payload.endsAt,
 				answerCount: 0,
+				questionResults: null,
 			};
 
 		case "UPDATE_ANSWER_COUNT":
 			return {
 				...state,
 				answerCount: action.payload,
+			};
+
+		case "QUESTION_TIME_UP":
+			return {
+				...state,
+				gameState: "RESULTS",
+				questionResults: action.payload,
 			};
 
 		default:

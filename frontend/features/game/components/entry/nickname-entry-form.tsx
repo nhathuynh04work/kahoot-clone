@@ -23,7 +23,7 @@ export function NicknameEntryForm({ pin, quizTitle }: NicknameEntryFormProps) {
 
 		socket.emit("joinLobby", { pin, nickname }, (response: any) => {
 			if (!response.success) {
-				setError(response.message || "Failed to join lobby.");
+				setError(response.error || "Failed to join lobby.");
 				return;
 			}
 

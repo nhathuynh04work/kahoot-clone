@@ -1,4 +1,3 @@
-// frontend/features/quizzes/components/quiz-editor/question-nav-list.tsx
 "use client";
 
 import { QuestionWithOptions } from "@/features/quizzes/types";

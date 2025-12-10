@@ -1,8 +1,8 @@
 "use client";
 
+import { Player } from "../../types";
 import PinDisplay from "../common/pin-display";
 import PlayerCard from "../common/player-card";
-import { Player } from "@/lib/types/game";
 import StartButton from "./start-button";
 
 interface Props {
