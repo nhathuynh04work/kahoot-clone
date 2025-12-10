@@ -37,17 +37,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         private quizService: QuizService,
     ) {}
 
-    // Handle a new client connection
-    handleConnection(client: Socket, ...args: any[]) {
+    handleConnection(client: Socket) {
         this.logger.log(`Client connected: ${client.id}`);
-        // this.logger.log(`Count: ${this.server.engine.clientsCount}`);
     }
 
-    // Handle a client disconnection
     async handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
 
-        // Player disconnected
+        // 1. Check if it was a Player
         try {
             const disconnectedPlayer = await this.gameService.disconnectPlayer(
                 client.id,
@@ -58,6 +55,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
                     id: disconnectedPlayer.playerId,
                     nickname: disconnectedPlayer.nickname,
                 });
+                return; // Exit if it was a player
             }
         } catch (error) {
             this.logger.error(
@@ -66,7 +64,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             );
         }
 
-        // Host disconnected
+        // 2. Check if it was a Host (Wait 60s for reconnect)
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         setTimeout(async () => {
             try {
@@ -94,7 +92,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: Socket,
     ) {
         try {
-            // This will check ownership and existence
             await this.quizService.getQuiz(payload.quizId, user.id);
 
             const pin = await this.gameService.createLobby({
@@ -106,7 +103,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             client.join(pin);
 
             this.logger.log(
-                `Host ${user.email} (ID: ${user.id}) created and joined room ${pin}`,
+                `Host ${user.email} (ID: ${user.id}) created/joined room ${pin}`,
             );
 
             return { success: true, pin };
@@ -123,27 +120,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { pin, nickname } = payload;
 
         try {
-            // 1. Call the service to validate and create the player
             const newPlayer = await this.gameService.addPlayerToLobby({
                 pin,
                 nickname,
                 socketId: client.id,
             });
 
-            // 2. Join the socket to the room
             client.join(pin);
 
             this.logger.log(
                 `Player ${nickname} (Socket: ${client.id}) joined room ${pin}`,
             );
 
-            // 3. Broadcast to the room (especially the host)
             this.server.to(pin).emit("playerJoined", {
                 id: newPlayer.id,
                 nickname: newPlayer.nickname,
             });
 
-            // 4. Send a successful acknowledgment back to the joining player
             return { success: true };
         } catch (error) {
             return {
@@ -193,7 +186,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { pin, optionId, questionId } = payload;
 
         try {
-            const playerAnswer = await this.gameService.savePlayerAnswer({
+            const { lobbyId } = await this.gameService.savePlayerAnswer({
                 socketId: client.id,
                 questionId,
                 optionId,
@@ -201,7 +194,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             const answerCount =
                 await this.gameService.getAnswerCountForQuestion(
-                    playerAnswer.lobbyId,
+                    lobbyId,
                     questionId,
                 );
 

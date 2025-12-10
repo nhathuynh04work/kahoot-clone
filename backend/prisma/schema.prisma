@@ -58,19 +58,16 @@ model Option {
 }
 
 model GameLobby {
-    id                Int         @id @default(autoincrement())
-    pin               String      @db.Char(6)
-    quizId            Int
-    hostId            Int
-    hostSocketId      String?
-    status            LobbyStatus
-    createdAt         DateTime    @default(now())
-    activeHostQuizKey String?     @unique
+    id        Int         @id @default(autoincrement())
+    pin       String      @db.Char(6)
+    quizId    Int
+    hostId    Int
+    status    LobbyStatus
+    createdAt DateTime    @default(now())
 
     players GamePlayer[]
-    host    User           @relation(fields: [hostId], references: [id])
-    quiz    Quiz           @relation(fields: [quizId], references: [id])
-    answers PlayerAnswer[]
+    host    User         @relation(fields: [hostId], references: [id])
+    quiz    Quiz         @relation(fields: [quizId], references: [id])
 }
 
 enum LobbyStatus {
@@ -81,13 +78,13 @@ enum LobbyStatus {
 }
 
 model GamePlayer {
-    id       Int            @id @default(autoincrement())
+    id       Int    @id @default(autoincrement())
     nickname String
-    socketId String?        @unique
-    score    Int            @default(0)
+    score    Int    @default(0)
     lobbyId  Int
-    lobby    GameLobby      @relation(fields: [lobbyId], references: [id])
-    answers  PlayerAnswer[]
+
+    lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
+    answers PlayerAnswer[]
 
     @@unique([lobbyId, nickname])
 }
@@ -95,14 +92,12 @@ model GamePlayer {
 model PlayerAnswer {
     id          Int     @id @default(autoincrement())
     playerId    Int
-    lobbyId     Int
     questionId  Int
     optionId    Int
     isCorrect   Boolean
     scoreEarned Int     @default(0)
 
     player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
-    lobby    GameLobby  @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
     question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
     option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
