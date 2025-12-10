@@ -58,12 +58,13 @@ model Option {
 }
 
 model GameLobby {
-    id        Int         @id @default(autoincrement())
-    pin       String      @db.Char(6)
-    quizId    Int
-    hostId    Int
-    status    LobbyStatus
-    createdAt DateTime    @default(now())
+    id                   Int         @id @default(autoincrement())
+    pin                  String      @db.Char(6)
+    quizId               Int
+    hostId               Int
+    status               LobbyStatus
+    currentQuestionIndex Int         @default(0) @map("current_question_index")
+    createdAt            DateTime    @default(now())
 
     players GamePlayer[]
     host    User         @relation(fields: [hostId], references: [id])

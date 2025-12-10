@@ -23,6 +23,8 @@ export default function GamePage() {
 			questionId: state.currentQuestion.id,
 			pin,
 		});
+
+		dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
 	}
 
 	useSocketEvent("connect", () =>
@@ -33,8 +35,22 @@ export default function GamePage() {
 		dispatch({ type: "SET_ERROR", payload: "You were disconnected." })
 	);
 
-	useSocketEvent("newQuestion", (question: QuestionWithOptions) =>
-		dispatch({ type: "NEW_QUESTION", payload: question })
+	useSocketEvent(
+		"newQuestion",
+		(data: {
+			question: QuestionWithOptions;
+			questionIndex: number;
+			totalQuestions: number;
+			timeLimit: number;
+			endsAt: number;
+		}) => dispatch({ type: "NEW_QUESTION", payload: data })
+	);
+
+	useSocketEvent(
+		"questionTimeUp",
+		(data: { stats: Record<number, number>; correctOptionId: number }) => {
+			dispatch({ type: "QUESTION_TIME_UP", payload: data });
+		}
 	);
 
 	useSocketEvent("lobbyClosed", () => {
@@ -50,14 +66,18 @@ export default function GamePage() {
 		case "QUESTION":
 			return (
 				<QuestionScreen
-					key={state.currentQuestion.id}
-					onSelect={handleSelectOption}
 					question={state.currentQuestion}
+					questionIndex={state.questionIndex}
+					totalQuestions={state.totalQuestions}
+					timeLimit={state.timeLimit}
+					endsAt={state.endsAt}
+					onSubmitAnswer={handleSelectOption}
+					selectedOptionId={state.selectedOptionId}
 				/>
 			);
 
 		case "RESULTS":
-			return <ResultScreen />;
+			return <ResultScreen isCorrect={state.isCorrect} />;
 
 		case "FINISHED":
 			return <FinishScreen />;

@@ -71,7 +71,7 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 			id: newId,
 			quizId: quiz.id,
 			text: "",
-			timeLimit: 20,
+			timeLimit: 20000,
 			points: 1000,
 			imageUrl: "",
 			sortOrder: lastSortOrder + 1,
@@ -124,14 +124,13 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 					<div className="col-span-5 flex overflow-hidden">
 						<div className="flex-1 overflow-y-auto">
 							{activeQuestion && (
-								<QuestionEditor
-									questionIndex={activeIndex}
-								/>
+								<QuestionEditor questionIndex={activeIndex} />
 							)}
 						</div>
 
 						{activeQuestion && (
 							<QuestionSettingsSidebar
+								key={activeIndex}
 								questionIndex={activeIndex}
 								isOpen={isSettingsOpen}
 								onToggle={() =>
