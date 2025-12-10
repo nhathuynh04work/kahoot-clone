@@ -18,7 +18,7 @@ import { QuizService } from "../quiz/quiz.service.js";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
 import { GameService } from "./game.service.js";
-import { LobbyStatus } from "../generated/prisma/enums.js";
+import { OnEvent } from "@nestjs/event-emitter";
 
 @WebSocketGateway({
     cors: {
@@ -65,22 +65,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
 
         // 2. Check if it was a Host (Wait 60s for reconnect)
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        setTimeout(async () => {
-            try {
-                const closedLobbyPin = await this.gameService.closeStaleLobby(
-                    client.id,
-                );
+        setTimeout(() => {
+            void (async () => {
+                try {
+                    const closedLobbyPin =
+                        await this.gameService.closeStaleLobby(client.id);
 
-                if (closedLobbyPin) {
-                    this.server.to(closedLobbyPin).emit("lobbyClosed");
+                    if (closedLobbyPin) {
+                        this.server.to(closedLobbyPin).emit("lobbyClosed");
+                    }
+                } catch (error) {
+                    this.logger.error(
+                        `Error closing stale lobby for socket ${client.id}`,
+                        error,
+                    );
                 }
-            } catch (error) {
-                this.logger.error(
-                    `Error closing stale lobby for socket ${client.id}`,
-                    error,
-                );
-            }
+            })();
         }, 60000);
     }
 
@@ -141,7 +141,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         } catch (error) {
             return {
                 success: false,
-                error: error.message || "Failed to join lobby.",
+                error: error.response.message || "Failed to join lobby.",
             };
         }
     }
@@ -150,26 +150,47 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage("startGame")
     async handleStartGame(
         @User() user: JwtUser,
-        @MessageBody() payload: { pin: string; quizId: number },
+        @MessageBody() payload: { pin: string },
     ) {
-        const { pin, quizId } = payload;
+        const { pin } = payload;
 
         try {
-            const quiz = await this.quizService.getQuiz(quizId, user.id);
+            const roundData = await this.gameService.startGame(pin, user.id);
 
-            if (!quiz) throw new NotFoundException("Quiz not found");
+            this.logger.log(roundData);
 
-            if (quiz.questions.length < 1)
-                throw new BadRequestException("Quiz has no question");
-
-            await this.gameService.changeLobbyStatus({
-                quizId,
-                hostId: user.id,
-                status: LobbyStatus.IN_PROGRESS,
-            });
+            if (!roundData) {
+                return { success: false, error: "Quiz has no questions" };
+            }
 
             this.logger.log(`Host: ${user.email} start game for lobby ${pin}`);
-            this.server.to(pin).emit("newQuestion", quiz.questions[0]);
+            this.server.to(pin).emit("newQuestion", roundData);
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
+    @UseGuards(JwtWsGuard)
+    @SubscribeMessage("nextQuestion")
+    async handleNextQuestion(
+        @User() user: JwtUser,
+        @MessageBody() payload: { pin: string },
+    ) {
+        const { pin } = payload;
+
+        try {
+            const roundData = await this.gameService.nextQuestion(pin, user.id);
+
+            if (!roundData) {
+                this.logger.log(`Game finished for lobby ${pin}`);
+                this.server.to(pin).emit("gameOver");
+                return { success: true };
+            }
+
+            this.logger.log(`Host: ${user.email} start game for lobby ${pin}`);
+            this.server.to(pin).emit("newQuestion", roundData);
 
             return { success: true };
         } catch (error) {
@@ -186,20 +207,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const { pin, optionId, questionId } = payload;
 
         try {
-            const { lobbyId } = await this.gameService.savePlayerAnswer({
-                socketId: client.id,
-                questionId,
-                optionId,
-            });
-
-            const answerCount =
-                await this.gameService.getAnswerCountForQuestion(
-                    lobbyId,
+            const { answerCount } =
+                await this.gameService.submitAnswerAndCheckCompletion({
+                    socketId: client.id,
                     questionId,
-                );
+                    optionId,
+                });
 
             this.logger.log(`Player ${client.id} submitted their answer`);
-
             this.server.to(pin).emit("updateAnswerCount", {
                 count: answerCount,
             });
@@ -214,5 +229,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 message: error.message || "Failed to submit answer.",
             };
         }
+    }
+
+    @OnEvent("game.questionTimeUp")
+    handleQuestionTimeUp(payload: {
+        pin: string;
+        lobbyId: number;
+        correctOptionId: number;
+        stats: Record<number, number>;
+    }) {
+        this.logger.log(`Time up event received for lobby ${payload.pin}`);
+        this.server.to(payload.pin).emit("questionTimeUp", {
+            correctOptionId: payload.correctOptionId,
+            stats: payload.stats,
+        });
     }
 }
