@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    ConflictException,
     Injectable,
     Logger,
     NotFoundException,
@@ -29,7 +30,7 @@ export class LobbyService {
             throw new BadRequestException("Quiz invalid or empty.");
         }
 
-        // 2. Check for existing active lobby 
+        // 2. Check for existing active lobby
         const existingLobby = await this.prisma.gameLobby.findFirst({
             where: {
                 quizId,
@@ -145,5 +146,55 @@ export class LobbyService {
             where: { id: lobby.id },
             data: { status },
         });
+    }
+
+    async addPlayer(params: { pin: string; nickname: string }) {
+        const { pin, nickname } = params;
+
+        // 1. Validate Lobby
+        const lobby = await this.getValidLobby(pin);
+
+        // 2. Check for existing player (Rejoin logic)
+        const existingPlayer = await this.prisma.gamePlayer.findUnique({
+            where: {
+                lobbyId_nickname: {
+                    lobbyId: lobby.id,
+                    nickname: nickname,
+                },
+            },
+        });
+
+        if (existingPlayer) {
+            // Note: The Gateway is responsible for checking if this player
+            // is currently "online" (Imposter check) using SocketManager.
+            return existingPlayer;
+        }
+
+        // 3. New Player Checks
+        // If the game has already started, we generally don't allow new players
+        if (lobby.status !== LobbyStatus.WAITING) {
+            throw new ConflictException(
+                "Game has already started. You cannot join as a new player.",
+            );
+        }
+
+        // 4. Create New Player
+        try {
+            return await this.prisma.gamePlayer.create({
+                data: {
+                    nickname,
+                    lobbyId: lobby.id,
+                    score: 0,
+                },
+            });
+        } catch (error) {
+            // Handle unique constraint violation (Race condition on nickname)
+            if (error.code === "P2002") {
+                throw new ConflictException(
+                    `Nickname "${nickname}" is already taken in this lobby.`,
+                );
+            }
+            throw error;
+        }
     }
 }
