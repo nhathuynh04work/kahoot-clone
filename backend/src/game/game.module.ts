@@ -5,10 +5,12 @@ import { QuizModule } from "../quiz/quiz.module.js";
 import { AuthModule } from "../auth/auth.module.js";
 import { GameController } from "./game.controller.js";
 import { QuestionModule } from "../question/question.module.js";
+import { LobbyService } from "./services/lobby.service.js";
+import { GameSessionService } from "./services/game-session.service.js";
 
 @Module({
     imports: [QuizModule, AuthModule, QuestionModule],
-    providers: [GameGateway, GameService],
+    providers: [GameGateway, GameService, LobbyService, GameSessionService],
     controllers: [GameController],
 })
 export class GameModule {}
