@@ -9,12 +9,12 @@
     - [x] Move `hostSocketMap` and `playerSocketMap` logic here.
     - [x] Create methods like `registerSocket(userId, socketId)` and `getSocketId(userId)`.
     - [x] Abstract the socket storage so it can be swapped for Redis later.
-- [ ] **Create `GameSessionService`**
-    - [ ] Move game loop logic here (`startGame`, `nextQuestion`, `submitAnswer`).
-    - [ ] Move the `calculateScore` logic here.
-- [ ] **Refactor `GameGateway`**
-    - [ ] Update dependency injection to use the new services above.
-    - [ ] Remove all business logic (e.g., `setTimeout` inside `handleDisconnect`). It should only route events.
+- [x] **Create `GameSessionService`**
+    - [x] Move game loop logic here (`startGame`, `nextQuestion`, `submitAnswer`).
+    - [x] Move the `calculateScore` logic here.
+- [x] **Refactor `GameGateway`**
+    - [x] Update dependency injection to use the new services above.
+    - [x] Remove all business logic (e.g., `setTimeout` inside `handleDisconnect`). It should only route events.
 
 ### Phase 2: Scalability & State Management
 *Moving from In-Memory Maps to Redis for multi-instance support.*

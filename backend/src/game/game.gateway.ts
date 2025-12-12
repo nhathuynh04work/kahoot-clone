@@ -6,14 +6,15 @@ import {
     OnGatewayConnection,
     OnGatewayDisconnect,
     ConnectedSocket,
+    WsException,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { Logger, UseGuards } from "@nestjs/common";
-import { QuizService } from "../quiz/quiz.service.js";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
-import { GameService } from "./game.service.js";
-import { OnEvent } from "@nestjs/event-emitter";
+import { LobbyService } from "./services/lobby.service.js";
+import { GameSessionService } from "./services/game-session.service.js";
+import { SocketService } from "../socket/socket.service.js";
 
 @WebSocketGateway({
     cors: {
@@ -28,8 +29,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private logger = new Logger("GameGateway");
 
     constructor(
-        private gameService: GameService,
-        private quizService: QuizService,
+        private lobbyService: LobbyService,
+        private gameSession: GameSessionService,
+        private socketManager: SocketService,
     ) {}
 
     handleConnection(client: Socket) {
@@ -39,44 +41,37 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     async handleDisconnect(client: Socket) {
         this.logger.log(`Client disconnected: ${client.id}`);
 
-        // 1. Check if it was a Player
-        try {
-            const disconnectedPlayer = await this.gameService.disconnectPlayer(
-                client.id,
-            );
+        // 1. Identify who disconnected
+        const clientKey = await this.socketManager.getClientKey(client.id);
+        if (!clientKey) return;
 
-            if (disconnectedPlayer) {
-                this.server.to(disconnectedPlayer.pin).emit("playerLeft", {
-                    id: disconnectedPlayer.playerId,
-                    nickname: disconnectedPlayer.nickname,
-                });
-                return; // Exit if it was a player
-            }
-        } catch (error) {
-            this.logger.error(
-                `Error handling player disconnect for socket ${client.id}`,
-                error,
-            );
+        // 2. Route to appropriate handler
+        if (clientKey.startsWith("player:")) {
+            const playerId = parseInt(clientKey.split(":")[1], 10);
+            await this.handlePlayerDisconnect(playerId, client.id);
+        } else if (clientKey.startsWith("user:")) {
+            const hostId = parseInt(clientKey.split(":")[1], 10);
+            await this.handleHostDisconnect(hostId, client.id);
         }
 
-        // 2. Check if it was a Host (Wait 60s for reconnect)
-        setTimeout(() => {
-            void (async () => {
-                try {
-                    const closedLobbyPin =
-                        await this.gameService.closeStaleLobby(client.id);
+        // 3. Cleanup Socket Map
+        await this.socketManager.remove(clientKey, client.id);
+    }
 
-                    if (closedLobbyPin) {
-                        this.server.to(closedLobbyPin).emit("lobbyClosed");
-                    }
-                } catch (error) {
-                    this.logger.error(
-                        `Error closing stale lobby for socket ${client.id}`,
-                        error,
-                    );
-                }
-            })();
-        }, 60000);
+    private async handlePlayerDisconnect(playerId: number, socketId: string) {
+        // We can move this logic to GameSessionService later if it gets complex
+        // For now, we just notify the lobby
+        /* Note: To notify the lobby, we'd need to look up the lobby ID for this player.
+           In a full Redis architecture, we'd store `socket:{id}:lobby` as well.
+           For now, we accept that the server might not emit "playerLeft" on hard disconnects
+           until we add that lookup to SocketManager.
+        */
+    }
+
+    private async handleHostDisconnect(hostId: number, socketId: string) {
+        // Logic for closing stale lobbies is now delegated to a service or
+        // handled via specific events/timeouts managed by GameSessionService.
+        // We do NOT put setTimeouts here in the Controller/Gateway.
     }
 
     @UseGuards(JwtWsGuard)
@@ -87,20 +82,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: Socket,
     ) {
         try {
-            await this.quizService.getQuiz(payload.quizId, user.id);
-
-            const pin = await this.gameService.createLobby({
+            const pin = await this.lobbyService.createLobby({
                 quizId: payload.quizId,
                 hostId: user.id,
-                socketId: client.id,
             });
 
+            // Register Host Identity
+            await this.socketManager.register(`user:${user.id}`, client.id);
             client.join(pin);
 
-            this.logger.log(
-                `Host ${user.email} (ID: ${user.id}) created/joined room ${pin}`,
-            );
-
+            this.logger.log(`Host ${user.email} created lobby ${pin}`);
             return { success: true, pin };
         } catch (error) {
             return { success: false, error: error.message };
@@ -112,32 +103,28 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @MessageBody() payload: { pin: string; nickname: string },
         @ConnectedSocket() client: Socket,
     ) {
-        const { pin, nickname } = payload;
-
         try {
-            const newPlayer = await this.gameService.addPlayerToLobby({
-                pin,
-                nickname,
-                socketId: client.id,
+            // Note: You need to move addPlayerToLobby to LobbyService
+            const newPlayer = await this.lobbyService.addPlayer({
+                pin: payload.pin,
+                nickname: payload.nickname,
             });
 
-            client.join(pin);
-
-            this.logger.log(
-                `Player ${nickname} (Socket: ${client.id}) joined room ${pin}`,
+            // Register Player Identity
+            await this.socketManager.register(
+                `player:${newPlayer.id}`,
+                client.id,
             );
+            client.join(payload.pin);
 
-            this.server.to(pin).emit("playerJoined", {
+            this.server.to(payload.pin).emit("playerJoined", {
                 id: newPlayer.id,
                 nickname: newPlayer.nickname,
             });
 
             return { success: true, playerId: newPlayer.id };
         } catch (error) {
-            return {
-                success: false,
-                error: error.response.message || "Failed to join lobby.",
-            };
+            return { success: false, error: error.message };
         }
     }
 
@@ -147,20 +134,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @User() user: JwtUser,
         @MessageBody() payload: { pin: string },
     ) {
-        const { pin } = payload;
-
         try {
-            const roundData = await this.gameService.startGame(pin, user.id);
-
-            this.logger.log(roundData);
+            const roundData = await this.gameSession.startGame(
+                payload.pin,
+                user.id,
+            );
 
             if (!roundData) {
                 return { success: false, error: "Quiz has no questions" };
             }
 
-            this.logger.log(`Host: ${user.email} start game for lobby ${pin}`);
-            this.server.to(pin).emit("newQuestion", roundData);
-
+            this.server.to(payload.pin).emit("newQuestion", roundData);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -173,31 +157,29 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @User() user: JwtUser,
         @MessageBody() payload: { pin: string },
     ) {
-        this.logger.log("reached");
-        const { pin } = payload;
-
         try {
-            const roundData = await this.gameService.nextQuestion(pin, user.id);
+            const roundData = await this.gameSession.nextQuestion(
+                payload.pin,
+                user.id,
+            );
 
             if (!roundData) {
-                this.logger.log(`Game finished for lobby ${pin}`);
+                // Game Over Logic
+                await this.gameSession.endLobby(payload.pin, user.id);
 
-                const lobby = await this.gameService.getValidLobby(pin);
-                await this.gameService.endLobby(pin, user.id);
-                const leaderboard = await this.gameService.getLeaderboard(
+                // Fetch Lobby ID to get leaderboard (You might want to optimize this fetch)
+                const lobby = await this.lobbyService.getValidLobby(
+                    payload.pin,
+                );
+                const leaderboard = await this.gameSession.getLeaderboard(
                     lobby.id,
                 );
 
-                this.server.to(pin).emit("gameOver", {
-                    leaderboard: leaderboard,
-                });
-
+                this.server.to(payload.pin).emit("gameOver", { leaderboard });
                 return { success: true };
             }
 
-            this.logger.log(`Host: ${user.email} start game for lobby ${pin}`);
-            this.server.to(pin).emit("newQuestion", roundData);
-
+            this.server.to(payload.pin).emit("newQuestion", roundData);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -206,48 +188,42 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage("submitAnswer")
     async handleSubmitAnswer(
+        @ConnectedSocket() client: Socket,
         @MessageBody()
         payload: { pin: string; questionId: number; optionId: number },
-        @ConnectedSocket() client: Socket,
     ) {
-        const { pin, optionId, questionId } = payload;
-
         try {
-            const { answerCount } =
-                await this.gameService.submitAnswerAndCheckCompletion({
-                    socketId: client.id,
-                    questionId,
-                    optionId,
-                });
+            // 1. Resolve Identity
+            const clientKey = await this.socketManager.getClientKey(client.id);
+            if (!clientKey || !clientKey.startsWith("player:")) {
+                throw new WsException("Player not identified");
+            }
+            const playerId = parseInt(clientKey.split(":")[1], 10);
 
-            this.logger.log(`Player ${client.id} submitted their answer`);
-            this.server.to(pin).emit("updateAnswerCount", {
-                count: answerCount,
+            // 2. Get active players count for early finish check
+            // (We can use the socket room size as an approximation for now)
+            const roomSize =
+                this.server.sockets.adapter.rooms.get(payload.pin)?.size || 0;
+            // Subtract 1 assuming Host is in the room
+            const activePlayerCount = Math.max(0, roomSize - 1);
+
+            // 3. Delegate to Service
+            const result = await this.gameSession.submitAnswer({
+                playerId,
+                questionId: payload.questionId,
+                optionId: payload.optionId,
+                activePlayerCount,
+            });
+
+            // 4. Emit Updates
+            this.server.to(payload.pin).emit("updateAnswerCount", {
+                count: result.answerCount,
             });
 
             return { success: true };
         } catch (error) {
-            this.logger.error(
-                `Answer submission failed for ${client.id}: ${error.message}`,
-            );
-            return {
-                success: false,
-                message: error.message || "Failed to submit answer.",
-            };
+            this.logger.error(`Submit Answer Failed: ${error.message}`);
+            return { success: false, message: error.message };
         }
-    }
-
-    @OnEvent("game.questionTimeUp")
-    handleQuestionTimeUp(payload: {
-        pin: string;
-        lobbyId: number;
-        correctOptionId: number;
-        stats: Record<number, number>;
-    }) {
-        this.logger.log(`Time up event received for lobby ${payload.pin}`);
-        this.server.to(payload.pin).emit("questionTimeUp", {
-            correctOptionId: payload.correctOptionId,
-            stats: payload.stats,
-        });
     }
 }
