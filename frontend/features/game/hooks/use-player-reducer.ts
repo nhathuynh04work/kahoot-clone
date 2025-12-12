@@ -4,6 +4,7 @@ import { useReducer } from "react";
 import { socket } from "@/features/game/lib/socket";
 
 export interface PlayerGameState {
+	playerId: number | null;
 	gameState: "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
 	currentQuestion: any | null;
 	error: string | null;
@@ -15,9 +16,12 @@ export interface PlayerGameState {
 	totalQuestions: number;
 	timeLimit: number;
 	endsAt: number;
+	rank: number | null;
+	score: number;
 }
 
 export const initialState: PlayerGameState = {
+	playerId: null,
 	gameState: "WAITING",
 	currentQuestion: null,
 	error: null,
@@ -29,11 +33,14 @@ export const initialState: PlayerGameState = {
 	totalQuestions: 0,
 	timeLimit: 0,
 	endsAt: 0,
+	rank: null,
+	score: 0,
 };
 
 export type PlayerAction =
 	| { type: "SET_CONNECTED"; payload: boolean }
 	| { type: "SET_ERROR"; payload: string }
+	| { type: "JOIN_SUCCESS"; payload: number }
 	| {
 			type: "NEW_QUESTION";
 			payload: {
@@ -46,7 +53,7 @@ export type PlayerAction =
 	  }
 	| { type: "SUBMIT_ANSWER"; payload: number }
 	| { type: "QUESTION_TIME_UP"; payload: { correctOptionId: number } }
-	| { type: "GAME_FINISHED" };
+	| { type: "GAME_OVER"; payload: { rank: number; score: number } };
 
 function playerReducer(
 	state: PlayerGameState,
@@ -58,6 +65,9 @@ function playerReducer(
 
 		case "SET_ERROR":
 			return { ...state, error: action.payload };
+
+		case "JOIN_SUCCESS":
+			return { ...state, playerId: action.payload };
 
 		case "NEW_QUESTION":
 			return {
@@ -89,8 +99,13 @@ function playerReducer(
 				isCorrect,
 			};
 
-		case "GAME_FINISHED":
-			return { ...state, gameState: "FINISHED" };
+		case "GAME_OVER":
+			return {
+				...state,
+				gameState: "FINISHED",
+				rank: action.payload.rank,
+				score: action.payload.score,
+			};
 
 		default:
 			return state;

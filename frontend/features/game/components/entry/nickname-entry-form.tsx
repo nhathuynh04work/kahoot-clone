@@ -27,6 +27,7 @@ export function NicknameEntryForm({ pin, quizTitle }: NicknameEntryFormProps) {
 				return;
 			}
 
+			localStorage.setItem("kahoot-nickname", response.playerId);
 			router.push(`/game/${pin}`);
 		});
 	}

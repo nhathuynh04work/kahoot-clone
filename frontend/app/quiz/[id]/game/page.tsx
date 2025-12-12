@@ -5,12 +5,17 @@ import { socket } from "@/features/game/lib/socket";
 import { useSocketEvent } from "@/features/game/hooks/use-socket-event";
 import Loading from "@/components/common/loading";
 import Error from "@/components/common/error";
-import { useHostReducer } from "@/features/game/hooks/use-host-reducer";
+import {
+	LeaderboardItem,
+	useHostReducer,
+} from "@/features/game/hooks/use-host-reducer";
 import { Player } from "@/features/game/types";
 import { QuestionWithOptions } from "@/features/quizzes/types";
 import QuestionScreen from "@/features/game/components/host/question-screen";
 import WaitingScreen from "@/features/game/components/host/waiting-screen";
 import HostResultScreen from "@/features/game/components/host/result-screen";
+import HostFinishScreen from "@/features/game/components/host/finish-screen";
+import { toast } from "sonner";
 
 interface HostGameProps {
 	params: Promise<{ id: string }>;
@@ -77,6 +82,11 @@ export default function HostGame({ params }: HostGameProps) {
 		}
 	);
 
+	useSocketEvent("gameOver", (data: { leaderboard: LeaderboardItem[] }) => {
+		console.log("Hello");
+		dispatch({ type: "GAME_OVER", payload: data.leaderboard });
+	});
+
 	useEffect(() => {
 		if (state.pin || !state.isConnected) return;
 
@@ -126,6 +136,9 @@ export default function HostGame({ params }: HostGameProps) {
 				/>
 			);
 
+		case "FINISHED":
+			return <HostFinishScreen leaderboard={state.leaderboard} />;
+
 		case "RESULTS":
 			if (!state.currentQuestion || !state.questionResults)
 				return <Loading />;
@@ -135,6 +148,11 @@ export default function HostGame({ params }: HostGameProps) {
 					stats={state.questionResults.stats}
 					correctOptionId={state.questionResults.correctOptionId}
 					onNext={() => {
+						console.log(
+							state.currentQuestion.sortOrder + 1 !== state.totalQuestions
+								? state.currentQuestion.sortOrder
+								: "Game over"
+						);
 						socket.emit("nextQuestion", { pin: state.pin });
 					}}
 				/>
