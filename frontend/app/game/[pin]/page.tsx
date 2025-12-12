@@ -57,6 +57,7 @@ export default function GamePage() {
 	useSocketEvent("gameOver", (data: { leaderboard: LeaderboardItem[] }) => {
 		// 1. Get current nickname (Assuming it was saved during Join)
 		const myNickname = localStorage.getItem("kahoot-nickname");
+		console.log(myNickname);
 
 		// 2. Find myself
 		const myEntryIndex = data.leaderboard.findIndex(

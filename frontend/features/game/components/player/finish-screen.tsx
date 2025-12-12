@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Trophy, Medal, Award, Frown } from "lucide-react";
 
 interface FinishScreenProps {
 	rank: number | null;
@@ -8,62 +9,82 @@ interface FinishScreenProps {
 }
 
 export default function FinishScreen({ rank, score }: FinishScreenProps) {
+	let TitleIcon = Frown;
 	let title = "Game Over";
 	let message = "Thanks for playing!";
-	let bgColor = "bg-gray-100";
+	let iconColor = "text-gray-400";
+	let bgGradient = "from-gray-900 to-gray-800";
 
 	if (rank === 1) {
-		title = "🥇 WINNER! 🥇";
+		TitleIcon = Trophy;
+		title = "Winner!";
 		message = "You are the champion!";
-		bgColor = "bg-yellow-100";
+		iconColor = "text-yellow-400";
+		bgGradient = "from-yellow-900/40 to-gray-900";
 	} else if (rank === 2) {
-		title = "🥈 2nd Place";
+		TitleIcon = Medal;
+		title = "2nd Place";
 		message = "So close! Great job.";
-		bgColor = "bg-slate-200";
+		iconColor = "text-slate-300";
+		bgGradient = "from-slate-800/60 to-gray-900";
 	} else if (rank === 3) {
-		title = "🥉 3rd Place";
+		TitleIcon = Medal;
+		title = "3rd Place";
 		message = "You made it to the podium!";
-		bgColor = "bg-orange-100";
+		iconColor = "text-orange-400";
+		bgGradient = "from-orange-900/40 to-gray-900";
 	} else if (rank && rank <= 10) {
+		TitleIcon = Award;
 		title = "Top 10!";
 		message = "You did great!";
-		bgColor = "bg-blue-50";
+		iconColor = "text-blue-400";
+		bgGradient = "from-blue-900/40 to-gray-900";
 	}
 
 	return (
 		<div
-			className={`flex flex-col items-center justify-center h-full p-6 ${bgColor}`}>
-			<div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full animate-fade-in-up">
-				<h1 className="text-4xl font-black text-gray-800 mb-2">
+			className={`flex flex-col items-center justify-center min-h-screen p-6 bg-linear-to-b ${bgGradient} text-white`}>
+			<div className="w-full max-w-sm animate-fade-in-up flex flex-col items-center">
+				{/* Main Icon */}
+				<div
+					className={`mb-6 p-6 rounded-full bg-gray-800/80 border border-gray-700 shadow-xl ${iconColor}`}>
+					<TitleIcon className="w-16 h-16" strokeWidth={1.5} />
+				</div>
+
+				<h1 className="text-4xl font-black mb-2 tracking-tight">
 					{title}
 				</h1>
-				<p className="text-gray-600 mb-8">{message}</p>
+				<p className="text-gray-400 mb-8 text-lg font-medium text-center">
+					{message}
+				</p>
 
-				<div className="space-y-4">
-					<div className="bg-gray-50 p-4 rounded-xl">
-						<p className="text-sm text-gray-500 uppercase font-bold">
+				<div className="w-full space-y-4">
+					{/* Score Card */}
+					<div className="bg-gray-800/60 backdrop-blur-sm p-5 rounded-xl border border-gray-700 flex justify-between items-center">
+						<span className="text-gray-400 font-bold uppercase text-sm tracking-wider">
 							Final Score
-						</p>
-						<p className="text-3xl font-bold text-blue-600">
+						</span>
+						<span className="text-3xl font-black text-blue-400">
 							{score}
-						</p>
+						</span>
 					</div>
 
+					{/* Rank Card */}
 					{rank && (
-						<div className="bg-gray-50 p-4 rounded-xl">
-							<p className="text-sm text-gray-500 uppercase font-bold">
+						<div className="bg-gray-800/60 backdrop-blur-sm p-5 rounded-xl border border-gray-700 flex justify-between items-center">
+							<span className="text-gray-400 font-bold uppercase text-sm tracking-wider">
 								Rank
-							</p>
-							<p className="text-3xl font-bold text-gray-800">
+							</span>
+							<span className="text-3xl font-black text-white">
 								#{rank}
-							</p>
+							</span>
 						</div>
 					)}
 				</div>
 
 				<Link
 					href="/"
-					className="block mt-8 w-full py-3 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-colors">
+					className="mt-10 w-full py-4 bg-white text-gray-900 rounded-xl font-bold text-center hover:bg-gray-200 transition-all shadow-lg active:scale-95">
 					Back to Home
 				</Link>
 			</div>

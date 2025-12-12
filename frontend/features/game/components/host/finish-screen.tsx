@@ -11,8 +11,8 @@ export default function HostFinishScreen({
 	const runnersUp = leaderboard.slice(3, 10);
 
 	return (
-		<div className="flex flex-col h-full w-full max-w-6xl mx-auto p-6">
-			<h1 className="text-4xl font-bold text-center text-gray-800 mb-10">
+		<div className="flex flex-col h-full w-full max-w-6xl mx-auto p-6 text-white">
+			<h1 className="text-4xl font-bold text-center text-white mb-10">
 				Podium
 			</h1>
 
@@ -22,13 +22,13 @@ export default function HostFinishScreen({
 				{top3[1] && (
 					<div className="flex flex-col items-center w-1/4 animate-bounce-in-left">
 						<div className="mb-2 text-center">
-							<p className="font-bold text-xl text-gray-700">
+							<p className="font-bold text-xl text-gray-200">
 								{top3[1].nickname}
 							</p>
-							<p className="text-gray-500">{top3[1].score} pts</p>
+							<p className="text-gray-400">{top3[1].score} pts</p>
 						</div>
-						<div className="w-full bg-slate-300 h-48 rounded-t-lg flex items-center justify-center shadow-lg border-t-4 border-slate-400">
-							<span className="text-4xl font-bold text-slate-500">
+						<div className="w-full bg-slate-600 h-48 rounded-t-lg flex items-center justify-center shadow-lg border-t-4 border-slate-500">
+							<span className="text-4xl font-bold text-slate-400">
 								2
 							</span>
 						</div>
@@ -39,20 +39,20 @@ export default function HostFinishScreen({
 				{top3[0] && (
 					<div className="flex flex-col items-center w-1/3 z-10 animate-bounce-in-up">
 						<div className="mb-4 text-center">
-							<div className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold mb-2">
+							<div className="inline-block px-3 py-1 bg-yellow-900/50 border border-yellow-700 text-yellow-200 rounded-full text-sm font-bold mb-2">
 								WINNER
 							</div>
-							<p className="font-bold text-3xl text-gray-800">
+							<p className="font-bold text-3xl text-white">
 								{top3[0].nickname}
 							</p>
-							<p className="text-xl text-blue-600 font-bold">
+							<p className="text-xl text-blue-400 font-bold">
 								{top3[0].score} pts
 							</p>
 						</div>
-						<div className="w-full bg-yellow-400 h-64 rounded-t-lg flex items-center justify-center shadow-xl border-t-4 border-yellow-300 relative overflow-hidden">
+						<div className="w-full bg-yellow-500 h-64 rounded-t-lg flex items-center justify-center shadow-xl border-t-4 border-yellow-400 relative overflow-hidden">
 							{/* Shine effect */}
 							<div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent"></div>
-							<span className="text-6xl font-bold text-yellow-700">
+							<span className="text-6xl font-bold text-yellow-800">
 								1
 							</span>
 						</div>
@@ -63,13 +63,13 @@ export default function HostFinishScreen({
 				{top3[2] && (
 					<div className="flex flex-col items-center w-1/4 animate-bounce-in-right">
 						<div className="mb-2 text-center">
-							<p className="font-bold text-xl text-gray-700">
+							<p className="font-bold text-xl text-gray-200">
 								{top3[2].nickname}
 							</p>
-							<p className="text-gray-500">{top3[2].score} pts</p>
+							<p className="text-gray-400">{top3[2].score} pts</p>
 						</div>
-						<div className="w-full bg-orange-300 h-32 rounded-t-lg flex items-center justify-center shadow-lg border-t-4 border-orange-400">
-							<span className="text-4xl font-bold text-orange-600">
+						<div className="w-full bg-orange-700 h-32 rounded-t-lg flex items-center justify-center shadow-lg border-t-4 border-orange-600">
+							<span className="text-4xl font-bold text-orange-900">
 								3
 							</span>
 						</div>
@@ -79,20 +79,20 @@ export default function HostFinishScreen({
 
 			{/* Runners Up List */}
 			{runnersUp.length > 0 && (
-				<div className="bg-white rounded-xl shadow-sm border max-w-2xl mx-auto w-full overflow-hidden">
+				<div className="bg-gray-800 rounded-xl shadow-sm border border-gray-700 max-w-2xl mx-auto w-full overflow-hidden">
 					{runnersUp.map((player, index) => (
 						<div
 							key={index}
-							className="flex justify-between items-center p-4 border-b last:border-b-0 hover:bg-gray-50">
+							className="flex justify-between items-center p-4 border-b border-gray-700 last:border-b-0 hover:bg-gray-700/50">
 							<div className="flex items-center gap-4">
-								<span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold text-gray-600">
+								<span className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-full font-bold text-gray-300">
 									{index + 4}
 								</span>
-								<span className="font-medium text-gray-800">
+								<span className="font-medium text-white">
 									{player.nickname}
 								</span>
 							</div>
-							<span className="font-bold text-gray-600">
+							<span className="font-bold text-gray-400">
 								{player.score}
 							</span>
 						</div>
