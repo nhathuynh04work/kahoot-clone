@@ -9,6 +9,8 @@ import { QuizModule } from "./quiz/quiz.module.js";
 import { QuestionModule } from "./question/question.module.js";
 import { GameModule } from "./game/game.module.js";
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { SocketManagerService } from "./common/socket-manager.service.js";
+import { RedisModule } from './redis/redis.module';
 
 @Module({
     imports: [
@@ -20,8 +22,9 @@ import { EventEmitterModule } from "@nestjs/event-emitter";
         QuizModule,
         QuestionModule,
         GameModule,
+        RedisModule,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, SocketManagerService],
 })
 export class AppModule {}
