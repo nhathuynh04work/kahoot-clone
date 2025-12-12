@@ -422,7 +422,6 @@ export class GameService {
 
         // end of game
         if (!question) {
-            await this.endLobby(pin, lobby.hostId);
             return null;
         }
 
@@ -590,6 +589,20 @@ export class GameService {
             correctOptionId: correctOption?.id,
             stats,
         };
+    }
+
+    async getLeaderboard(lobbyId: number) {
+        return this.prisma.gamePlayer.findMany({
+            where: { lobbyId },
+            select: {
+                id: true,
+                nickname: true,
+                score: true,
+            },
+            orderBy: {
+                score: "desc",
+            },
+        });
     }
 
     getAnswerCountForQuestion(lobbyId: number, questionId: number) {

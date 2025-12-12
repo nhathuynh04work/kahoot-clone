@@ -21,6 +21,8 @@ export function NicknameEntryForm({ pin, quizTitle }: NicknameEntryFormProps) {
 			return;
 		}
 
+		localStorage.setItem("kahoot-nickname", nickname);
+
 		socket.emit("joinLobby", { pin, nickname }, (response: any) => {
 			if (!response.success) {
 				setError(response.error || "Failed to join lobby.");

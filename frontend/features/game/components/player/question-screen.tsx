@@ -53,14 +53,14 @@ export default function PlayerQuestionScreen({
 	}, [endsAt, timeLimit]);
 
 	return (
-		<div className="flex flex-col h-full bg-gray-100">
+		<div className="flex flex-col h-full">
 			{/* Header: Progress & Timer */}
-			<div className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
+			<div className="bg-gray-800 p-4 shadow-sm flex justify-between items-center sticky top-0 z-10 border-b border-gray-700">
 				<div className="flex items-center gap-3">
-					<span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-bold">
+					<span className="bg-gray-700 text-gray-200 px-3 py-1 rounded-full text-sm font-bold border border-gray-600">
 						{questionIndex + 1}/{totalQuestions}
 					</span>
-					<div className="text-sm font-medium text-gray-500 hidden sm:block">
+					<div className="text-sm font-medium text-gray-400 hidden sm:block">
 						Quiz in progress
 					</div>
 				</div>
@@ -70,29 +70,29 @@ export default function PlayerQuestionScreen({
 					<span
 						className={`font-bold text-xl ${
 							timeLeft <= 5
-								? "text-red-500 animate-pulse"
-								: "text-gray-700"
+								? "text-red-400 animate-pulse"
+								: "text-white"
 						}`}>
 						{timeLeft}
 					</span>
-					<span className="text-xs text-gray-400 uppercase font-semibold">
+					<span className="text-xs text-gray-500 uppercase font-semibold">
 						sec
 					</span>
 				</div>
 			</div>
 
 			{/* Progress Bar Line */}
-			<div className="w-full h-2 bg-gray-200">
+			<div className="w-full h-2 bg-gray-700">
 				<div
-					className="h-full bg-purple-600 transition-all duration-100 ease-linear"
+					className="h-full bg-purple-500 transition-all duration-100 ease-linear"
 					style={{ width: `${progressPercentage}%` }}
 				/>
 			</div>
 
 			{/* Question Body */}
 			<div className="flex-1 p-4 flex flex-col items-center justify-center max-w-lg mx-auto w-full">
-				<div className="bg-white p-6 rounded-xl shadow-sm border mb-6 w-full text-center">
-					<h2 className="text-xl font-bold text-gray-800">
+				<div className="bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-700 mb-6 w-full text-center">
+					<h2 className="text-xl font-bold text-white">
 						{question.text}
 					</h2>
 				</div>
@@ -109,7 +109,7 @@ export default function PlayerQuestionScreen({
 							onClick={onSubmitAnswer}
 							className={
 								selectedOptionId === option.id
-									? "ring-4 ring-offset-2 ring-indigo-500"
+									? "ring-4 ring-offset-2 ring-offset-gray-900 ring-indigo-500"
 									: ""
 							}
 						/>
@@ -119,7 +119,7 @@ export default function PlayerQuestionScreen({
 
 			{/* Status Footer */}
 			{selectedOptionId && (
-				<div className="p-4 bg-indigo-50 text-center text-indigo-700 font-medium animate-pulse">
+				<div className="p-4 bg-indigo-900/50 text-center text-indigo-200 font-medium animate-pulse border-t border-indigo-800">
 					Answer submitted! Waiting for results...
 				</div>
 			)}

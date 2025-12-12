@@ -2,6 +2,12 @@ import { socket } from "@/features/game/lib/socket";
 import { useReducer } from "react";
 import { Player } from "../types";
 
+export interface LeaderboardItem {
+	id: number;
+	nickname: string;
+	score: number;
+}
+
 export interface HostGameState {
 	gameState: "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
 	pin: string | null;
@@ -19,6 +25,7 @@ export interface HostGameState {
 		stats: Record<number, number>;
 		correctOptionId: number;
 	} | null;
+	leaderboard: LeaderboardItem[];
 }
 
 export const initialState: HostGameState = {
@@ -35,6 +42,7 @@ export const initialState: HostGameState = {
 	isConnected: socket.connected,
 	answerCount: 0,
 	questionResults: null,
+	leaderboard: [],
 };
 
 export type HostGameAction =
@@ -61,7 +69,8 @@ export type HostGameAction =
 				stats: Record<number, number>;
 				correctOptionId: number;
 			};
-	  };
+	  }
+	| { type: "GAME_OVER"; payload: LeaderboardItem[] };
 
 function gameReducer(
 	state: HostGameState,
@@ -126,6 +135,14 @@ function gameReducer(
 				...state,
 				gameState: "RESULTS",
 				questionResults: action.payload,
+			};
+
+		case "GAME_OVER":
+			return {
+				...state,
+				gameState: "FINISHED",
+				leaderboard: action.payload,
+				loading: false,
 			};
 
 		default:

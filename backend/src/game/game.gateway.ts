@@ -8,12 +8,7 @@ import {
     ConnectedSocket,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import {
-    BadRequestException,
-    Logger,
-    NotFoundException,
-    UseGuards,
-} from "@nestjs/common";
+import { Logger, UseGuards } from "@nestjs/common";
 import { QuizService } from "../quiz/quiz.service.js";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
@@ -137,7 +132,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 nickname: newPlayer.nickname,
             });
 
-            return { success: true };
+            return { success: true, playerId: newPlayer.id };
         } catch (error) {
             return {
                 success: false,
@@ -178,6 +173,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @User() user: JwtUser,
         @MessageBody() payload: { pin: string },
     ) {
+        this.logger.log("reached");
         const { pin } = payload;
 
         try {
@@ -185,7 +181,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             if (!roundData) {
                 this.logger.log(`Game finished for lobby ${pin}`);
-                this.server.to(pin).emit("gameOver");
+
+                const lobby = await this.gameService.getValidLobby(pin);
+                await this.gameService.endLobby(pin, user.id);
+                const leaderboard = await this.gameService.getLeaderboard(
+                    lobby.id,
+                );
+
+                this.server.to(pin).emit("gameOver", {
+                    leaderboard: leaderboard,
+                });
+
                 return { success: true };
             }
 
