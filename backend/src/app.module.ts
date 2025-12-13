@@ -9,8 +9,6 @@ import { QuizModule } from "./quiz/quiz.module.js";
 import { QuestionModule } from "./question/question.module.js";
 import { GameModule } from "./game/game.module.js";
 import { EventEmitterModule } from "@nestjs/event-emitter";
-import { RedisModule } from "./redis/redis.module.js";
-import { SocketModule } from "./socket/socket.module.js";
 
 @Module({
     imports: [
@@ -22,8 +20,6 @@ import { SocketModule } from "./socket/socket.module.js";
         QuizModule,
         QuestionModule,
         GameModule,
-        RedisModule,
-        SocketModule,
     ],
     controllers: [AppController],
     providers: [AppService],

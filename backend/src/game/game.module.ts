@@ -1,17 +1,15 @@
 import { Module } from "@nestjs/common";
-import { GameGateway } from "./game.gateway.js";
-import { GameService } from "./game.service.js";
-import { QuizModule } from "../quiz/quiz.module.js";
-import { AuthModule } from "../auth/auth.module.js";
-import { GameController } from "./game.controller.js";
-import { QuestionModule } from "../question/question.module.js";
-import { LobbyService } from "./services/lobby.service.js";
-import { GameSessionService } from "./services/game-session.service.js";
-import { SocketModule } from "../socket/socket.module.js";
+import { GameGateway } from "./game.gateway";
+import { GameService } from "./game.service";
+import { QuizModule } from "../quiz/quiz.module";
+import { AuthModule } from "../auth/auth.module";
+import { GameController } from "./game.controller";
+import { QuestionModule } from "../question/question.module";
+import { LobbyService } from "./services/lobby.service";
 
 @Module({
-    imports: [QuizModule, AuthModule, QuestionModule, SocketModule],
-    providers: [GameGateway, GameService, LobbyService, GameSessionService],
+    imports: [QuizModule, AuthModule, QuestionModule],
+    providers: [GameGateway, GameService, LobbyService],
     controllers: [GameController],
 })
 export class GameModule {}
