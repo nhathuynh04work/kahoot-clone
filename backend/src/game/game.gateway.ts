@@ -25,7 +25,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.logger.log(`Client connected: ${client.id}`);
     }
 
-    async handleDisconnect(client: Socket) {}
+    async handleDisconnect(client: Socket) {
+        
+    }
 
     @UseGuards(JwtWsGuard)
     @SubscribeMessage("createLobby")
@@ -39,4 +41,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const lobby = await this.lobbyService.createLobby({ quizId, hostId });
         return { lobby };
     }
+
+
 }

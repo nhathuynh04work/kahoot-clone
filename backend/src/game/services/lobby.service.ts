@@ -1,6 +1,11 @@
-import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
-import { LobbyStatus, Prisma } from "../../generated/prisma/client";
+import {
+    BadRequestException,
+    ConflictException,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
+import { LobbyStatus, Prisma } from "../../generated/prisma/client";
 
 export class LobbyService {
     private logger = new Logger(LobbyService.name);
@@ -64,10 +69,10 @@ export class LobbyService {
 
         const existing = await this.findActiveLobby({ quizId, hostId });
 
-        // [TO-DO]: NO REJOINING LOGIC
         if (existing) {
-            this.logger.log("Found existing lobby. Activate rejoining logic");
-            return existing;
+            throw new ConflictException(
+                "You are currently hosting this quiz somewhere",
+            );
         }
 
         const quiz = await this.prisma.quiz.findUnique({
