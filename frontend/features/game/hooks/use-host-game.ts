@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 import { HostGameState, Player } from "../types";
-import { useConfirmUnload } from "./use-confirm-unload";
+import { useConfirmLeave } from "./use-confirm-leave";
 import { useSocketEvent } from "../context/socket-context";
 import { useHostJoin } from "./use-join-lobby";
 import { socket } from "../lib/socket";
@@ -33,7 +33,7 @@ const hostReducer = (
 export const useHostGame = (lobbyId: number) => {
 	const [state, dispatch] = useReducer(hostReducer, initialState);
 
-	useConfirmUnload();
+	useConfirmLeave();
 
 	useHostJoin(lobbyId);
 

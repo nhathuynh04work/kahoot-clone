@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { socket } from "@/features/game/lib/socket";
 
 interface SocketContextType {
@@ -49,11 +49,19 @@ export const useSocketEvent = (
 	event: string,
 	handler: (...args: any[]) => void
 ) => {
+	const savedHandler = useRef(handler);
+
 	useEffect(() => {
-		socket.on(event, handler);
+		savedHandler.current = handler;
+	}, [handler]);
+
+	useEffect(() => {
+		const eventListener = (...args: any[]) => savedHandler.current(...args);
+
+		socket.on(event, eventListener);
 
 		return () => {
-			socket.off(event, handler);
+			socket.off(event, eventListener);
 		};
-	}, [event, handler]);
+	}, [event]);
 };

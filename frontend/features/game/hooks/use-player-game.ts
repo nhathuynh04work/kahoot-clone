@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 import { PlayerGameState } from "../types";
-import { useConfirmUnload } from "./use-confirm-unload";
+import { useConfirmLeave } from "./use-confirm-leave";
 
 const initialState: PlayerGameState = {
 	nickname: "",
@@ -38,7 +38,7 @@ const playerReducer = (
 export const usePlayerGame = () => {
 	const [state, dispatch] = useReducer(playerReducer, initialState);
 
-	useConfirmUnload();
+	useConfirmLeave();
 
 	return { state };
 };
