@@ -103,7 +103,7 @@ export class GameGateway
 
         await client.join(`${lobbyId}`);
         this.logger.log(`Host joined lobby ${lobbyId}`);
-        return { success: true };
+        return { success: true, pin: lobby.pin };
     }
 
     @SubscribeMessage("playerJoin")

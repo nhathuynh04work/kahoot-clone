@@ -15,13 +15,21 @@ const initialState: HostGameState = {
 	totalQuestions: 0,
 };
 
-type HostAction = { type: "PLAYER_JOINED"; payload: Player };
+type HostAction =
+	| { type: "SET_PIN"; payload: string }
+	| { type: "PLAYER_JOINED"; payload: Player };
 
 const hostReducer = (
 	state: HostGameState,
 	action: HostAction
 ): HostGameState => {
 	switch (action.type) {
+		case "SET_PIN":
+			return {
+				...state,
+				pin: action.payload,
+			};
+
 		case "PLAYER_JOINED":
 			return {
 				...state,
@@ -35,7 +43,9 @@ export const useHostGame = (lobbyId: number) => {
 
 	useConfirmLeave();
 
-	useHostJoin(lobbyId);
+	useHostJoin(lobbyId, (pin: string) => {
+		dispatch({ type: "SET_PIN", payload: pin });
+	});
 
 	useSocketEvent("playerJoined", ({ player }: { player: Player }) => {
 		dispatch({ type: "PLAYER_JOINED", payload: player });
