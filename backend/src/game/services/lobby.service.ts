@@ -14,32 +14,33 @@ export class LobbyService {
 
     constructor(private prisma: PrismaService) {}
 
-    async findActiveLobby(
-        params: { pin: string } | { hostId: number; quizId: number },
-    ) {
-        const whereCondition: Prisma.GameLobbyWhereInput = {
-            status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
-        };
-
-        if ("pin" in params) {
-            whereCondition.pin = params.pin;
-        } else {
-            whereCondition.quizId = params.quizId;
-            whereCondition.hostId = params.hostId;
-        }
-
+    async findActiveLobbyByPin(pin: string) {
         const lobby = await this.prisma.gameLobby.findFirst({
-            where: whereCondition,
+            where: {
+                pin: pin,
+                status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
+            },
             include: { quiz: true },
         });
 
         if (!lobby) {
-            const errorMsg =
-                "pin" in params
-                    ? `Active lobby with PIN ${params.pin} not found.`
-                    : `Active lobby for this Host/Quiz combination not found.`;
+            throw new NotFoundException(`Lobby with PIN ${pin} not found`);
+        }
 
-            throw new NotFoundException(errorMsg);
+        return lobby;
+    }
+
+    async findActiveLobbyById(lobbyId: number) {
+        const lobby = await this.prisma.gameLobby.findFirst({
+            where: {
+                id: lobbyId,
+                status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
+            },
+            include: { quiz: true },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException(`Lobby not found`);
         }
 
         return lobby;
@@ -68,14 +69,6 @@ export class LobbyService {
 
     async createLobby(params: { quizId: number; hostId: number }) {
         const { quizId, hostId } = params;
-
-        const existing = await this.findActiveLobby({ quizId, hostId });
-
-        if (existing) {
-            throw new ConflictException(
-                "You are currently hosting this quiz somewhere",
-            );
-        }
 
         const quiz = await this.prisma.quiz.findUnique({
             where: { id: quizId },
@@ -106,7 +99,7 @@ export class LobbyService {
     async addPlayerToLobby(params: { pin: string; nickname: string }) {
         const { pin, nickname } = params;
 
-        const lobby = await this.findActiveLobby({ pin });
+        const lobby = await this.findActiveLobbyByPin(pin);
 
         const player = await this.prisma.gamePlayer.create({
             data: {

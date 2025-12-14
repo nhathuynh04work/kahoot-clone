@@ -9,7 +9,7 @@ export class GameController {
 
     @Get("lobby")
     async getActiveLobby(@Query("pin") pin: string) {
-        const lobby = await this.lobbyService.findActiveLobby({ pin });
+        const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
         return lobby;
     }

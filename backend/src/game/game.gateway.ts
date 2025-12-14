@@ -68,11 +68,20 @@ export class GameGateway
         @MessageBody() payload: { lobbyId: number },
         @ConnectedSocket() client: Socket,
     ) {
+        const existing = await this.lobbyService.findActiveLobbyById(
+            payload.lobbyId,
+        );
+
+        if (existing) {
+            return { success: false };
+        }
+
         client.data.isHost = true;
         client.data.lobbyId = payload.lobbyId;
 
         await client.join(`${payload.lobbyId}`);
         this.logger.log(`Host joined lobby ${payload.lobbyId}`);
+        return { success: true };
     }
 
     @SubscribeMessage("playerJoin")

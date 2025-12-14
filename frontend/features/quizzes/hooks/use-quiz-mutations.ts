@@ -20,3 +20,4 @@ export const useUpdateQuiz = () => {
 		mutationFn: updateQuiz,
 	});
 };
+
