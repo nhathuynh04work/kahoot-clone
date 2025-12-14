@@ -86,9 +86,33 @@ export class LobbyService {
 
         const pin = await this.getUniquePin();
         const newLobby = this.prisma.gameLobby.create({
-            data: { pin, quizId, hostId, status: LobbyStatus.WAITING },
+            data: { pin, quizId, hostId },
         });
 
         return newLobby;
+    }
+
+    async closeLobby(lobbyId: number) {
+        const closed = await this.prisma.gameLobby.update({
+            where: { id: lobbyId },
+            data: { status: LobbyStatus.CLOSED },
+        });
+
+        return closed;
+    }
+
+    async addPlayerToLobby(params: { pin: string; nickname: string }) {
+        const { pin, nickname } = params;
+
+        const lobby = await this.findActiveLobby({ pin });
+
+        const player = await this.prisma.gamePlayer.create({
+            data: {
+                nickname,
+                lobbyId: lobby.id,
+            },
+        });
+
+        return player;
     }
 }
