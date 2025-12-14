@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Image, Play } from "lucide-react";
-import { QuizWithQuestions } from "@/lib/types/quiz";
+import { QuizWithQuestions } from "../types";
 
 interface QuizCardProps {
 	quiz: QuizWithQuestions;

@@ -62,26 +62,20 @@ export class GameGateway
     }
 
     @UseGuards(JwtWsGuard)
-    @SubscribeMessage("createLobby")
-    async handleCreateLobby(
+    @SubscribeMessage("hostJoin")
+    async handleHostJoin(
         @User() user: JwtUser,
-        @MessageBody() payload: { quizId: number },
+        @MessageBody() payload: { lobbyId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        const { quizId } = payload;
-        const hostId = user.id;
-
-        const lobby = await this.lobbyService.createLobby({ quizId, hostId });
-
-        // Add metadata to the socket and join it to a room
         client.data.isHost = true;
-        client.data.lobbyId = lobby.id;
-        await client.join(`${lobby.id}`);
+        client.data.lobbyId = payload.lobbyId;
 
-        return { lobby };
+        await client.join(`${payload.lobbyId}`);
+        this.logger.log(`Host joined lobby ${payload.lobbyId}`);
     }
 
-    @SubscribeMessage("joinLobby")
+    @SubscribeMessage("playerJoin")
     async handleJoinLobby(
         @MessageBody() payload: { pin: string; nickname: string },
         @ConnectedSocket() client: Socket,
