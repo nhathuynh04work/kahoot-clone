@@ -14,7 +14,7 @@ import { Logger, UseGuards } from "@nestjs/common";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
-import { LobbyStatus } from "../generated/prisma/enums";
+import { LobbyStatus } from "../generated/prisma/client";
 
 @WebSocketGateway()
 export class GameGateway
@@ -73,16 +73,33 @@ export class GameGateway
         @ConnectedSocket() client: Socket,
     ) {
         const { lobbyId } = payload;
-        const lobby = await this.lobbyService.findLobbyById(lobbyId);
+
+        if (client.data.lobbyId === lobbyId) {
+            this.logger.debug(
+                `Duplicate join request for ${lobbyId} blocked (Strict Mode).`,
+            );
+            return { success: true };
+        }
+
+        client.data.isHost = true;
+        client.data.lobbyId = lobbyId;
+
+        let lobby;
+        try {
+            lobby = await this.lobbyService.findLobbyById(lobbyId);
+        } catch (error) {
+            return { success: false };
+        }
+
+        if (lobby.hostId !== user.id) {
+            return { success: false };
+        }
 
         if (lobby.status !== LobbyStatus.CREATED) {
             return { success: false };
         }
 
         await this.lobbyService.updateLobbyStatus(lobbyId, LobbyStatus.WAITING);
-
-        client.data.isHost = true;
-        client.data.lobbyId = lobbyId;
 
         await client.join(`${lobbyId}`);
         this.logger.log(`Host joined lobby ${lobbyId}`);
