@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Image, Play } from "lucide-react";
-import { QuizWithQuestions } from "@/lib/types/quiz";
+import { QuizWithQuestions } from "../types";
+import { useCreateLobby } from "../hooks/use-create-lobby";
 
 interface QuizCardProps {
 	quiz: QuizWithQuestions;
@@ -8,7 +11,8 @@ interface QuizCardProps {
 
 export function QuizCard({ quiz }: QuizCardProps) {
 	const editHref = `/quiz/${quiz.id}/edit`;
-	const lobbyHref = `/quiz/${quiz.id}/game`;
+
+	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
 
 	return (
 		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-indigo-600">
@@ -42,13 +46,23 @@ export function QuizCard({ quiz }: QuizCardProps) {
 						Edit &rarr;
 					</Link>
 
-					{/* Link to Start Lobby */}
-					<Link
-						href={lobbyHref}
-						className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors shadow-md">
-						<Play className="w-4 h-4" />
-						<span>Start Game</span>
-					</Link>
+					<button
+						disabled={isPending}
+						className={`flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-medium transition-colors shadow-md ${
+							isPending
+								? "opacity-50 cursor-not-allowed"
+								: "hover:bg-indigo-700"
+						}`}
+						onClick={() => createLobby()}>
+						{isPending ? (
+							<span className="animate-pulse">Starting...</span>
+						) : (
+							<>
+								<Play className="w-4 h-4" />
+								<span>Start Game</span>
+							</>
+						)}
+					</button>
 				</div>
 			</div>
 		</div>

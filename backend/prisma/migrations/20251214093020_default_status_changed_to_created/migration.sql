@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "GameLobby" ALTER COLUMN "status" SET DEFAULT 'CREATED';

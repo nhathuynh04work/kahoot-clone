@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "LobbyStatus" AS ENUM ('WAITING', 'IN_PROGRESS', 'FINISHED', 'CLOSED');
+CREATE TYPE "LobbyStatus" AS ENUM ('WAITING', 'IN_PROGRESS', 'CLOSED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -53,10 +53,9 @@ CREATE TABLE "GameLobby" (
     "pin" CHAR(6) NOT NULL,
     "quizId" INTEGER NOT NULL,
     "hostId" INTEGER NOT NULL,
-    "hostSocketId" TEXT,
-    "status" "LobbyStatus" NOT NULL,
+    "status" "LobbyStatus" NOT NULL DEFAULT 'WAITING',
+    "current_question_index" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "activeHostQuizKey" TEXT,
 
     CONSTRAINT "GameLobby_pkey" PRIMARY KEY ("id")
 );
@@ -65,7 +64,6 @@ CREATE TABLE "GameLobby" (
 CREATE TABLE "GamePlayer" (
     "id" SERIAL NOT NULL,
     "nickname" TEXT NOT NULL,
-    "socketId" TEXT,
     "score" INTEGER NOT NULL DEFAULT 0,
     "lobbyId" INTEGER NOT NULL,
 
@@ -76,7 +74,6 @@ CREATE TABLE "GamePlayer" (
 CREATE TABLE "PlayerAnswer" (
     "id" SERIAL NOT NULL,
     "playerId" INTEGER NOT NULL,
-    "lobbyId" INTEGER NOT NULL,
     "questionId" INTEGER NOT NULL,
     "optionId" INTEGER NOT NULL,
     "isCorrect" BOOLEAN NOT NULL,
@@ -93,12 +90,6 @@ CREATE UNIQUE INDEX "Question_quiz_id_sort_order_key" ON "Question"("quiz_id", "
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Option_question_id_sort_order_key" ON "Option"("question_id", "sort_order");
-
--- CreateIndex
-CREATE UNIQUE INDEX "GameLobby_activeHostQuizKey_key" ON "GameLobby"("activeHostQuizKey");
-
--- CreateIndex
-CREATE UNIQUE INDEX "GamePlayer_socketId_key" ON "GamePlayer"("socketId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "GamePlayer_lobbyId_nickname_key" ON "GamePlayer"("lobbyId", "nickname");
@@ -126,9 +117,6 @@ ALTER TABLE "GamePlayer" ADD CONSTRAINT "GamePlayer_lobbyId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "GamePlayer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_lobbyId_fkey" FOREIGN KEY ("lobbyId") REFERENCES "GameLobby"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE ON UPDATE CASCADE;

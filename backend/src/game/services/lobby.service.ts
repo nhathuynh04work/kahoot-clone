@@ -1,41 +1,56 @@
-import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
+import {
+    BadRequestException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common";
 import { LobbyStatus, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 
+@Injectable()
 export class LobbyService {
     private logger = new Logger(LobbyService.name);
 
     constructor(private prisma: PrismaService) {}
 
-    async findActiveLobby(
-        params: { pin: string } | { hostId: number; quizId: number },
-    ) {
-        const whereCondition: Prisma.GameLobbyWhereInput = {
-            status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
-        };
-
-        if ("pin" in params) {
-            whereCondition.pin = params.pin;
-        } else {
-            whereCondition.quizId = params.quizId;
-            whereCondition.hostId = params.hostId;
-        }
-
+    async findActiveLobbyByPin(pin: string) {
         const lobby = await this.prisma.gameLobby.findFirst({
-            where: whereCondition,
+            where: {
+                pin: pin,
+                status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
+            },
             include: { quiz: true },
         });
 
         if (!lobby) {
-            const errorMsg =
-                "pin" in params
-                    ? `Active lobby with PIN ${params.pin} not found.`
-                    : `Active lobby for this Host/Quiz combination not found.`;
-
-            throw new NotFoundException(errorMsg);
+            throw new NotFoundException(`Lobby with PIN ${pin} not found`);
         }
 
         return lobby;
+    }
+
+    async findLobbyById(lobbyId: number) {
+        const lobby = await this.prisma.gameLobby.findFirst({
+            where: {
+                id: lobbyId,
+            },
+            include: { quiz: true },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException(`Lobby not found`);
+        }
+
+        return lobby;
+    }
+
+    async updateLobbyStatus(lobbyId: number, status: LobbyStatus) {
+        const updated = await this.prisma.gameLobby.update({
+            where: { id: lobbyId },
+            data: { status },
+        });
+
+        return updated;
     }
 
     private async getUniquePin() {
@@ -62,14 +77,6 @@ export class LobbyService {
     async createLobby(params: { quizId: number; hostId: number }) {
         const { quizId, hostId } = params;
 
-        const existing = await this.findActiveLobby({ quizId, hostId });
-
-        // [TO-DO]: NO REJOINING LOGIC
-        if (existing) {
-            this.logger.log("Found existing lobby. Activate rejoining logic");
-            return existing;
-        }
-
         const quiz = await this.prisma.quiz.findUnique({
             where: { id: quizId },
             include: { _count: { select: { questions: true } } },
@@ -81,9 +88,24 @@ export class LobbyService {
 
         const pin = await this.getUniquePin();
         const newLobby = this.prisma.gameLobby.create({
-            data: { pin, quizId, hostId, status: LobbyStatus.WAITING },
+            data: { pin, quizId, hostId },
         });
 
         return newLobby;
+    }
+
+    async addPlayerToLobby(params: { pin: string; nickname: string }) {
+        const { pin, nickname } = params;
+
+        const lobby = await this.findActiveLobbyByPin(pin);
+
+        const player = await this.prisma.gamePlayer.create({
+            data: {
+                nickname,
+                lobbyId: lobby.id,
+            },
+        });
+
+        return player;
     }
 }

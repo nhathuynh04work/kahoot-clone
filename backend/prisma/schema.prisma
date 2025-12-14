@@ -63,7 +63,7 @@ model GameLobby {
     pin                  String      @db.Char(6)
     quizId               Int
     hostId               Int
-    status               LobbyStatus
+    status               LobbyStatus @default(CREATED)
     currentQuestionIndex Int         @default(0) @map("current_question_index")
     createdAt            DateTime    @default(now())
 
@@ -73,9 +73,9 @@ model GameLobby {
 }
 
 enum LobbyStatus {
+    CREATED
     WAITING
     IN_PROGRESS
-    FINISHED
     CLOSED
 }
 
