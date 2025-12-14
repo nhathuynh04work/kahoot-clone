@@ -14,6 +14,7 @@ import { Logger, UseGuards } from "@nestjs/common";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
+import { LobbyStatus } from "../generated/prisma/enums";
 
 @WebSocketGateway()
 export class GameGateway
@@ -51,7 +52,10 @@ export class GameGateway
 
             this.socketService.emitToRoom(lobbyId, "hostLeft");
 
-            await this.lobbyService.closeLobby(lobbyId);
+            await this.lobbyService.updateLobbyStatus(
+                lobbyId,
+                LobbyStatus.CLOSED,
+            );
 
             return;
         }
@@ -68,19 +72,20 @@ export class GameGateway
         @MessageBody() payload: { lobbyId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        const existing = await this.lobbyService.findActiveLobbyById(
-            payload.lobbyId,
-        );
+        const { lobbyId } = payload;
+        const lobby = await this.lobbyService.findLobbyById(lobbyId);
 
-        if (existing) {
+        if (lobby.status !== LobbyStatus.CREATED) {
             return { success: false };
         }
 
-        client.data.isHost = true;
-        client.data.lobbyId = payload.lobbyId;
+        await this.lobbyService.updateLobbyStatus(lobbyId, LobbyStatus.WAITING);
 
-        await client.join(`${payload.lobbyId}`);
-        this.logger.log(`Host joined lobby ${payload.lobbyId}`);
+        client.data.isHost = true;
+        client.data.lobbyId = lobbyId;
+
+        await client.join(`${lobbyId}`);
+        this.logger.log(`Host joined lobby ${lobbyId}`);
         return { success: true };
     }
 
