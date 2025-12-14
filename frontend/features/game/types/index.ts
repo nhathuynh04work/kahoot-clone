@@ -9,11 +9,32 @@ export interface GameLobby {
 
 export type LobbyStatus = "WAITING" | "IN_PROGRESS" | "FINISHED" | "CLOSED";
 
-export type GameState = "WAITING" | "QUESTION" | "RESULTS" | "FINISHED";
+export type GameState =
+	| "WAITING"
+	| "QUESTION"
+	| "SUBMITTED"
+	| "RESULTS"
+	| "SCOREBOARD"
+	| "FINISHED";
 
 export interface Player {
-	id: string;
 	nickname: string;
-	isHost?: boolean;
-	score?: number;
+	points: number;
+}
+
+interface BaseGameState {
+	status: GameState;
+	currentQuestionIndex: number;
+	totalQuestions: number;
+}
+
+export interface HostGameState extends BaseGameState {
+	pin: string;
+	players: Array<Player>;
+	answerStats: Record<number, number>;
+}
+
+export interface PlayerGameState extends BaseGameState, Player {
+	rank: number;
+	isLastAnswerCorrect: boolean | null;
 }

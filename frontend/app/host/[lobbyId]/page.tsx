@@ -1,22 +1,27 @@
 "use client";
-
-import { socket } from "@/features/game/lib/socket";
+import { HostWaitingScreen } from "@/features/game/components/host/host-waiting-screen";
+import { useHostGame } from "@/features/game/hooks/use-host-game";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function HostGameScreen() {
-	const { lobbyId } = useParams();
 	const router = useRouter();
+	const { lobbyId } = useParams();
+	const { state, handlers } = useHostGame(Number(lobbyId));
 
 	if (!lobbyId) {
 		router.push("/dashboard");
 	}
 
-	useEffect(() => {
-		socket.emit("hostJoin", { lobbyId }, (response: any) => {
-			if (!response.success) {
-				router.push("/dashboard");
-			}
-		});
-	}, [lobbyId, router]);
+	switch (state.status) {
+		case "WAITING":
+			return (
+				<HostWaitingScreen
+					players={state.players}
+					pin={state.pin}
+					onStart={handlers.handleStartGame}
+				/>
+			);
+	}
+
+	return <p>implementing...</p>;
 }

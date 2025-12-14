@@ -44,3 +44,16 @@ export function useSocket() {
 	}
 	return context;
 }
+
+export const useSocketEvent = (
+	event: string,
+	handler: (...args: any[]) => void
+) => {
+	useEffect(() => {
+		socket.on(event, handler);
+
+		return () => {
+			socket.off(event, handler);
+		};
+	}, [event, handler]);
+};
