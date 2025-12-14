@@ -10,10 +10,9 @@ import {
     OnGatewayInit,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { Inject, Logger, UseGuards } from "@nestjs/common";
+import { Logger, UseGuards } from "@nestjs/common";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
-import Redis from "ioredis";
 import { SocketService } from "./services/socket.service";
 
 @WebSocketGateway()
@@ -28,7 +27,6 @@ export class GameGateway
     constructor(
         private lobbyService: LobbyService,
         private socketService: SocketService,
-        @Inject("REDIS_CLIENT") private redis: Redis,
     ) {}
 
     afterInit(server: Server) {
@@ -41,26 +39,23 @@ export class GameGateway
     }
 
     async handleDisconnect(client: Socket) {
-        const isHost = client.data?.isHost;
-        const lobbyId = client.data.lobbyId;
+        const { isHost, lobbyId, nickname } = client.data || {};
+
+        if (!lobbyId) return;
 
         if (isHost) {
             this.logger.log(`Host disconnected. Destroying lobby ${lobbyId}`);
 
+            this.socketService.emitToRoom(lobbyId, "hostLeft");
+
             await this.lobbyService.closeLobby(lobbyId);
 
-            this.socketService.emitToRoom({
-                roomId: lobbyId,
-                event: "hostLeft",
-            });
+            return;
         }
 
-        this.logger.log(`Player named ${client.data.nickname} left room.`);
+        this.logger.log(`Player ${nickname} left lobby ${lobbyId}.`);
 
-        this.socketService.emitToRoom({
-            roomId: lobbyId,
-            event: "playerLeft",
-        });
+        this.socketService.emitToRoom(lobbyId, "playerLeft", { nickname });
     }
 
     @UseGuards(JwtWsGuard)
@@ -97,13 +92,15 @@ export class GameGateway
 
         client.data.isHost = false;
         client.data.lobbyId = player.lobbyId;
+        client.data.nickname = nickname;
+
         await client.join(`${player.lobbyId}`);
 
-        this.socketService.emitToRoom({
-            roomId: player.lobbyId.toString(),
-            event: "playerJoined",
-            payload: { nickname },
-        });
+        this.socketService.emitToRoom(
+            player.lobbyId.toString(),
+            "playerJoined",
+            player,
+        );
 
         return { success: true };
     }

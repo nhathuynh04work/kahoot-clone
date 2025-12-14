@@ -9,15 +9,7 @@ export class SocketService {
         this.server = server;
     }
 
-    emitToRoom({
-        roomId,
-        event,
-        payload,
-    }: {
-        roomId: string;
-        event: string;
-        payload?: any;
-    }) {
+    emitToRoom(roomId: string, event: string, payload?: any) {
         this.server.to(roomId).emit(event, payload);
     }
 }
