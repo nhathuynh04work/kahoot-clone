@@ -1,12 +1,14 @@
 import {
     BadRequestException,
     ConflictException,
+    Injectable,
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { PrismaService } from "../../prisma/prisma.service";
 import { LobbyStatus, Prisma } from "../../generated/prisma/client";
+import { PrismaService } from "../../prisma/prisma.service";
 
+@Injectable()
 export class LobbyService {
     private logger = new Logger(LobbyService.name);
 

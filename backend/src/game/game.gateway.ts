@@ -41,7 +41,10 @@ export class GameGateway
     async handleDisconnect(client: Socket) {
         const { isHost, lobbyId, nickname } = client.data || {};
 
-        if (!lobbyId) return;
+        if (!lobbyId) {
+            this.logger.log(`Client disconnected: ${client.id}`);
+            return;
+        }
 
         if (isHost) {
             this.logger.log(`Host disconnected. Destroying lobby ${lobbyId}`);
@@ -99,7 +102,7 @@ export class GameGateway
         this.socketService.emitToRoom(
             player.lobbyId.toString(),
             "playerJoined",
-            player,
+            { player },
         );
 
         return { success: true };
