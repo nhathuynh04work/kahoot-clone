@@ -1,4 +1,4 @@
-import { PinEntryForm } from "@/features/game/components/entry/pin-entry-form";
+import { PinEntryForm } from "@/features/game/components/common/pin-entry-form";
 import Link from "next/link";
 
 export default async function Home() {
@@ -15,11 +15,11 @@ export default async function Home() {
 				<PinEntryForm />
 
 				{/* --- Login/Register Links --- */}
-				<div className="flex gap-4">
+				<div className="flex gap-4 mt-6">
 					<Link
 						href="/auth/login"
 						className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm">
-						Host/Login
+						Host
 					</Link>
 					<Link
 						href="/auth/register"

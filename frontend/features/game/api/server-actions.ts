@@ -1,3 +1,5 @@
+"use server";
+
 import { Quiz } from "@/features/quizzes/types";
 import { apiServer } from "@/lib/apiServer";
 import { GameLobby } from "../types";
