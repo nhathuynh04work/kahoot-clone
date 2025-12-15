@@ -22,4 +22,10 @@ export class GameController {
             hostId: user.id,
         });
     }
+
+    @Post("player")
+    async registerPlayer(@Body() body: { pin: string; nickname: string }) {
+        const { pin, nickname } = body;
+        return this.lobbyService.addPlayerToLobby({ pin, nickname });
+    }
 }
