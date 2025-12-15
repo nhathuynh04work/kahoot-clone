@@ -1,6 +1,7 @@
 import { useReducer } from "react";
 import { PlayerGameState } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
+import { usePlayerJoin } from "./use-join-lobby";
 
 const initialState: PlayerGameState = {
 	nickname: "",
@@ -13,13 +14,22 @@ const initialState: PlayerGameState = {
 	totalQuestions: 0,
 };
 
-type PlayerAction = { type: "SET_QUESTION" } | { type: "ANSWER_SUBMITTED" };
+type PlayerAction =
+	| { type: "SET_NICKNAME"; payload: string }
+	| { type: "SET_QUESTION" }
+	| { type: "ANSWER_SUBMITTED" };
 
 const playerReducer = (
 	state: PlayerGameState,
 	action: PlayerAction
 ): PlayerGameState => {
 	switch (action.type) {
+		case "SET_NICKNAME":
+			return {
+				...state,
+				nickname: action.payload,
+			};
+
 		case "SET_QUESTION":
 			return {
 				...state,
@@ -37,6 +47,10 @@ const playerReducer = (
 
 export const usePlayerGame = () => {
 	const [state, dispatch] = useReducer(playerReducer, initialState);
+
+	usePlayerJoin((nickname: string) => {
+		dispatch({ type: "SET_NICKNAME", payload: nickname });
+	});
 
 	useConfirmLeave();
 

@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    ConflictException,
     Injectable,
     Logger,
     NotFoundException,
@@ -97,13 +98,46 @@ export class LobbyService {
     async addPlayerToLobby(params: { pin: string; nickname: string }) {
         const { pin, nickname } = params;
 
-        const lobby = await this.findActiveLobbyByPin(pin);
+        try {
+            const lobby = await this.findActiveLobbyByPin(pin);
 
-        const player = await this.prisma.gamePlayer.create({
-            data: {
-                nickname,
-                lobbyId: lobby.id,
-            },
+            const player = await this.prisma.gamePlayer.create({
+                data: {
+                    nickname,
+                    lobbyId: lobby.id,
+                },
+            });
+
+            this.logger.log(`Player ${nickname} added to lobby PIN ${pin}`);
+
+            return player;
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === "P2002"
+            ) {
+                throw new ConflictException("Nickname is already taken");
+            }
+
+            throw error;
+        }
+    }
+
+    async findPlayerInLobby(nickname: string, lobbyId: number) {
+        return this.prisma.gamePlayer.findFirst({
+            where: { nickname, lobbyId },
+        });
+    }
+
+    async updatePlayerOnlineStatus(params: {
+        playerId: number;
+        isOnline: boolean;
+    }) {
+        const { playerId, isOnline } = params;
+
+        const player = await this.prisma.gamePlayer.update({
+            where: { id: playerId },
+            data: { isOnline },
         });
 
         return player;

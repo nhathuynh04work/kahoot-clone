@@ -80,10 +80,11 @@ enum LobbyStatus {
 }
 
 model GamePlayer {
-    id       Int    @id @default(autoincrement())
+    id       Int     @id @default(autoincrement())
     nickname String
-    score    Int    @default(0)
+    score    Int     @default(0)
     lobbyId  Int
+    isOnline Boolean @default(false)
 
     lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
     answers PlayerAnswer[]
