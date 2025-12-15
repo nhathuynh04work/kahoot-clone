@@ -10,7 +10,12 @@ import {
     OnGatewayInit,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { Logger, UseGuards } from "@nestjs/common";
+import {
+    ConflictException,
+    Logger,
+    NotFoundException,
+    UseGuards,
+} from "@nestjs/common";
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
@@ -61,8 +66,8 @@ export class GameGateway
         }
 
         this.logger.log(`Player ${nickname} left lobby ${lobbyId}.`);
-
         this.socketService.emitToRoom(lobbyId, "playerLeft", { nickname });
+        // [TO-DO] isOnline = false
     }
 
     @UseGuards(JwtWsGuard)
@@ -111,25 +116,54 @@ export class GameGateway
         @MessageBody() payload: { pin: string; nickname: string },
         @ConnectedSocket() client: Socket,
     ) {
+        if (client.data.isJoining) {
+            this.logger.debug("Duplicate request");
+            return { success: true };
+        }
+
+        client.data.isJoining = true;
+
         const { pin, nickname } = payload;
 
-        const player = await this.lobbyService.addPlayerToLobby({
-            pin,
-            nickname,
-        });
+        try {
+            const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
-        client.data.isHost = false;
-        client.data.lobbyId = player.lobbyId;
-        client.data.nickname = nickname;
+            const player = await this.lobbyService.findPlayerInLobby(
+                nickname,
+                lobby.id,
+            );
 
-        await client.join(`${player.lobbyId}`);
+            if (!player) throw new NotFoundException("Player not found");
 
-        this.socketService.emitToRoom(
-            player.lobbyId.toString(),
-            "playerJoined",
-            { player },
-        );
+            if (player.isOnline)
+                throw new ConflictException("Player is active somewhere");
 
-        return { success: true };
+            await this.lobbyService.updatePlayerOnlineStatus({
+                playerId: player.id,
+                isOnline: true,
+            });
+
+            client.data.isHost = false;
+            client.data.lobbyId = player.lobbyId;
+            client.data.nickname = nickname;
+
+            await client.join(`${player.lobbyId}`);
+
+            this.socketService.emitToRoom(
+                player.lobbyId.toString(),
+                "playerJoined",
+                { player },
+            );
+
+            this.logger.log(
+                `Player ${nickname} (socketID: ${client.id}) is online`,
+            );
+
+            return { success: true };
+        } catch (error) {
+            return { success: false };
+        } finally {
+            client.data.isJoining = false;
+        }
     }
 }
