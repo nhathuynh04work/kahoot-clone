@@ -24,4 +24,31 @@ export const useHostJoin = (lobbyId: number, onJoin: (pin: string) => void) => {
 	}, [lobbyId, router]);
 };
 
-export const usePlayerJoin = () => {};
+export const usePlayerJoin = (onJoin: (nickname: string) => void) => {
+	const router = useRouter();
+	const onJoinRef = useRef(onJoin);
+
+	useEffect(() => {
+		onJoinRef.current = onJoin;
+	});
+
+	useEffect(() => {
+		const session = localStorage.getItem("recovery");
+		if (!session) {
+			router.push("/");
+			return;
+		}
+
+		const { nickname, pin } = JSON.parse(session);
+		socket.emit("playerJoin", { pin, nickname }, (response: any) => {
+			if (!response.success) {
+				router.push("/");
+				return;
+			}
+
+			if (onJoinRef.current) {
+				onJoinRef.current(nickname);
+			}
+		});
+	}, [router]);
+};

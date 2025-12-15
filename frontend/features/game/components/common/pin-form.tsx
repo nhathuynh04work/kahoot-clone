@@ -1,15 +1,17 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { getValidLobby } from "../../api/server-actions";
 import { toast } from "sonner";
 
-export function PinEntryForm() {
+interface PinFormProps {
+	onSuccess: (pin: string) => void;
+}
+
+export function PinForm({ onSuccess }: PinFormProps) {
 	const [pin, setPin] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const router = useRouter();
 
 	async function handleJoinGame(e: FormEvent) {
 		e.preventDefault();
@@ -22,7 +24,7 @@ export function PinEntryForm() {
 
 		try {
 			const lobby = await getValidLobby(pin);
-			router.push(`/join?pin=${lobby.pin}`);
+			onSuccess(lobby.pin);
 		} catch (error: any) {
 			toast.error(error.message || "Something went wrong");
 		} finally {
