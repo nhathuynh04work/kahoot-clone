@@ -7,6 +7,7 @@ import { socket } from "../lib/socket";
 import { useRouter } from "next/navigation";
 
 const initialState: PlayerGameState = {
+	pin: "",
 	nickname: "",
 	points: 0,
 	rank: 0,
@@ -19,7 +20,7 @@ const initialState: PlayerGameState = {
 };
 
 type PlayerAction =
-	| { type: "SET_NICKNAME"; payload: string }
+	| { type: "SET_INFO"; payload: { nickname: string; pin: string } }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
 	| { type: "SUBMIT_ANSWER"; payload: number };
 
@@ -28,10 +29,11 @@ const playerReducer = (
 	action: PlayerAction
 ): PlayerGameState => {
 	switch (action.type) {
-		case "SET_NICKNAME":
+		case "SET_INFO":
 			return {
 				...state,
-				nickname: action.payload,
+				nickname: action.payload.nickname,
+				pin: action.payload.pin,
 			};
 
 		case "SET_QUESTION":
@@ -48,6 +50,7 @@ const playerReducer = (
 			return {
 				...state,
 				status: "SUBMITTED",
+				selectedOptionId: action.payload,
 			};
 	}
 };
@@ -58,8 +61,8 @@ export const usePlayerGame = () => {
 
 	const { disableGuard } = useConfirmLeave();
 
-	usePlayerJoin((nickname: string) => {
-		dispatch({ type: "SET_NICKNAME", payload: nickname });
+	usePlayerJoin((nickname: string, pin: string) => {
+		dispatch({ type: "SET_INFO", payload: { nickname, pin } });
 	});
 
 	// Host left
@@ -91,12 +94,25 @@ export const usePlayerGame = () => {
 	});
 
 	const handleSelectOption = (optionId: number) => {
-		dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
+		socket.emit(
+			"submitAnswer",
+			{
+				optionId,
+				questionId: state.currentQuestion?.id,
+				nickname: state.nickname,
+				pin: state.pin,
+			},
+			(response: any) => {
+				if (response.success) {
+					dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
+				}
+			}
+		);
 	};
 
 	const handlers = {
 		handleSelectOption,
 	};
-    
+
 	return { state, handlers };
 };
