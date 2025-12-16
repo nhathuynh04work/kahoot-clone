@@ -55,7 +55,7 @@ export class GameGateway
         if (isHost) {
             this.logger.log(`Host disconnected. Destroying lobby ${lobbyId}`);
 
-            this.socketService.emitToRoom(lobbyId, "hostLeft");
+            this.socketService.emitToRoom(lobbyId.toString(), "hostLeft");
 
             await this.lobbyService.updateLobbyStatus(
                 lobbyId,

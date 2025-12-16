@@ -2,6 +2,7 @@ import { useReducer } from "react";
 import { PlayerGameState } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { usePlayerJoin } from "./use-join-lobby";
+import { useSocketEvent } from "../context/socket-context";
 
 const initialState: PlayerGameState = {
 	nickname: "",
@@ -48,11 +49,17 @@ const playerReducer = (
 export const usePlayerGame = () => {
 	const [state, dispatch] = useReducer(playerReducer, initialState);
 
+	const { disableGuard } = useConfirmLeave();
+
 	usePlayerJoin((nickname: string) => {
 		dispatch({ type: "SET_NICKNAME", payload: nickname });
 	});
 
-	useConfirmLeave();
+	useSocketEvent("hostLeft", () => {
+		disableGuard();
+		localStorage.removeItem("recovery");
+		window.location.href = "/";
+	});
 
 	return { state };
 };
