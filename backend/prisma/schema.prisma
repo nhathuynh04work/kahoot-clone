@@ -82,7 +82,7 @@ enum LobbyStatus {
 model GamePlayer {
     id       Int     @id @default(autoincrement())
     nickname String
-    score    Int     @default(0)
+    points   Int     @default(0)
     lobbyId  Int
     isOnline Boolean @default(false)
 
@@ -93,12 +93,12 @@ model GamePlayer {
 }
 
 model PlayerAnswer {
-    id          Int     @id @default(autoincrement())
-    playerId    Int
-    questionId  Int
-    optionId    Int
-    isCorrect   Boolean
-    scoreEarned Int     @default(0)
+    id         Int     @id @default(autoincrement())
+    playerId   Int
+    questionId Int
+    optionId   Int
+    isCorrect  Boolean
+    points     Int     @default(0)
 
     player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
     question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
