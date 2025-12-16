@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { PlayerGameState } from "../types";
+import { Player, PlayerGameState } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { usePlayerJoin } from "./use-join-lobby";
 import { useSocketEvent } from "../context/socket-context";
@@ -66,10 +66,13 @@ export const usePlayerGame = () => {
 
 	useSocketEvent(
 		"playerRejoined",
-		(payload: { nickname: string; newSocketId: string }) => {
-			const { nickname, newSocketId } = payload;
+		(payload: { player: Player; newSocketId: string }) => {
+			const { player, newSocketId } = payload;
 
-			if (state.nickname === nickname && socket.id !== newSocketId) {
+			if (
+				state.nickname === player.nickname &&
+				socket.id !== newSocketId
+			) {
 				disableGuard();
 				router.push("/");
 			}
