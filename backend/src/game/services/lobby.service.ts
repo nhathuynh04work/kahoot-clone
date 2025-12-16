@@ -174,4 +174,37 @@ export class LobbyService {
 
         return lobby.quiz.questions;
     }
+
+    async gradeAnswer(params: { questionId: number; optionId: number }) {
+        const { questionId, optionId } = params;
+
+        const question = await this.prisma.question.findUnique({
+            where: { id: questionId },
+            include: { options: true },
+        });
+
+        if (!question) {
+            throw new NotFoundException("Question not found");
+        }
+
+        const correctOption = question.options.find((o) => o.isCorrect);
+        const isCorrect = correctOption!.id === optionId;
+        const points = isCorrect ? question.points : 0;
+
+        return { isCorrect, points };
+    }
+
+    async saveAnswer(params: {
+        optionId: number;
+        questionId: number;
+        playerId: number;
+        isCorrect: boolean;
+        points: number;
+    }) {
+        const saved = await this.prisma.playerAnswer.create({
+            data: params,
+        });
+
+        return saved;
+    }
 }

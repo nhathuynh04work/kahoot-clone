@@ -240,4 +240,63 @@ export class GameGateway
 
         return { success: true };
     }
+
+    @SubscribeMessage("submitAnswer")
+    async handleSubmitAnswer(
+        @MessageBody()
+        body: {
+            optionId: number;
+            questionId: number;
+            nickname: string;
+            pin: string;
+        },
+    ) {
+        this.logger.debug("Reached");
+        const { optionId, questionId, nickname, pin } = body;
+
+        try {
+            const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
+
+            const player = await this.lobbyService.findPlayerInLobby({
+                nickname,
+                lobbyId: lobby.id,
+            });
+
+            if (!player) {
+                throw new ConflictException(
+                    "Player does not belong to this lobby",
+                );
+            }
+
+            // grade the answer
+            const result = await this.lobbyService.gradeAnswer({
+                questionId,
+                optionId,
+            });
+
+            // save answer
+            const savedAnswer = await this.lobbyService.saveAnswer({
+                optionId,
+                questionId,
+                playerId: player?.id,
+                ...result,
+            });
+
+            this.logger.log(
+                `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
+            );
+
+            // [TO-DO]: check if all online players have answered
+
+            // emit new answer event so host can update answer count
+            this.socketService.emitToRoom(lobby.id.toString(), "newAnswer", {
+                optionId,
+            });
+
+            return { success: true };
+        } catch (error) {
+            this.logger.debug(error);
+            return { success: false };
+        }
+    }
 }
