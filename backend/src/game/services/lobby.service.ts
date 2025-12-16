@@ -95,20 +95,16 @@ export class LobbyService {
         return newLobby;
     }
 
-    async addPlayerToLobby(params: { pin: string; nickname: string }) {
-        const { pin, nickname } = params;
+    async addPlayerToLobby(params: { lobbyId: number; nickname: string }) {
+        const { lobbyId, nickname } = params;
 
         try {
-            const lobby = await this.findActiveLobbyByPin(pin);
-
             const player = await this.prisma.gamePlayer.create({
                 data: {
                     nickname,
-                    lobbyId: lobby.id,
+                    lobbyId,
                 },
             });
-
-            this.logger.log(`Player ${nickname} added to lobby PIN ${pin}`);
 
             return player;
         } catch (error) {
@@ -123,20 +119,23 @@ export class LobbyService {
         }
     }
 
-    async findPlayerInLobby(nickname: string, lobbyId: number) {
+    async findPlayerInLobby(params: { nickname: string; lobbyId: number }) {
+        const { lobbyId, nickname } = params;
+
         return this.prisma.gamePlayer.findFirst({
             where: { nickname, lobbyId },
         });
     }
 
     async updatePlayerOnlineStatus(params: {
-        playerId: number;
+        nickname: string;
+        lobbyId: number;
         isOnline: boolean;
     }) {
-        const { playerId, isOnline } = params;
+        const { nickname, lobbyId, isOnline } = params;
 
         const player = await this.prisma.gamePlayer.update({
-            where: { id: playerId },
+            where: { lobbyId_nickname: { lobbyId, nickname } },
             data: { isOnline },
         });
 
