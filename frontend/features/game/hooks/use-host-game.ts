@@ -13,6 +13,7 @@ const initialState: HostGameState = {
 
 	status: "WAITING",
 	currentQuestionIndex: 0,
+	currentQuestionCorrectOptionId: null,
 	currentQuestion: null,
 	totalQuestions: 0,
 };
@@ -23,7 +24,8 @@ type HostAction =
 	| { type: "PLAYER_LEFT"; payload: string }
 	| { type: "PLAYER_REJOINED"; payload: Player }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
-	| { type: "ADD_NEW_ANSWER"; payload: number };
+	| { type: "ADD_NEW_ANSWER"; payload: number }
+	| { type: "SET_CORRECT_ANSWER"; payload: number };
 
 const hostReducer = (
 	state: HostGameState,
@@ -67,6 +69,7 @@ const hostReducer = (
 				currentQuestion: action.payload.currentQuestion,
 				currentQuestionIndex: action.payload.currentQuestionIndex,
 				totalQuestions: action.payload.totalQuestions,
+				currentQuestionCorrectOptionId: null,
 			};
 
 		case "ADD_NEW_ANSWER":
@@ -79,6 +82,13 @@ const hostReducer = (
 					...state.answerStats,
 					[optionId]: currentCount + 1,
 				},
+			};
+
+		case "SET_CORRECT_ANSWER":
+			return {
+				...state,
+				status: "RESULT",
+				currentQuestionCorrectOptionId: action.payload,
 			};
 	}
 };
@@ -112,6 +122,13 @@ export const useHostGame = (lobbyId: number) => {
 		dispatch({ type: "ADD_NEW_ANSWER", payload: payload.optionId });
 	});
 
+	useSocketEvent("showResult", (payload: { optionId: number }) => {
+		dispatch({
+			type: "SET_CORRECT_ANSWER",
+			payload: payload.optionId,
+		});
+	});
+
 	const handleStartGame = () => {
 		if (state.players.length < 1) {
 			toast.error("Cannot start an empty lobby");
@@ -126,5 +143,17 @@ export const useHostGame = (lobbyId: number) => {
 		});
 	};
 
-	return { state, handlers: { handleStartGame } };
+	const handleTimeUp = () => {
+		socket.emit("timeUp", {
+			pin: state.pin,
+			questionId: state.currentQuestion!.id,
+		});
+	};
+
+	const handlers = {
+		handleStartGame,
+		handleTimeUp,
+	};
+
+	return { state, handlers };
 };

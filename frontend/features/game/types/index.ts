@@ -15,7 +15,7 @@ export type GameState =
 	| "WAITING"
 	| "QUESTION"
 	| "SUBMITTED"
-	| "RESULTS"
+	| "RESULT"
 	| "SCOREBOARD"
 	| "FINISHED";
 
@@ -28,6 +28,7 @@ interface BaseGameState {
 	pin: string;
 	status: GameState;
 	currentQuestionIndex: number;
+	currentQuestionCorrectOptionId: null | number;
 	currentQuestion: null | QuestionWithOptions;
 	totalQuestions: number;
 }
