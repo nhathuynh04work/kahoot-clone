@@ -19,7 +19,7 @@ export const PlayerQuestionScreen = ({
 				{question.options.map((o) => (
 					<div
 						key={o.id}
-						className="border"
+						className="border cursor-pointer"
 						onClick={() => onSubmit(o.id)}>
 						{o.text}
 					</div>

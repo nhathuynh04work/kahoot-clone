@@ -25,6 +25,7 @@ export interface Player {
 }
 
 interface BaseGameState {
+	pin: string;
 	status: GameState;
 	currentQuestionIndex: number;
 	currentQuestion: null | QuestionWithOptions;
@@ -32,7 +33,6 @@ interface BaseGameState {
 }
 
 export interface HostGameState extends BaseGameState {
-	pin: string;
 	players: Array<Player>;
 	answerStats: Record<number, number>;
 }
