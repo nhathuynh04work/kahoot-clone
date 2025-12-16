@@ -69,7 +69,12 @@ export class GameGateway
         this.socketService.emitToRoom(lobbyId.toString(), "playerLeft", {
             nickname,
         });
-        // [TO-DO] isOnline = false
+
+        this.lobbyService.updatePlayerOnlineStatus({
+            nickname,
+            lobbyId,
+            isOnline: false,
+        });
     }
 
     @UseGuards(JwtWsGuard)
@@ -115,9 +120,18 @@ export class GameGateway
 
     @SubscribeMessage("playerJoin")
     async handleJoinLobby(
-        @MessageBody() payload: { pin: string; nickname: string },
+        @MessageBody()
+        payload: { pin: string; nickname: string; rejoin: boolean },
         @ConnectedSocket() client: Socket,
     ) {
+        /* 
+            A few cases that needs to be handled:
+            - New player joining
+            - Already joined user use the url to access the game -> don't allow
+            - User rejoin on RejoinDialog -> check the rejoin flag
+            - Race condition -> use isJoining to disable double request
+        */
+
         if (client.data.isJoining) {
             this.logger.debug("Duplicate request");
             return { success: true };
@@ -125,30 +139,49 @@ export class GameGateway
 
         client.data.isJoining = true;
 
-        const { pin, nickname } = payload;
+        const { pin, nickname, rejoin } = payload;
 
         try {
             const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
-            const player = await this.lobbyService.findPlayerInLobby(
+            const player = await this.lobbyService.findPlayerInLobby({
                 nickname,
-                lobby.id,
-            );
+                lobbyId: lobby.id,
+            });
 
             if (!player) throw new NotFoundException("Player not found");
+
+            if (rejoin) {
+                client.data.isHost = false;
+                client.data.lobbyId = player.lobbyId;
+                client.data.nickname = nickname;
+                await client.join(`${player.lobbyId}`);
+
+                this.socketService.emitToRoom(
+                    lobby.id.toString(),
+                    "playerRejoined",
+                    { player: player, newSocketId: client.id },
+                );
+
+                this.logger.log(
+                    `Player ${nickname} (socketID: ${client.id}) has rejoined`,
+                );
+
+                return { success: true };
+            }
 
             if (player.isOnline)
                 throw new ConflictException("Player is active somewhere");
 
             await this.lobbyService.updatePlayerOnlineStatus({
-                playerId: player.id,
+                nickname: player.nickname,
+                lobbyId: lobby.id,
                 isOnline: true,
             });
 
             client.data.isHost = false;
             client.data.lobbyId = player.lobbyId;
             client.data.nickname = nickname;
-
             await client.join(`${player.lobbyId}`);
 
             this.socketService.emitToRoom(

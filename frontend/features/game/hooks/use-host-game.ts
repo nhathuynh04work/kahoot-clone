@@ -18,7 +18,8 @@ const initialState: HostGameState = {
 type HostAction =
 	| { type: "SET_PIN"; payload: string }
 	| { type: "PLAYER_JOINED"; payload: Player }
-	| { type: "PLAYER_LEFT"; payload: string };
+	| { type: "PLAYER_LEFT"; payload: string }
+	| { type: "PLAYER_REJOINED"; payload: Player };
 
 const hostReducer = (
 	state: HostGameState,
@@ -44,6 +45,16 @@ const hostReducer = (
 					(p) => p.nickname !== action.payload
 				),
 			};
+
+		case "PLAYER_REJOINED":
+			const filtered = state.players.filter(
+				(p) => p.nickname !== action.payload.nickname
+			);
+
+			return {
+				...state,
+				players: [...filtered, action.payload],
+			};
 	}
 };
 
@@ -63,6 +74,10 @@ export const useHostGame = (lobbyId: number) => {
 	useSocketEvent("playerLeft", ({ nickname }: { nickname: string }) => {
 		console.log(nickname);
 		dispatch({ type: "PLAYER_LEFT", payload: nickname });
+	});
+
+	useSocketEvent("playerRejoined", (payload: { player: Player }) => {
+		dispatch({ type: "PLAYER_REJOINED", payload: payload.player });
 	});
 
 	const handleStartGame = () => {

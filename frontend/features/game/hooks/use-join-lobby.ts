@@ -39,16 +39,20 @@ export const usePlayerJoin = (onJoin: (nickname: string) => void) => {
 			return;
 		}
 
-		const { nickname, pin } = JSON.parse(session);
-		socket.emit("playerJoin", { pin, nickname }, (response: any) => {
-			if (!response.success) {
-				router.push("/");
-				return;
-			}
+		const { nickname, pin, rejoin } = JSON.parse(session);
+		socket.emit(
+			"playerJoin",
+			{ pin, nickname, rejoin },
+			(response: any) => {
+				if (!response.success) {
+					router.push("/");
+					return;
+				}
 
-			if (onJoinRef.current) {
-				onJoinRef.current(nickname);
+				if (onJoinRef.current) {
+					onJoinRef.current(nickname);
+				}
 			}
-		});
+		);
 	}, [router]);
 };

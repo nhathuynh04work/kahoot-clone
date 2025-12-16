@@ -7,6 +7,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+interface SessionData {
+	nickname: string;
+	pin: string;
+	rejoin: boolean;
+}
+
 export default function JoinScreen() {
 	const router = useRouter();
 
@@ -24,7 +30,7 @@ export default function JoinScreen() {
 			return;
 		}
 
-		const parsed = JSON.parse(session) as { nickname: string; pin: string };
+		const parsed = JSON.parse(session) as SessionData;
 
 		if (parsed.pin !== pin) {
 			setState("nickname");
@@ -41,6 +47,7 @@ export default function JoinScreen() {
 			JSON.stringify({
 				pin: pin,
 				nickname: nickname,
+				rejoin: false,
 			})
 		);
 
@@ -49,28 +56,31 @@ export default function JoinScreen() {
 
 	const handleStartFresh = () => {
 		const session: string | null = localStorage.getItem("recovery");
-		const parsed = JSON.parse(session!) as {
-			nickname: string;
-			pin: string;
-		};
+		const parsed = JSON.parse(session!) as SessionData;
 
 		localStorage.removeItem("recovery");
 		setPin(parsed.pin);
 		setState("nickname");
 	};
 
-	const handleContinue = () => {
+	const handleResume = () => {
+		const session: string | null = localStorage.getItem("recovery");
+		const parsed = JSON.parse(session!) as SessionData;
+
+		const newSession: SessionData = {
+			nickname: parsed.nickname,
+			pin: parsed.pin,
+			rejoin: true,
+		};
+
+		localStorage.setItem("recovery", JSON.stringify(newSession));
 		router.push("/game");
 	};
 
 	return (
 		<div className="bg-gray-900">
 			<div className="flex flex-col items-center justify-center min-h-screen text-white">
-				<h1 className="text-5xl font-bold mb-4">Kahoot!</h1>
-
-				<p className="text-xl text-gray-300 mb-10">
-					Your new favorite quiz platform.
-				</p>
+				<h1 className="text-5xl font-bold mb-10">Kahoot!</h1>
 
 				{/* --- Pin form / Nickname form / Rejoin --- */}
 				{state === "pin" && <PinForm onSuccess={handlePinValid} />}
@@ -81,7 +91,7 @@ export default function JoinScreen() {
 
 				{state === "rejoin" && (
 					<RejoinDialog
-						onContinue={handleContinue}
+						onContinue={handleResume}
 						onStartFresh={handleStartFresh}
 					/>
 				)}
