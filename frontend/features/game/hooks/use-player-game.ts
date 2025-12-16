@@ -15,6 +15,7 @@ const initialState: PlayerGameState = {
 
 	status: "WAITING",
 	currentQuestion: null,
+	currentQuestionCorrectOptionId: null,
 	currentQuestionIndex: 0,
 	totalQuestions: 0,
 };
@@ -22,7 +23,8 @@ const initialState: PlayerGameState = {
 type PlayerAction =
 	| { type: "SET_INFO"; payload: { nickname: string; pin: string } }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
-	| { type: "SUBMIT_ANSWER"; payload: number };
+	| { type: "SUBMIT_ANSWER"; payload: number }
+	| { type: "SET_CORRECT_ANSWER"; payload: number };
 
 const playerReducer = (
 	state: PlayerGameState,
@@ -43,6 +45,7 @@ const playerReducer = (
 				currentQuestion: action.payload.currentQuestion,
 				currentQuestionIndex: action.payload.currentQuestionIndex,
 				totalQuestions: action.payload.totalQuestions,
+				currentQuestionCorrectOptionId: null,
 				selectedOptionId: null,
 			};
 
@@ -51,6 +54,17 @@ const playerReducer = (
 				...state,
 				status: "SUBMITTED",
 				selectedOptionId: action.payload,
+			};
+
+		case "SET_CORRECT_ANSWER":
+			return {
+				...state,
+				status: "RESULT",
+				currentQuestionCorrectOptionId: action.payload,
+				points:
+					action.payload === state.selectedOptionId
+						? state.points + state.currentQuestion!.points
+						: state.points,
 			};
 	}
 };
@@ -93,21 +107,18 @@ export const usePlayerGame = () => {
 		dispatch({ type: "SET_QUESTION", payload: payload });
 	});
 
+	useSocketEvent("showResult", (payload: { optionId: number }) => {
+		dispatch({ type: "SET_CORRECT_ANSWER", payload: payload.optionId });
+	});
+
 	const handleSelectOption = (optionId: number) => {
-		socket.emit(
-			"submitAnswer",
-			{
-				optionId,
-				questionId: state.currentQuestion?.id,
-				nickname: state.nickname,
-				pin: state.pin,
-			},
-			(response: any) => {
-				if (response.success) {
-					dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
-				}
-			}
-		);
+		dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
+		socket.emit("submitAnswer", {
+			optionId,
+			questionId: state.currentQuestion?.id,
+			nickname: state.nickname,
+			pin: state.pin,
+		});
 	};
 
 	const handlers = {
