@@ -12,6 +12,7 @@ import {
 import { Server, Socket } from "socket.io";
 import {
     ConflictException,
+    Inject,
     Logger,
     NotFoundException,
     UseGuards,
@@ -20,6 +21,7 @@ import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
 import { LobbyStatus } from "../generated/prisma/client";
+import Redis from "ioredis";
 
 @WebSocketGateway()
 export class GameGateway
@@ -33,6 +35,7 @@ export class GameGateway
     constructor(
         private lobbyService: LobbyService,
         private socketService: SocketService,
+        @Inject("REDIS_CLIENT") private redis: Redis,
     ) {}
 
     afterInit(server: Server) {
@@ -119,7 +122,7 @@ export class GameGateway
     }
 
     @SubscribeMessage("playerJoin")
-    async handleJoinLobby(
+    async handlePlayerJoin(
         @MessageBody()
         payload: { pin: string; nickname: string; rejoin: boolean },
         @ConnectedSocket() client: Socket,
@@ -200,5 +203,41 @@ export class GameGateway
         } finally {
             client.data.isJoining = false;
         }
+    }
+
+    @UseGuards(JwtWsGuard)
+    @SubscribeMessage("startGame")
+    async handleStartGame(
+        @MessageBody() payload: { pin: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        const { pin } = payload;
+
+        const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
+
+        // Cannot start a lobby that has already started
+        if (lobby.status === LobbyStatus.IN_PROGRESS) {
+            return { success: false };
+        }
+
+        // Update status
+        await this.lobbyService.updateLobbyStatus(
+            lobby.id,
+            LobbyStatus.IN_PROGRESS,
+        );
+
+        // Get the question
+        const questions = await this.lobbyService.getQuestionListOfLobby(
+            lobby.id,
+            { includeAnswer: false },
+        );
+
+        this.socketService.emitToRoom(lobby.id.toString(), "newQuestion", {
+            currentQuestionIndex: lobby.currentQuestionIndex,
+            currentQuestion: questions[lobby.currentQuestionIndex],
+            totalQuestions: questions.length,
+        });
+
+        return { success: true };
     }
 }
