@@ -66,7 +66,9 @@ export class GameGateway
         }
 
         this.logger.log(`Player ${nickname} left lobby ${lobbyId}.`);
-        this.socketService.emitToRoom(lobbyId, "playerLeft", { nickname });
+        this.socketService.emitToRoom(lobbyId.toString(), "playerLeft", {
+            nickname,
+        });
         // [TO-DO] isOnline = false
     }
 
