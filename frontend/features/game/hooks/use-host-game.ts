@@ -22,7 +22,8 @@ type HostAction =
 	| { type: "PLAYER_JOINED"; payload: Player }
 	| { type: "PLAYER_LEFT"; payload: string }
 	| { type: "PLAYER_REJOINED"; payload: Player }
-	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload };
+	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
+	| { type: "ADD_NEW_ANSWER"; payload: number };
 
 const hostReducer = (
 	state: HostGameState,
@@ -67,6 +68,18 @@ const hostReducer = (
 				currentQuestionIndex: action.payload.currentQuestionIndex,
 				totalQuestions: action.payload.totalQuestions,
 			};
+
+		case "ADD_NEW_ANSWER":
+			// count of answer for an option
+			const optionId = action.payload;
+			const currentCount = state.answerStats?.[optionId] ?? 0;
+			return {
+				...state,
+				answerStats: {
+					...state.answerStats,
+					[optionId]: currentCount + 1,
+				},
+			};
 	}
 };
 
@@ -93,6 +106,10 @@ export const useHostGame = (lobbyId: number) => {
 
 	useSocketEvent("newQuestion", (payload: NewQuestionEventPayload) => {
 		dispatch({ type: "SET_QUESTION", payload: payload });
+	});
+
+	useSocketEvent("newAnswer", (payload: { optionId: number }) => {
+		dispatch({ type: "ADD_NEW_ANSWER", payload: payload.optionId });
 	});
 
 	const handleStartGame = () => {

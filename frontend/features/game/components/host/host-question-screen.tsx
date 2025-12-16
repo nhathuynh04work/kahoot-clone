@@ -6,6 +6,7 @@ interface HostQuestionScreenProps {
 	currentQuestion: QuestionWithOptions;
 	currentQuestionIndex: number;
 	totalQuestions: number;
+	totalAnswerCount: number;
 	onNext: () => void;
 }
 
@@ -13,6 +14,7 @@ export const HostQuestionScreen = ({
 	currentQuestion,
 	currentQuestionIndex,
 	totalQuestions,
+	totalAnswerCount,
 	onNext,
 }: HostQuestionScreenProps) => {
 	return (
@@ -21,6 +23,7 @@ export const HostQuestionScreen = ({
 				{currentQuestionIndex + 1}/{totalQuestions}
 			</p>
 			<p>{currentQuestion.text}</p>
+			<p>{totalAnswerCount}</p>
 
 			<div className="flex flex-col gap-4">
 				{currentQuestion.options.map((o) => (
