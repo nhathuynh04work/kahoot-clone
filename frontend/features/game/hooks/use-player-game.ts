@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { Player, PlayerGameState } from "../types";
+import { NewQuestionEventPayload, Player, PlayerGameState } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { usePlayerJoin } from "./use-join-lobby";
 import { useSocketEvent } from "../context/socket-context";
@@ -10,17 +10,18 @@ const initialState: PlayerGameState = {
 	nickname: "",
 	points: 0,
 	rank: 0,
-	isLastAnswerCorrect: null,
+	selectedOptionId: null,
 
 	status: "WAITING",
+	currentQuestion: null,
 	currentQuestionIndex: 0,
 	totalQuestions: 0,
 };
 
 type PlayerAction =
 	| { type: "SET_NICKNAME"; payload: string }
-	| { type: "SET_QUESTION" }
-	| { type: "ANSWER_SUBMITTED" };
+	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
+	| { type: "SUBMIT_ANSWER"; payload: number };
 
 const playerReducer = (
 	state: PlayerGameState,
@@ -37,10 +38,13 @@ const playerReducer = (
 			return {
 				...state,
 				status: "QUESTION",
-				isLastAnswerCorrect: null,
+				currentQuestion: action.payload.currentQuestion,
+				currentQuestionIndex: action.payload.currentQuestionIndex,
+				totalQuestions: action.payload.totalQuestions,
+				selectedOptionId: null,
 			};
 
-		case "ANSWER_SUBMITTED":
+		case "SUBMIT_ANSWER":
 			return {
 				...state,
 				status: "SUBMITTED",
@@ -58,12 +62,14 @@ export const usePlayerGame = () => {
 		dispatch({ type: "SET_NICKNAME", payload: nickname });
 	});
 
+	// Host left
 	useSocketEvent("hostLeft", () => {
 		disableGuard();
 		localStorage.removeItem("recovery");
 		window.location.href = "/";
 	});
 
+	// Player rejoined
 	useSocketEvent(
 		"playerRejoined",
 		(payload: { player: Player; newSocketId: string }) => {
@@ -79,5 +85,18 @@ export const usePlayerGame = () => {
 		}
 	);
 
-	return { state };
+	// New question
+	useSocketEvent("newQuestion", (payload: NewQuestionEventPayload) => {
+		dispatch({ type: "SET_QUESTION", payload: payload });
+	});
+
+	const handleSelectOption = (optionId: number) => {
+		dispatch({ type: "SUBMIT_ANSWER", payload: optionId });
+	};
+
+	const handlers = {
+		handleSelectOption,
+	};
+    
+	return { state, handlers };
 };

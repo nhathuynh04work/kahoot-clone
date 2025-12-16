@@ -1,9 +1,10 @@
 import { useReducer } from "react";
-import { HostGameState, Player } from "../types";
+import { HostGameState, NewQuestionEventPayload, Player } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { useSocketEvent } from "../context/socket-context";
 import { useHostJoin } from "./use-join-lobby";
 import { socket } from "../lib/socket";
+import { toast } from "sonner";
 
 const initialState: HostGameState = {
 	pin: "",
@@ -12,6 +13,7 @@ const initialState: HostGameState = {
 
 	status: "WAITING",
 	currentQuestionIndex: 0,
+	currentQuestion: null,
 	totalQuestions: 0,
 };
 
@@ -19,7 +21,8 @@ type HostAction =
 	| { type: "SET_PIN"; payload: string }
 	| { type: "PLAYER_JOINED"; payload: Player }
 	| { type: "PLAYER_LEFT"; payload: string }
-	| { type: "PLAYER_REJOINED"; payload: Player };
+	| { type: "PLAYER_REJOINED"; payload: Player }
+	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload };
 
 const hostReducer = (
 	state: HostGameState,
@@ -55,6 +58,15 @@ const hostReducer = (
 				...state,
 				players: [...filtered, action.payload],
 			};
+
+		case "SET_QUESTION":
+			return {
+				...state,
+				status: "QUESTION",
+				currentQuestion: action.payload.currentQuestion,
+				currentQuestionIndex: action.payload.currentQuestionIndex,
+				totalQuestions: action.payload.totalQuestions,
+			};
 	}
 };
 
@@ -72,7 +84,6 @@ export const useHostGame = (lobbyId: number) => {
 	});
 
 	useSocketEvent("playerLeft", ({ nickname }: { nickname: string }) => {
-		console.log(nickname);
 		dispatch({ type: "PLAYER_LEFT", payload: nickname });
 	});
 
@@ -80,8 +91,22 @@ export const useHostGame = (lobbyId: number) => {
 		dispatch({ type: "PLAYER_REJOINED", payload: payload.player });
 	});
 
+	useSocketEvent("newQuestion", (payload: NewQuestionEventPayload) => {
+		dispatch({ type: "SET_QUESTION", payload: payload });
+	});
+
 	const handleStartGame = () => {
-		socket.emit("startGame");
+		if (state.players.length < 1) {
+			toast.error("Cannot start an empty lobby");
+			return;
+		}
+
+		socket.emit("startGame", { pin: state.pin }, (response: any) => {
+			//[TO-DO]: May need some logic here
+			if (!response.success) {
+				window.location.href = "/dashboard";
+			}
+		});
 	};
 
 	return { state, handlers: { handleStartGame } };

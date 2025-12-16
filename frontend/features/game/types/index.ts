@@ -1,3 +1,5 @@
+import { QuestionWithOptions } from "@/features/quizzes/types";
+
 export interface GameLobby {
 	id: number;
 	pin: string;
@@ -25,6 +27,7 @@ export interface Player {
 interface BaseGameState {
 	status: GameState;
 	currentQuestionIndex: number;
+	currentQuestion: null | QuestionWithOptions;
 	totalQuestions: number;
 }
 
@@ -36,5 +39,11 @@ export interface HostGameState extends BaseGameState {
 
 export interface PlayerGameState extends BaseGameState, Player {
 	rank: number;
-	isLastAnswerCorrect: boolean | null;
+	selectedOptionId: null | number;
+}
+
+export interface NewQuestionEventPayload {
+	currentQuestionIndex: number;
+	currentQuestion: QuestionWithOptions;
+	totalQuestions: number;
 }

@@ -1,18 +1,23 @@
 import {
     BadRequestException,
     ConflictException,
+    Inject,
     Injectable,
     Logger,
     NotFoundException,
 } from "@nestjs/common";
 import { LobbyStatus, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
+import Redis from "ioredis";
 
 @Injectable()
 export class LobbyService {
     private logger = new Logger(LobbyService.name);
 
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        @Inject("REDIS_CLIENT") redis: Redis,
+    ) {}
 
     async findActiveLobbyByPin(pin: string) {
         const lobby = await this.prisma.gameLobby.findFirst({
@@ -140,5 +145,33 @@ export class LobbyService {
         });
 
         return player;
+    }
+
+    async getQuestionListOfLobby(
+        lobbyId: number,
+        options: { includeAnswer: boolean } = { includeAnswer: true },
+    ) {
+        const { includeAnswer } = options;
+
+        const lobby = await this.prisma.gameLobby.findUnique({
+            where: { id: lobbyId },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            include: {
+                                options: { omit: { isCorrect: includeAnswer } },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException("Lobby not found");
+        }
+
+        return lobby.quiz.questions;
     }
 }
