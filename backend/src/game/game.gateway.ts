@@ -251,7 +251,6 @@ export class GameGateway
             pin: string;
         },
     ) {
-        this.logger.debug("Reached");
         const { optionId, questionId, nickname, pin } = body;
 
         try {
@@ -286,7 +285,15 @@ export class GameGateway
                 `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
             );
 
-            // [TO-DO]: check if all online players have answered
+            // check if all online players have answered
+            const isAllAnswered =
+                await this.lobbyService.isAllOnlinePlayersAnswerCurrentQuestion(
+                    { lobbyId: lobby.id, questionId },
+                );
+
+            if (isAllAnswered) {
+                return this.handleEndRound({ pin, questionId });
+            }
 
             // emit new answer event so host can update answer count
             this.socketService.emitToRoom(lobby.id.toString(), "newAnswer", {
@@ -298,5 +305,32 @@ export class GameGateway
             this.logger.debug(error);
             return { success: false };
         }
+    }
+
+    @UseGuards(JwtWsGuard)
+    @SubscribeMessage("timeUp")
+    async handleTimeUp(
+        @MessageBody() body: { pin: string; questionId: number },
+    ) {
+        const { pin, questionId } = body;
+
+        return this.handleEndRound({ pin, questionId });
+    }
+
+    async handleEndRound(params: { pin: string; questionId: number }) {
+        const { pin, questionId } = params;
+
+        const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
+
+        const { answer } =
+            await this.lobbyService.findAnswerToQuestion(questionId);
+
+        // [TO-DO]: The stats should be returned from here
+
+        this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
+            optionId: answer.id,
+        });
+
+        return { success: true };
     }
 }

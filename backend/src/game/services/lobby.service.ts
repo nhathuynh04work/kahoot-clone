@@ -175,9 +175,7 @@ export class LobbyService {
         return lobby.quiz.questions;
     }
 
-    async gradeAnswer(params: { questionId: number; optionId: number }) {
-        const { questionId, optionId } = params;
-
+    async findAnswerToQuestion(questionId: number) {
         const question = await this.prisma.question.findUnique({
             where: { id: questionId },
             include: { options: true },
@@ -188,7 +186,16 @@ export class LobbyService {
         }
 
         const correctOption = question.options.find((o) => o.isCorrect);
-        const isCorrect = correctOption!.id === optionId;
+        return { question, answer: correctOption! };
+    }
+
+    async gradeAnswer(params: { questionId: number; optionId: number }) {
+        const { questionId, optionId } = params;
+
+        const { question, answer: correctOption } =
+            await this.findAnswerToQuestion(questionId);
+
+        const isCorrect = correctOption.id === optionId;
         const points = isCorrect ? question.points : 0;
 
         return { isCorrect, points };
@@ -206,5 +213,22 @@ export class LobbyService {
         });
 
         return saved;
+    }
+
+    async isAllOnlinePlayersAnswerCurrentQuestion(params: {
+        lobbyId: number;
+        questionId: number;
+    }) {
+        const { lobbyId, questionId } = params;
+
+        const onlinePlayersCount = await this.prisma.gamePlayer.count({
+            where: { lobbyId, isOnline: true },
+        });
+
+        const answerCount = await this.prisma.playerAnswer.count({
+            where: { questionId, player: { lobbyId } },
+        });
+
+        return onlinePlayersCount === answerCount;
     }
 }

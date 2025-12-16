@@ -11,7 +11,7 @@ export type Question = {
 	id: number;
 	quizId: number;
 	text?: string;
-	timeLimit?: number;
+	timeLimit: number;
 	points: number;
 	imageUrl?: string;
 	sortOrder: number;

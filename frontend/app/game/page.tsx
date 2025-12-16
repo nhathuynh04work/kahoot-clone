@@ -1,6 +1,7 @@
 "use client";
 
 import { PlayerQuestionScreen } from "@/features/game/components/player/player-question-screen";
+import { PlayerResultScreen } from "@/features/game/components/player/player-result-screen";
 import { PlayerSubmittedScreen } from "@/features/game/components/player/player-submitted-screen";
 import { PlayerWaitingScreen } from "@/features/game/components/player/player-waiting-screen";
 import { usePlayerGame } from "@/features/game/hooks/use-player-game";
@@ -22,5 +23,16 @@ export default function PlayerGameScreen() {
 
 		case "SUBMITTED":
 			return <PlayerSubmittedScreen />;
+
+		case "RESULT":
+			return (
+				<PlayerResultScreen
+					isCorrect={
+						state.currentQuestionCorrectOptionId ===
+						state.selectedOptionId
+					}
+					points={state.points}
+				/>
+			);
 	}
 }
