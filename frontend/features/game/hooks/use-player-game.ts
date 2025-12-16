@@ -3,6 +3,8 @@ import { PlayerGameState } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { usePlayerJoin } from "./use-join-lobby";
 import { useSocketEvent } from "../context/socket-context";
+import { socket } from "../lib/socket";
+import { useRouter } from "next/navigation";
 
 const initialState: PlayerGameState = {
 	nickname: "",
@@ -48,6 +50,7 @@ const playerReducer = (
 
 export const usePlayerGame = () => {
 	const [state, dispatch] = useReducer(playerReducer, initialState);
+	const router = useRouter();
 
 	const { disableGuard } = useConfirmLeave();
 
@@ -60,6 +63,18 @@ export const usePlayerGame = () => {
 		localStorage.removeItem("recovery");
 		window.location.href = "/";
 	});
+
+	useSocketEvent(
+		"playerRejoined",
+		(payload: { nickname: string; newSocketId: string }) => {
+			const { nickname, newSocketId } = payload;
+
+			if (state.nickname === nickname && socket.id !== newSocketId) {
+				disableGuard();
+				router.push("/");
+			}
+		}
+	);
 
 	return { state };
 };
