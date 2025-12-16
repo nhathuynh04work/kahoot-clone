@@ -160,7 +160,7 @@ export class GameGateway
                 this.socketService.emitToRoom(
                     lobby.id.toString(),
                     "playerRejoined",
-                    { nickname, newSocketId: client.id },
+                    { player: player, newSocketId: client.id },
                 );
 
                 this.logger.log(
