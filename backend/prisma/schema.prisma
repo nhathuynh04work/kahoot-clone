@@ -59,13 +59,12 @@ model Option {
 }
 
 model GameLobby {
-    id                   Int         @id @default(autoincrement())
-    pin                  String      @db.Char(6)
-    quizId               Int
-    hostId               Int
-    status               LobbyStatus @default(CREATED)
-    currentQuestionIndex Int         @default(0) @map("current_question_index")
-    createdAt            DateTime    @default(now())
+    id        Int         @id @default(autoincrement())
+    pin       String      @db.Char(6)
+    quizId    Int
+    hostId    Int
+    status    LobbyStatus @default(CREATED)
+    createdAt DateTime    @default(now())
 
     players GamePlayer[]
     host    User         @relation(fields: [hostId], references: [id])
@@ -80,11 +79,10 @@ enum LobbyStatus {
 }
 
 model GamePlayer {
-    id       Int     @id @default(autoincrement())
+    id       Int    @id @default(autoincrement())
     nickname String
-    points   Int     @default(0)
+    points   Int    @default(0)
     lobbyId  Int
-    isOnline Boolean @default(false)
 
     lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
     answers PlayerAnswer[]

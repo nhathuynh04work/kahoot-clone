@@ -6,9 +6,16 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { LobbyStatus, Prisma } from "../../generated/prisma/client";
+import { GameLobby, LobbyStatus, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import Redis from "ioredis";
+import { QuestionWithOptions } from "../../quiz/dto/quiz.dto";
+import {
+    lobbyAnsweredKey,
+    lobbyIndexKey,
+    lobbyOnlinePlayersKey,
+    lobbyPinKey,
+} from "../../lib/redis-key-factory";
 
 @Injectable()
 export class LobbyService {
@@ -16,10 +23,17 @@ export class LobbyService {
 
     constructor(
         private prisma: PrismaService,
-        @Inject("REDIS_CLIENT") redis: Redis,
+        @Inject("REDIS_CLIENT") private redis: Redis,
     ) {}
 
     async findActiveLobbyByPin(pin: string) {
+        const cacheKey = lobbyPinKey(pin);
+        const cachedLobby = await this.redis.get(cacheKey);
+
+        if (cachedLobby) {
+            return JSON.parse(cachedLobby) as GameLobby;
+        }
+
         const lobby = await this.prisma.gameLobby.findFirst({
             where: {
                 pin: pin,
@@ -31,6 +45,8 @@ export class LobbyService {
         if (!lobby) {
             throw new NotFoundException(`Lobby with PIN ${pin} not found`);
         }
+
+        await this.redis.set(cacheKey, JSON.stringify(lobby), "EX", 7200);
 
         return lobby;
     }
@@ -55,6 +71,12 @@ export class LobbyService {
             where: { id: lobbyId },
             data: { status },
         });
+
+        await this.redis.del(lobbyPinKey(updated.pin));
+
+        if (status === LobbyStatus.CLOSED) {
+            await this.redis.del(lobbyIndexKey(lobbyId));
+        }
 
         return updated;
     }
@@ -93,9 +115,11 @@ export class LobbyService {
         }
 
         const pin = await this.getUniquePin();
-        const newLobby = this.prisma.gameLobby.create({
+        const newLobby = await this.prisma.gameLobby.create({
             data: { pin, quizId, hostId },
         });
+
+        await this.redis.set(lobbyIndexKey(newLobby.id), 0, "EX", 10800);
 
         return newLobby;
     }
@@ -139,12 +163,22 @@ export class LobbyService {
     }) {
         const { nickname, lobbyId, isOnline } = params;
 
-        const player = await this.prisma.gamePlayer.update({
-            where: { lobbyId_nickname: { lobbyId, nickname } },
-            data: { isOnline },
-        });
+        if (isOnline) {
+            await this.redis.sadd(lobbyOnlinePlayersKey(lobbyId), nickname);
+            return;
+        }
 
-        return player;
+        await this.redis.srem(lobbyOnlinePlayersKey(lobbyId), nickname);
+    }
+
+    async getCurrentQuestionIndex(lobbyId: number) {
+        const index = await this.redis.get(lobbyIndexKey(lobbyId));
+        return index ? parseInt(index, 10) : 0;
+    }
+
+    async increaseCurrentQuestionIndex(lobbyId: number) {
+        const newIndex = await this.redis.incr(lobbyIndexKey(lobbyId));
+        return newIndex;
     }
 
     async getQuestionListOfLobby(
@@ -152,27 +186,55 @@ export class LobbyService {
         options: { includeAnswer: boolean } = { includeAnswer: true },
     ) {
         const { includeAnswer } = options;
+        const cacheKey = `lobby_questions:${lobbyId}`;
 
-        const lobby = await this.prisma.gameLobby.findUnique({
-            where: { id: lobbyId },
-            include: {
-                quiz: {
-                    include: {
-                        questions: {
-                            include: {
-                                options: { omit: { isCorrect: includeAnswer } },
+        const cachedQuestions = await this.redis.get(cacheKey);
+
+        let questions: QuestionWithOptions[];
+
+        if (cachedQuestions) {
+            questions = JSON.parse(cachedQuestions);
+        } else {
+            const lobby = await this.prisma.gameLobby.findUnique({
+                where: { id: lobbyId },
+                include: {
+                    quiz: {
+                        include: {
+                            questions: {
+                                include: {
+                                    options: true,
+                                },
                             },
                         },
                     },
                 },
-            },
-        });
+            });
 
-        if (!lobby) {
-            throw new NotFoundException("Lobby not found");
+            if (!lobby) {
+                throw new NotFoundException("Lobby not found");
+            }
+
+            questions = lobby.quiz.questions;
+
+            await this.redis.set(
+                cacheKey,
+                JSON.stringify(questions),
+                "EX",
+                7200,
+            );
         }
 
-        return lobby.quiz.questions;
+        if (!includeAnswer) {
+            return questions.map((q) => ({
+                ...q,
+                options: q.options.map((o) => {
+                    const { isCorrect, ...rest } = o;
+                    return rest;
+                }),
+            }));
+        }
+
+        return questions;
     }
 
     async findAnswerToQuestion(questionId: number) {
@@ -220,30 +282,37 @@ export class LobbyService {
         return saved;
     }
 
+    async markPlayerAsAnswered(params: {
+        lobbyId: number;
+        questionId: number;
+        nickname: string;
+    }) {
+        const { lobbyId, questionId, nickname } = params;
+        const key = lobbyAnsweredKey(lobbyId, questionId);
+        await this.redis.sadd(key, nickname);
+        await this.redis.expire(key, 3600);
+    }
+
     async isAllOnlinePlayersAnswerCurrentQuestion(params: {
         lobbyId: number;
         questionId: number;
     }) {
         const { lobbyId, questionId } = params;
 
-        const onlinePlayersCount = await this.prisma.gamePlayer.count({
-            where: { lobbyId, isOnline: true },
-        });
+        const onlineAndAnsweredCount = await this.redis.sintercard(
+            2,
+            lobbyOnlinePlayersKey(lobbyId),
+            lobbyAnsweredKey(lobbyId, questionId),
+        );
 
-        const answerCount = await this.prisma.playerAnswer.count({
-            where: { questionId, player: { lobbyId } },
-        });
+        const onlinePlayersCount = await this.redis.scard(
+            lobbyOnlinePlayersKey(lobbyId),
+        );
 
-        return onlinePlayersCount === answerCount;
-    }
-
-    async increaseCurrentQuestionIndex(lobbyId: number) {
-        const updated = await this.prisma.gameLobby.update({
-            where: { id: lobbyId },
-            data: { currentQuestionIndex: { increment: 1 } },
-        });
-
-        return updated;
+        return (
+            onlinePlayersCount === 0 ||
+            onlineAndAnsweredCount === onlinePlayersCount
+        );
     }
 
     async getLeaderBoard(lobbyId: number) {
@@ -255,5 +324,9 @@ export class LobbyService {
         });
 
         return leaderboard;
+    }
+
+    async isPlayerOnline(lobbyId: number, nickname: string) {
+        return this.redis.sismember(lobbyOnlinePlayersKey(lobbyId), nickname);
     }
 }
