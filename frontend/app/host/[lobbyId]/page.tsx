@@ -55,6 +55,7 @@ export default function HostGameScreen() {
 						state.answerStats
 					)}
 					correctOptionId={state.currentQuestionCorrectOptionId!}
+					onNext={handlers.handleNextQuestion}
 				/>
 			);
 	}
