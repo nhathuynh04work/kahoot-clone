@@ -12,10 +12,12 @@ import Redis from "ioredis";
 import { QuestionWithOptions } from "../../quiz/dto/quiz.dto";
 import {
     lobbyAnsweredKey,
-    lobbyIndexKey,
+    lobbyCurrentQuestionIndexKey,
+    lobbyLeaderboardKey,
     lobbyOnlinePlayersKey,
     lobbyPinKey,
     questionStatsKey,
+    quizQuestionsKey,
 } from "../../lib/redis-key-factory";
 
 @Injectable()
@@ -76,7 +78,7 @@ export class LobbyService {
         await this.redis.del(lobbyPinKey(updated.pin));
 
         if (status === LobbyStatus.CLOSED) {
-            await this.redis.del(lobbyIndexKey(lobbyId));
+            await this.redis.del(lobbyCurrentQuestionIndexKey(lobbyId));
         }
 
         return updated;
@@ -84,23 +86,20 @@ export class LobbyService {
 
     private async getUniquePin() {
         let pin = "000000";
-        let isPinInUse = true;
 
-        while (isPinInUse) {
+        while (true) {
             pin = Math.floor(100000 + Math.random() * 900000).toString();
-            const lobby = await this.prisma.gameLobby.findFirst({
-                where: {
-                    pin: pin,
-                    status: {
-                        in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS],
-                    },
-                },
-            });
-
-            if (!lobby) isPinInUse = false;
+            try {
+                await this.findActiveLobbyByPin(pin);
+            } catch (error) {
+                // If it throws NotFoundException, the PIN is free
+                if (error instanceof NotFoundException) {
+                    return pin;
+                }
+                // If it's another error (e.g. Redis down), stop the loop
+                throw error;
+            }
         }
-
-        return pin;
     }
 
     async createLobby(params: { quizId: number; hostId: number }) {
@@ -120,7 +119,12 @@ export class LobbyService {
             data: { pin, quizId, hostId },
         });
 
-        await this.redis.set(lobbyIndexKey(newLobby.id), 0, "EX", 10800);
+        await this.redis.set(
+            lobbyCurrentQuestionIndexKey(newLobby.id),
+            0,
+            "EX",
+            10800,
+        );
 
         return newLobby;
     }
@@ -135,6 +139,9 @@ export class LobbyService {
                     lobbyId,
                 },
             });
+
+            await this.redis.zadd(lobbyLeaderboardKey(lobbyId), 0, nickname);
+            await this.redis.expire(lobbyLeaderboardKey(lobbyId), 10800);
 
             return player;
         } catch (error) {
@@ -173,49 +180,42 @@ export class LobbyService {
     }
 
     async getCurrentQuestionIndex(lobbyId: number) {
-        const index = await this.redis.get(lobbyIndexKey(lobbyId));
+        const index = await this.redis.get(
+            lobbyCurrentQuestionIndexKey(lobbyId),
+        );
         return index ? parseInt(index, 10) : 0;
     }
 
     async increaseCurrentQuestionIndex(lobbyId: number) {
-        const newIndex = await this.redis.incr(lobbyIndexKey(lobbyId));
+        const newIndex = await this.redis.incr(
+            lobbyCurrentQuestionIndexKey(lobbyId),
+        );
         return newIndex;
     }
 
-    async getQuestionListOfLobby(
-        lobbyId: number,
+    async getQuestionList(
+        quizId: number,
         options: { includeAnswer: boolean } = { includeAnswer: true },
     ) {
         const { includeAnswer } = options;
-        const cacheKey = `lobby_questions:${lobbyId}`;
-
-        const cachedQuestions = await this.redis.get(cacheKey);
+        const cacheKey = quizQuestionsKey(quizId);
+        const cachedData = await this.redis.get(cacheKey);
 
         let questions: QuestionWithOptions[];
 
-        if (cachedQuestions) {
-            questions = JSON.parse(cachedQuestions);
+        if (cachedData) {
+            questions = JSON.parse(cachedData);
         } else {
-            const lobby = await this.prisma.gameLobby.findUnique({
-                where: { id: lobbyId },
-                include: {
-                    quiz: {
-                        include: {
-                            questions: {
-                                include: {
-                                    options: true,
-                                },
-                            },
-                        },
-                    },
-                },
+            const quizData = await this.prisma.quiz.findUnique({
+                where: { id: quizId },
+                include: { questions: { include: { options: true } } },
             });
 
-            if (!lobby) {
-                throw new NotFoundException("Lobby not found");
+            if (!quizData) {
+                throw new NotFoundException("Quiz not found");
             }
 
-            questions = lobby.quiz.questions;
+            questions = quizData.questions;
 
             await this.redis.set(
                 cacheKey,
@@ -225,38 +225,45 @@ export class LobbyService {
             );
         }
 
-        if (!includeAnswer) {
-            return questions.map((q) => ({
-                ...q,
-                options: q.options.map((o) => {
-                    const { isCorrect, ...rest } = o;
-                    return rest;
-                }),
-            }));
-        }
+        if (includeAnswer) return questions;
 
-        return questions;
+        return questions.map((q) => ({
+            ...q,
+            options: q.options.map(({ isCorrect, ...rest }) => rest),
+        }));
     }
 
-    async findAnswerToQuestion(questionId: number) {
-        const question = await this.prisma.question.findUnique({
-            where: { id: questionId },
-            include: { options: true },
-        });
+    async findAnswerToQuestion(quizId: number, questionId: number) {
+        const questions = (await this.getQuestionList(quizId, {
+            includeAnswer: true,
+        })) as QuestionWithOptions[];
+
+        const question = questions.find((q) => q.id === questionId);
 
         if (!question) {
             throw new NotFoundException("Question not found");
         }
 
         const correctOption = question.options.find((o) => o.isCorrect);
-        return { question, answer: correctOption! };
+
+        if (!correctOption) {
+            throw new NotFoundException(
+                "This question has no correct option set",
+            );
+        }
+
+        return { question, answer: correctOption };
     }
 
-    async gradeAnswer(params: { questionId: number; optionId: number }) {
-        const { questionId, optionId } = params;
+    async gradeAnswer(params: {
+        quizId: number;
+        questionId: number;
+        optionId: number;
+    }) {
+        const { quizId, questionId, optionId } = params;
 
         const { question, answer: correctOption } =
-            await this.findAnswerToQuestion(questionId);
+            await this.findAnswerToQuestion(quizId, questionId);
 
         const isCorrect = correctOption.id === optionId;
         const points = isCorrect ? question.points : 0;
@@ -306,6 +313,20 @@ export class LobbyService {
         await this.redis.expire(key, 7200);
     }
 
+    async addScoreToLeaderboard(
+        lobbyId: number,
+        nickname: string,
+        points: number,
+    ) {
+        if (points > 0) {
+            await this.redis.zincrby(
+                lobbyLeaderboardKey(lobbyId),
+                points,
+                nickname,
+            );
+        }
+    }
+
     async getQuestionStats(lobbyId: number, questionId: number) {
         return await this.redis.hgetall(questionStatsKey(lobbyId, questionId));
     }
@@ -333,12 +354,21 @@ export class LobbyService {
     }
 
     async getLeaderBoard(lobbyId: number) {
-        const leaderboard = await this.prisma.gamePlayer.findMany({
-            where: { lobbyId },
-            orderBy: {
-                points: "desc",
-            },
-        });
+        const rawList = await this.redis.zrevrange(
+            lobbyLeaderboardKey(lobbyId),
+            0,
+            -1,
+            "WITHSCORES",
+        );
+
+        const leaderboard: { nickname: string; points: number }[] = [];
+
+        for (let i = 0; i < rawList.length; i += 2) {
+            leaderboard.push({
+                nickname: rawList[i],
+                points: parseInt(rawList[i + 1], 10),
+            });
+        }
 
         return leaderboard;
     }

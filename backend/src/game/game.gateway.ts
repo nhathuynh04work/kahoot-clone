@@ -228,8 +228,8 @@ export class GameGateway
         );
 
         // Get the question
-        const questions = await this.lobbyService.getQuestionListOfLobby(
-            lobby.id,
+        const questions = await this.lobbyService.getQuestionList(
+            lobby.quizId,
             { includeAnswer: false },
         );
 
@@ -273,6 +273,7 @@ export class GameGateway
 
             // grade the answer
             const result = await this.lobbyService.gradeAnswer({
+                quizId: lobby.quizId,
                 questionId,
                 optionId,
             });
@@ -284,6 +285,12 @@ export class GameGateway
                 playerId: player?.id,
                 ...result,
             });
+
+            await this.lobbyService.addScoreToLeaderboard(
+                lobby.id,
+                nickname,
+                result.points,
+            );
 
             this.logger.log(
                 `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
@@ -340,8 +347,10 @@ export class GameGateway
 
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
-        const { answer } =
-            await this.lobbyService.findAnswerToQuestion(questionId);
+        const { answer } = await this.lobbyService.findAnswerToQuestion(
+            lobby.quizId,
+            questionId,
+        );
 
         const stats = await this.lobbyService.getQuestionStats(
             lobby.id,
@@ -369,9 +378,7 @@ export class GameGateway
         );
 
         // check if there's no questions
-        const questions = await this.lobbyService.getQuestionListOfLobby(
-            lobby.id,
-        );
+        const questions = await this.lobbyService.getQuestionList(lobby.quizId);
 
         if (nextIndex >= questions.length) {
             const leaderboard = await this.lobbyService.getLeaderBoard(
