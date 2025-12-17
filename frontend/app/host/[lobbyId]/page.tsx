@@ -1,5 +1,6 @@
 "use client";
 
+import { HostFinishedScreen } from "@/features/game/components/host/host-finished-screen";
 import { HostQuestionScreen } from "@/features/game/components/host/host-question-screen";
 import { HostResultScreen } from "@/features/game/components/host/host-result-screen";
 import { HostWaitingScreen } from "@/features/game/components/host/host-waiting-screen";
@@ -58,6 +59,9 @@ export default function HostGameScreen() {
 					onNext={handlers.handleNextQuestion}
 				/>
 			);
+
+		case "FINISHED":
+			return <HostFinishedScreen leaderboard={state.leaderboard} />;
 	}
 
 	return <p>implementing...</p>;

@@ -24,7 +24,8 @@ type PlayerAction =
 	| { type: "SET_INFO"; payload: { nickname: string; pin: string } }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
 	| { type: "SUBMIT_ANSWER"; payload: number }
-	| { type: "SET_CORRECT_ANSWER"; payload: number };
+	| { type: "SET_CORRECT_ANSWER"; payload: number }
+	| { type: "SHOW_LEADERBOARD"; payload: Player[] };
 
 const playerReducer = (
 	state: PlayerGameState,
@@ -65,6 +66,15 @@ const playerReducer = (
 					action.payload === state.selectedOptionId
 						? state.points + state.currentQuestion!.points
 						: state.points,
+			};
+
+		case "SHOW_LEADERBOARD":
+			return {
+				...state,
+				status: "FINISHED",
+				rank: action.payload.findIndex(
+					(p) => p.nickname === state.nickname
+				),
 			};
 	}
 };
@@ -107,8 +117,13 @@ export const usePlayerGame = () => {
 		dispatch({ type: "SET_QUESTION", payload: payload });
 	});
 
+	// Show result at the end of every round
 	useSocketEvent("showResult", (payload: { optionId: number }) => {
 		dispatch({ type: "SET_CORRECT_ANSWER", payload: payload.optionId });
+	});
+
+	useSocketEvent("gameFinished", (payload: { leaderboard: Player[] }) => {
+		dispatch({ type: "SHOW_LEADERBOARD", payload: payload.leaderboard });
 	});
 
 	const handleSelectOption = (optionId: number) => {

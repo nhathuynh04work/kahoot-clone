@@ -8,10 +8,12 @@ import { toast } from "sonner";
 
 const initialState: HostGameState = {
 	pin: "",
+	status: "WAITING",
+
 	players: [],
 	answerStats: {},
+	leaderboard: [],
 
-	status: "WAITING",
 	currentQuestionIndex: 0,
 	currentQuestionCorrectOptionId: null,
 	currentQuestion: null,
@@ -25,7 +27,8 @@ type HostAction =
 	| { type: "PLAYER_REJOINED"; payload: Player }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
 	| { type: "ADD_NEW_ANSWER"; payload: number }
-	| { type: "SET_CORRECT_ANSWER"; payload: number };
+	| { type: "SET_CORRECT_ANSWER"; payload: number }
+	| { type: "SHOW_LEADERBOARD"; payload: Player[] };
 
 const hostReducer = (
 	state: HostGameState,
@@ -90,6 +93,13 @@ const hostReducer = (
 				status: "RESULT",
 				currentQuestionCorrectOptionId: action.payload,
 			};
+
+		case "SHOW_LEADERBOARD":
+			return {
+				...state,
+				status: "FINISHED",
+				leaderboard: action.payload,
+			};
 	}
 };
 
@@ -127,6 +137,10 @@ export const useHostGame = (lobbyId: number) => {
 			type: "SET_CORRECT_ANSWER",
 			payload: payload.optionId,
 		});
+	});
+
+	useSocketEvent("gameFinished", (payload: { leaderboard: Player[] }) => {
+		dispatch({ type: "SHOW_LEADERBOARD", payload: payload.leaderboard });
 	});
 
 	const handleStartGame = () => {

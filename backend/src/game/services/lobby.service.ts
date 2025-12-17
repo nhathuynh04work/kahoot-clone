@@ -212,6 +212,11 @@ export class LobbyService {
             data: params,
         });
 
+        await this.prisma.gamePlayer.update({
+            where: { id: params.playerId },
+            data: { points: { increment: params.points } },
+        });
+
         return saved;
     }
 
@@ -241,5 +246,14 @@ export class LobbyService {
         return updated;
     }
 
-    async getLeaderBoard(lobbyId: number) {}
+    async getLeaderBoard(lobbyId: number) {
+        const leaderboard = await this.prisma.gamePlayer.findMany({
+            where: { lobbyId },
+            orderBy: {
+                points: "desc",
+            },
+        });
+
+        return leaderboard;
+    }
 }

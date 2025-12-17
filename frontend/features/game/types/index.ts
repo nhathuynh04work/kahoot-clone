@@ -34,8 +34,9 @@ interface BaseGameState {
 }
 
 export interface HostGameState extends BaseGameState {
-	players: Array<Player>;
+	players: Player[];
 	answerStats: Record<number, number>;
+	leaderboard: Player[];
 }
 
 export interface PlayerGameState extends BaseGameState, Player {

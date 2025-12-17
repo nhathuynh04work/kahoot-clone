@@ -1,5 +1,6 @@
 "use client";
 
+import { PlayerFinishedScreen } from "@/features/game/components/player/player-finished-screen";
 import { PlayerQuestionScreen } from "@/features/game/components/player/player-question-screen";
 import { PlayerResultScreen } from "@/features/game/components/player/player-result-screen";
 import { PlayerSubmittedScreen } from "@/features/game/components/player/player-submitted-screen";
@@ -34,5 +35,16 @@ export default function PlayerGameScreen() {
 					points={state.points}
 				/>
 			);
+
+		case "FINISHED":
+			return (
+				<PlayerFinishedScreen
+					nickname={state.nickname}
+					points={state.points}
+					rank={state.rank}
+				/>
+			);
 	}
+
+	return <div>implementing...</div>;
 }
