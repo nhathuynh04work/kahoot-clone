@@ -231,4 +231,15 @@ export class LobbyService {
 
         return onlinePlayersCount === answerCount;
     }
+
+    async increaseCurrentQuestionIndex(lobbyId: number) {
+        const updated = await this.prisma.gameLobby.update({
+            where: { id: lobbyId },
+            data: { currentQuestionIndex: { increment: 1 } },
+        });
+
+        return updated;
+    }
+
+    async getLeaderBoard(lobbyId: number) {}
 }
