@@ -289,6 +289,20 @@ export class GameGateway
                 `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
             );
 
+            // add the answer to the stats
+            await this.lobbyService.recordAnswerStats({
+                lobbyId: lobby.id,
+                questionId,
+                optionId,
+            });
+
+            // mark the player as having answered
+            await this.lobbyService.markPlayerAsAnswered({
+                lobbyId: lobby.id,
+                questionId,
+                nickname,
+            });
+
             // check if all online players have answered
             const isAllAnswered =
                 await this.lobbyService.isAllOnlinePlayersAnswerCurrentQuestion(
@@ -329,10 +343,14 @@ export class GameGateway
         const { answer } =
             await this.lobbyService.findAnswerToQuestion(questionId);
 
-        // [TO-DO]: The stats should be returned from here
+        const stats = await this.lobbyService.getQuestionStats(
+            lobby.id,
+            questionId,
+        );
 
         this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
             optionId: answer.id,
+            answerStats: stats, // { "optionId": "count" }
         });
 
         return { success: true };

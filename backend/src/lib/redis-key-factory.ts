@@ -7,3 +7,6 @@ export const lobbyOnlinePlayersKey = (lobbyId: number) =>
 
 export const lobbyAnsweredKey = (lobbyId: number, questionId: number) =>
     `lobby:${lobbyId}:question:${questionId}:answered`;
+
+export const questionStatsKey = (lobbyId: number, questionId: number) =>
+    `lobby:${lobbyId}:question:${questionId}:stats`;

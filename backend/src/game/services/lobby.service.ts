@@ -15,6 +15,7 @@ import {
     lobbyIndexKey,
     lobbyOnlinePlayersKey,
     lobbyPinKey,
+    questionStatsKey,
 } from "../../lib/redis-key-factory";
 
 @Injectable()
@@ -291,6 +292,22 @@ export class LobbyService {
         const key = lobbyAnsweredKey(lobbyId, questionId);
         await this.redis.sadd(key, nickname);
         await this.redis.expire(key, 3600);
+    }
+
+    async recordAnswerStats(params: {
+        lobbyId: number;
+        questionId: number;
+        optionId: number;
+    }) {
+        const { lobbyId, questionId, optionId } = params;
+        const key = questionStatsKey(lobbyId, questionId);
+
+        await this.redis.hincrby(key, optionId.toString(), 1);
+        await this.redis.expire(key, 7200);
+    }
+
+    async getQuestionStats(lobbyId: number, questionId: number) {
+        return await this.redis.hgetall(questionStatsKey(lobbyId, questionId));
     }
 
     async isAllOnlinePlayersAnswerCurrentQuestion(params: {

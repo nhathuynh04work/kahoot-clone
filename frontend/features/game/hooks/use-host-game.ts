@@ -1,5 +1,10 @@
 import { useReducer } from "react";
-import { HostGameState, NewQuestionEventPayload, Player } from "../types";
+import {
+	HostGameState,
+	NewQuestionEventPayload,
+	Player,
+	ShowResultEventPayload,
+} from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { useSocketEvent } from "../context/socket-context";
 import { useHostJoin } from "./use-join-lobby";
@@ -12,6 +17,7 @@ const initialState: HostGameState = {
 
 	players: [],
 	answerStats: {},
+	currentQuestionAnswerCount: 0,
 	leaderboard: [],
 
 	currentQuestionIndex: 0,
@@ -27,7 +33,10 @@ type HostAction =
 	| { type: "PLAYER_REJOINED"; payload: Player }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
 	| { type: "ADD_NEW_ANSWER"; payload: number }
-	| { type: "SET_CORRECT_ANSWER"; payload: number }
+	| {
+			type: "SET_CORRECT_ANSWER";
+			payload: ShowResultEventPayload;
+	  }
 	| { type: "SHOW_LEADERBOARD"; payload: Player[] };
 
 const hostReducer = (
@@ -69,6 +78,7 @@ const hostReducer = (
 			return {
 				...state,
 				status: "QUESTION",
+				currentQuestionAnswerCount: 0,
 				currentQuestion: action.payload.currentQuestion,
 				currentQuestionIndex: action.payload.currentQuestionIndex,
 				totalQuestions: action.payload.totalQuestions,
@@ -76,22 +86,18 @@ const hostReducer = (
 			};
 
 		case "ADD_NEW_ANSWER":
-			// count of answer for an option
-			const optionId = action.payload;
-			const currentCount = state.answerStats?.[optionId] ?? 0;
 			return {
 				...state,
-				answerStats: {
-					...state.answerStats,
-					[optionId]: currentCount + 1,
-				},
+				currentQuestionAnswerCount:
+					state.currentQuestionAnswerCount + 1,
 			};
 
 		case "SET_CORRECT_ANSWER":
 			return {
 				...state,
 				status: "RESULT",
-				currentQuestionCorrectOptionId: action.payload,
+				currentQuestionCorrectOptionId: action.payload.optionId,
+				answerStats: action.payload.answerStats,
 			};
 
 		case "SHOW_LEADERBOARD":
@@ -132,10 +138,10 @@ export const useHostGame = (lobbyId: number) => {
 		dispatch({ type: "ADD_NEW_ANSWER", payload: payload.optionId });
 	});
 
-	useSocketEvent("showResult", (payload: { optionId: number }) => {
+	useSocketEvent("showResult", (payload: ShowResultEventPayload) => {
 		dispatch({
 			type: "SET_CORRECT_ANSWER",
-			payload: payload.optionId,
+			payload: payload,
 		});
 	});
 

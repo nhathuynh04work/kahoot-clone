@@ -5,10 +5,6 @@ import { HostQuestionScreen } from "@/features/game/components/host/host-questio
 import { HostResultScreen } from "@/features/game/components/host/host-result-screen";
 import { HostWaitingScreen } from "@/features/game/components/host/host-waiting-screen";
 import { useHostGame } from "@/features/game/hooks/use-host-game";
-import {
-	getStatsOfCurrentQuestion,
-	getTotalAnswerCountForCurrentQuestion,
-} from "@/features/game/lib/helpers";
 import { useParams, useRouter } from "next/navigation";
 
 export default function HostGameScreen() {
@@ -36,14 +32,7 @@ export default function HostGameScreen() {
 					currentQuestion={state.currentQuestion!}
 					currentQuestionIndex={state.currentQuestionIndex}
 					totalQuestions={state.totalQuestions}
-					totalAnswerCount={
-						state.currentQuestion
-							? getTotalAnswerCountForCurrentQuestion(
-									state.currentQuestion,
-									state.answerStats
-							  )
-							: 0
-					}
+					totalAnswerCount={state.currentQuestionAnswerCount}
 					onTimeUp={handlers.handleTimeUp}
 				/>
 			);
@@ -51,10 +40,7 @@ export default function HostGameScreen() {
 		case "RESULT":
 			return (
 				<HostResultScreen
-					stats={getStatsOfCurrentQuestion(
-						state.currentQuestion!,
-						state.answerStats
-					)}
+					stats={state.answerStats}
 					correctOptionId={state.currentQuestionCorrectOptionId!}
 					onNext={handlers.handleNextQuestion}
 				/>

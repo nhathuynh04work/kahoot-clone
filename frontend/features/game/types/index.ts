@@ -35,7 +35,8 @@ interface BaseGameState {
 
 export interface HostGameState extends BaseGameState {
 	players: Player[];
-	answerStats: Record<number, number>;
+	currentQuestionAnswerCount: number;
+	answerStats: Record<string, string>;
 	leaderboard: Player[];
 }
 
@@ -48,4 +49,9 @@ export interface NewQuestionEventPayload {
 	currentQuestionIndex: number;
 	currentQuestion: QuestionWithOptions;
 	totalQuestions: number;
+}
+
+export interface ShowResultEventPayload {
+	optionId: number;
+	answerStats: Record<string, string>;
 }
