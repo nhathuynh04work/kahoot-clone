@@ -207,10 +207,7 @@ export class GameGateway
 
     @UseGuards(JwtWsGuard)
     @SubscribeMessage("startGame")
-    async handleStartGame(
-        @MessageBody() payload: { pin: string },
-        @ConnectedSocket() client: Socket,
-    ) {
+    async handleStartGame(@MessageBody() payload: { pin: string }) {
         const { pin } = payload;
 
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
@@ -329,6 +326,50 @@ export class GameGateway
 
         this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
             optionId: answer.id,
+        });
+
+        return { success: true };
+    }
+
+    @UseGuards(JwtWsGuard)
+    @SubscribeMessage("nextQuestion")
+    async handleNextQuestion(@MessageBody() payload: { pin: string }) {
+        const { pin } = payload;
+
+        const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
+
+        // increase current question index
+        const updated = await this.lobbyService.increaseCurrentQuestionIndex(
+            lobby.id,
+        );
+
+        // check if there's no questions
+        const questions = await this.lobbyService.getQuestionListOfLobby(
+            lobby.id,
+        );
+
+        if (updated.currentQuestionIndex >= questions.length) {
+            const leaderboard = await this.lobbyService.getLeaderBoard(
+                lobby.id,
+            );
+
+            this.socketService.emitToRoom(lobby.id.toString(), "gameFinished", {
+                leaderboard,
+            });
+
+            await this.lobbyService.updateLobbyStatus(
+                lobby.id,
+                LobbyStatus.CLOSED,
+            );
+
+            return { success: true };
+        }
+
+        // get current question
+        this.socketService.emitToRoom(updated.id.toString(), "newQuestion", {
+            currentQuestionIndex: updated.currentQuestionIndex,
+            currentQuestion: questions[updated.currentQuestionIndex],
+            totalQuestions: questions.length,
         });
 
         return { success: true };

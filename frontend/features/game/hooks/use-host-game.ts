@@ -150,9 +150,14 @@ export const useHostGame = (lobbyId: number) => {
 		});
 	};
 
+	const handleNextQuestion = () => {
+		socket.emit("nextQuestion", { pin: state.pin });
+	};
+
 	const handlers = {
 		handleStartGame,
 		handleTimeUp,
+		handleNextQuestion,
 	};
 
 	return { state, handlers };
