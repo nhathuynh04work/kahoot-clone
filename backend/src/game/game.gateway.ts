@@ -12,7 +12,6 @@ import {
 import { Server, Socket } from "socket.io";
 import {
     ConflictException,
-    Inject,
     Logger,
     NotFoundException,
     UseGuards,
@@ -21,7 +20,6 @@ import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
 import { LobbyStatus } from "../generated/prisma/client";
-import Redis from "ioredis";
 
 @WebSocketGateway()
 export class GameGateway
@@ -35,7 +33,6 @@ export class GameGateway
     constructor(
         private lobbyService: LobbyService,
         private socketService: SocketService,
-        @Inject("REDIS_CLIENT") private redis: Redis,
     ) {}
 
     afterInit(server: Server) {
@@ -166,6 +163,12 @@ export class GameGateway
                     { player: player, newSocketId: client.id },
                 );
 
+                await this.lobbyService.updatePlayerOnlineStatus({
+                    nickname,
+                    lobbyId: player.lobbyId,
+                    isOnline: true,
+                });
+
                 this.logger.log(
                     `Player ${nickname} (socketID: ${client.id}) has rejoined`,
                 );
@@ -173,7 +176,7 @@ export class GameGateway
                 return { success: true };
             }
 
-            if (player.isOnline)
+            if (await this.lobbyService.isPlayerOnline(lobby.id, nickname))
                 throw new ConflictException("Player is active somewhere");
 
             await this.lobbyService.updatePlayerOnlineStatus({
@@ -199,6 +202,7 @@ export class GameGateway
 
             return { success: true };
         } catch (error) {
+            this.logger.error(error.message);
             return { success: false };
         } finally {
             client.data.isJoining = false;
@@ -224,14 +228,17 @@ export class GameGateway
         );
 
         // Get the question
-        const questions = await this.lobbyService.getQuestionListOfLobby(
-            lobby.id,
+        const questions = await this.lobbyService.getQuestionList(
+            lobby.quizId,
             { includeAnswer: false },
         );
 
+        const currentQuestionIndex =
+            await this.lobbyService.getCurrentQuestionIndex(lobby.id);
+
         this.socketService.emitToRoom(lobby.id.toString(), "newQuestion", {
-            currentQuestionIndex: lobby.currentQuestionIndex,
-            currentQuestion: questions[lobby.currentQuestionIndex],
+            currentQuestionIndex: currentQuestionIndex,
+            currentQuestion: questions[currentQuestionIndex],
             totalQuestions: questions.length,
         });
 
@@ -266,6 +273,7 @@ export class GameGateway
 
             // grade the answer
             const result = await this.lobbyService.gradeAnswer({
+                quizId: lobby.quizId,
                 questionId,
                 optionId,
             });
@@ -278,9 +286,29 @@ export class GameGateway
                 ...result,
             });
 
+            await this.lobbyService.addScoreToLeaderboard(
+                lobby.id,
+                nickname,
+                result.points,
+            );
+
             this.logger.log(
                 `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
             );
+
+            // add the answer to the stats
+            await this.lobbyService.recordAnswerStats({
+                lobbyId: lobby.id,
+                questionId,
+                optionId,
+            });
+
+            // mark the player as having answered
+            await this.lobbyService.markPlayerAsAnswered({
+                lobbyId: lobby.id,
+                questionId,
+                nickname,
+            });
 
             // check if all online players have answered
             const isAllAnswered =
@@ -319,13 +347,19 @@ export class GameGateway
 
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
-        const { answer } =
-            await this.lobbyService.findAnswerToQuestion(questionId);
+        const { answer } = await this.lobbyService.findAnswerToQuestion(
+            lobby.quizId,
+            questionId,
+        );
 
-        // [TO-DO]: The stats should be returned from here
+        const stats = await this.lobbyService.getQuestionStats(
+            lobby.id,
+            questionId,
+        );
 
         this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
             optionId: answer.id,
+            answerStats: stats, // { "optionId": "count" }
         });
 
         return { success: true };
@@ -339,16 +373,14 @@ export class GameGateway
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
         // increase current question index
-        const updated = await this.lobbyService.increaseCurrentQuestionIndex(
+        const nextIndex = await this.lobbyService.increaseCurrentQuestionIndex(
             lobby.id,
         );
 
         // check if there's no questions
-        const questions = await this.lobbyService.getQuestionListOfLobby(
-            lobby.id,
-        );
+        const questions = await this.lobbyService.getQuestionList(lobby.quizId);
 
-        if (updated.currentQuestionIndex >= questions.length) {
+        if (nextIndex >= questions.length) {
             const leaderboard = await this.lobbyService.getLeaderBoard(
                 lobby.id,
             );
@@ -366,9 +398,9 @@ export class GameGateway
         }
 
         // get current question
-        this.socketService.emitToRoom(updated.id.toString(), "newQuestion", {
-            currentQuestionIndex: updated.currentQuestionIndex,
-            currentQuestion: questions[updated.currentQuestionIndex],
+        this.socketService.emitToRoom(lobby.id.toString(), "newQuestion", {
+            currentQuestionIndex: nextIndex,
+            currentQuestion: questions[nextIndex],
             totalQuestions: questions.length,
         });
 

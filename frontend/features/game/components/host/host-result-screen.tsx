@@ -1,7 +1,7 @@
 "use client";
 
 interface HostResultScreenProps {
-	stats: Record<number, number>;
+	stats: Record<string, string>;
 	correctOptionId: number;
 	onNext: () => void;
 }
