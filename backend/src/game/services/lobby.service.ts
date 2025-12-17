@@ -376,4 +376,20 @@ export class LobbyService {
     async isPlayerOnline(lobbyId: number, nickname: string) {
         return this.redis.sismember(lobbyOnlinePlayersKey(lobbyId), nickname);
     }
+
+    async initializeAnswerStatsForQuestion(
+        lobbyId: number,
+        question: QuestionWithOptions,
+    ) {
+        const key = questionStatsKey(lobbyId, question.id);
+        const pipeline = this.redis.pipeline();
+
+        question.options.forEach((option) => {
+            pipeline.hset(key, option.id.toString(), "0");
+        });
+
+        pipeline.expire(key, 7200);
+
+        await pipeline.exec();
+    }
 }

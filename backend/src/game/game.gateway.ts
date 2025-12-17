@@ -20,6 +20,7 @@ import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
 import { LobbyStatus } from "../generated/prisma/client";
+import { QuestionWithOptions } from "../quiz/dto/quiz.dto";
 
 @WebSocketGateway()
 export class GameGateway
@@ -236,6 +237,11 @@ export class GameGateway
         const currentQuestionIndex =
             await this.lobbyService.getCurrentQuestionIndex(lobby.id);
 
+        await this.lobbyService.initializeAnswerStatsForQuestion(
+            lobby.id,
+            questions[currentQuestionIndex] as QuestionWithOptions,
+        );
+
         this.socketService.emitToRoom(lobby.id.toString(), "newQuestion", {
             currentQuestionIndex: currentQuestionIndex,
             currentQuestion: questions[currentQuestionIndex],
@@ -245,6 +251,7 @@ export class GameGateway
         return { success: true };
     }
 
+    // [TO-DO]: Create a service that encapsulates all step, return the points and isCorrect to frontend
     @SubscribeMessage("submitAnswer")
     async handleSubmitAnswer(
         @MessageBody()
@@ -396,6 +403,11 @@ export class GameGateway
 
             return { success: true };
         }
+
+        await this.lobbyService.initializeAnswerStatsForQuestion(
+            lobby.id,
+            questions[nextIndex] as QuestionWithOptions,
+        );
 
         // get current question
         this.socketService.emitToRoom(lobby.id.toString(), "newQuestion", {

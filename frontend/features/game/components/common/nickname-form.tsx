@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { registerPlayer } from "../../api/server-actions";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ export function NicknameForm({ onSuccess, pin }: NicknameFormProps) {
 		setIsLoading(true);
 
 		try {
-			const player = await registerPlayer(nickname, pin);
+			await registerPlayer(nickname, pin);
 			onSuccess(nickname);
 		} catch (error: any) {
 			toast.error(error.message || "Something went wrong");
@@ -34,29 +34,41 @@ export function NicknameForm({ onSuccess, pin }: NicknameFormProps) {
 	}
 
 	return (
-		<div className="w-full max-w-sm">
+		<div className="w-full max-w-sm animate-in slide-in-from-right-8 duration-500">
 			<form
 				onSubmit={handleJoinGame}
-				className="relative flex flex-col gap-4 p-8 bg-gray-900/90 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-800">
-				<input
-					type="text"
-					placeholder="Nickname"
-					value={nickname}
-					onChange={(e) => setNickname(e.target.value)}
-					className="w-full px-4 py-4 text-center text-xl font-bold border-2 border-gray-700 rounded-lg bg-gray-800 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-inner"
-					autoFocus
-				/>
+				className="flex flex-col gap-6 p-8 bg-gray-800 rounded-2xl shadow-xl border border-gray-700">
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-white">
+						Who are you?
+					</h2>
+					<p className="text-gray-400 text-sm mt-1">
+						Pick a fun nickname
+					</p>
+				</div>
+
+				<div className="relative">
+					<div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+						<User size={24} />
+					</div>
+					<input
+						type="text"
+						placeholder="Nickname"
+						value={nickname}
+						onChange={(e) => setNickname(e.target.value)}
+						className="w-full pl-12 pr-4 py-4 text-xl font-bold bg-gray-900 border-2 border-gray-700 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+						autoFocus
+					/>
+				</div>
 
 				<button
 					type="submit"
 					disabled={isLoading}
-					className={`
-                        w-full py-4 rounded-lg font-bold text-lg transition-all transform duration-200
-                        flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-1text-white cursor-pointer`}>
+					className="w-full py-4 rounded-xl font-bold text-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 disabled:text-indigo-400 disabled:cursor-not-allowed text-white transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
 					{isLoading ? (
 						<>
 							<Loader2 className="w-5 h-5 animate-spin" />
-							Entering...
+							Joining...
 						</>
 					) : (
 						"OK, go!"
