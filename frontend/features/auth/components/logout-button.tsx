@@ -6,9 +6,10 @@ import { ReactNode } from "react";
 
 interface LogoutButtonProps {
 	children: ReactNode;
+	className: string;
 }
 
-export const LogoutButton = ({ children }: LogoutButtonProps) => {
+export const LogoutButton = ({ children, className }: LogoutButtonProps) => {
 	const router = useRouter();
 
 	const handleLogout = async () => {
@@ -19,5 +20,9 @@ export const LogoutButton = ({ children }: LogoutButtonProps) => {
 		} catch {}
 	};
 
-	return <button onClick={handleLogout}>{children}</button>;
+	return (
+		<button onClick={handleLogout} className={className}>
+			{children}
+		</button>
+	);
 };
