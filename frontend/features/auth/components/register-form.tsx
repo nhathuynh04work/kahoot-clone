@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 type RegisterInput = {
 	email: string;
@@ -20,7 +21,6 @@ export default function RegisterForm() {
 	} = useForm<RegisterInput>();
 
 	const router = useRouter();
-
 	const [apiError, setApiError] = useState<string | null>(null);
 
 	async function onSubmit(values: RegisterInput) {
@@ -34,19 +34,20 @@ export default function RegisterForm() {
 		}
 	}
 
+	// Dark theme styles
 	const inputClasses =
-		"w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
-	const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
-	const errorClasses = "text-red-600 text-sm mt-1";
+		"w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200";
+	const labelClasses = "block text-sm font-medium text-gray-300 mb-2";
+	const errorClasses = "text-red-400 text-sm mt-1 font-medium";
 
 	return (
-		<div className="bg-white p-8 shadow-lg rounded-lg">
+		<div className="bg-gray-800 border border-gray-700 p-8 shadow-xl rounded-xl">
 			<form
 				onSubmit={handleSubmit(onSubmit)}
-				className="flex flex-col gap-5">
+				className="flex flex-col gap-6">
 				{/* API Error Box */}
 				{apiError && (
-					<div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-center">
+					<div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-center text-sm font-medium">
 						{apiError}
 					</div>
 				)}
@@ -54,7 +55,7 @@ export default function RegisterForm() {
 				{/* Email */}
 				<div>
 					<label htmlFor="email" className={labelClasses}>
-						Email
+						Email Address
 					</label>
 					<input
 						id="email"
@@ -63,7 +64,7 @@ export default function RegisterForm() {
 							required: "Email is required",
 						})}
 						className={inputClasses}
-						placeholder="you@example.com"
+						placeholder="name@example.com"
 					/>
 					{errors.email && (
 						<p className={errorClasses}>{errors.email.message}</p>
@@ -99,14 +100,17 @@ export default function RegisterForm() {
 				{/* Name */}
 				<div>
 					<label htmlFor="name" className={labelClasses}>
-						Name (Optional)
+						Full Name{" "}
+						<span className="text-gray-500 font-normal">
+							(Optional)
+						</span>
 					</label>
 					<input
 						id="name"
 						type="text"
 						{...register("name")}
 						className={inputClasses}
-						placeholder="Your Name"
+						placeholder="Enter your name"
 					/>
 				</div>
 
@@ -114,20 +118,29 @@ export default function RegisterForm() {
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors duration-200">
-					{isSubmitting ? "Registering..." : "Create Account"}
+					className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-lg font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2">
+					{isSubmitting ? (
+						<>
+							<Loader2 className="animate-spin" size={20} />
+							Creating Account...
+						</>
+					) : (
+						"Create Account"
+					)}
 				</button>
 			</form>
 
 			{/* Link to Login Page */}
-			<p className="text-center text-sm text-gray-600 mt-6">
-				Already have an account?{" "}
-				<Link
-					href="/auth/login"
-					className="font-medium text-blue-600 hover:text-blue-500">
-					Log in
-				</Link>
-			</p>
+			<div className="text-center mt-8 pt-6 border-t border-gray-700">
+				<p className="text-sm text-gray-400">
+					Already have an account?{" "}
+					<Link
+						href="/auth/login"
+						className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+						Log in
+					</Link>
+				</p>
+			</div>
 		</div>
 	);
 }
