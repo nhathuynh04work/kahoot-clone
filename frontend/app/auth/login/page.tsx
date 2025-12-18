@@ -8,11 +8,16 @@ export default async function LoginPage() {
 	if (user) redirect("/dashboard");
 
 	return (
-		<div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
-			<div className="w-full max-w-md">
-				<h1 className="text-center text-3xl font-bold text-gray-800 mb-6">
-					Welcome Back
-				</h1>
+		<div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4 transition-colors">
+			<div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+				<div className="text-center mb-8">
+					<h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+						Welcome Back
+					</h1>
+					<p className="text-gray-400 text-lg">
+						Sign in to continue to your dashboard
+					</p>
+				</div>
 
 				<LoginForm />
 			</div>

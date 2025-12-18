@@ -3,10 +3,11 @@
 import { User } from "@/features/auth/types";
 import Link from "next/link";
 
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
+import { LogoutButton } from "@/features/auth/components/logout-button";
 
 const getInitials = (email: string) => {
 	return email[0]?.toUpperCase() || "?";
@@ -63,6 +64,10 @@ export default function TopBar({ user }: { user: User }) {
 					title={user.email}>
 					{getInitials(user.email)}
 				</div>
+
+				<LogoutButton className="cursor-pointer">
+					<LogOut />
+				</LogoutButton>
 			</div>
 		</div>
 	);
