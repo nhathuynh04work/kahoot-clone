@@ -8,7 +8,8 @@ import { QuizModule } from "./quiz/quiz.module";
 import { GameModule } from "./game/game.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from "./redis/redis.module";
+import { UploadModule } from "./upload/upload.module";
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { RedisModule } from './redis/redis.module';
         QuizModule,
         GameModule,
         RedisModule,
+        UploadModule,
     ],
     controllers: [AppController],
     providers: [AppService],
