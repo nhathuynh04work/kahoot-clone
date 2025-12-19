@@ -1,11 +1,4 @@
-import {
-    BadRequestException,
-    Body,
-    Controller,
-    Logger,
-    Post,
-    UseGuards,
-} from "@nestjs/common";
+import { BadRequestException, Controller, Get, Logger } from "@nestjs/common";
 import { UploadService } from "./upload.service";
 import { JwtHttpGuard } from "../auth/guard/jwt-http.guard";
 
@@ -16,7 +9,7 @@ export class UploadController {
     constructor(private uploadService: UploadService) {}
 
     // @UseGuards(JwtHttpGuard)
-    @Post("/signature")
+    @Get("/signature")
     getCloudinaryUploadSignature() {
         try {
             const result = this.uploadService.generateSignature();
