@@ -25,7 +25,7 @@ export class UploadService {
         const signature = cloudinary.utils.api_sign_request(params, apiSecret);
 
         return {
-            timestamp,
+            ...params,
             signature,
             apiKey: this.configService.get<string>("CLOUDINARY_API_KEY"),
             cloudName: this.configService.get<string>("CLOUDINARY_CLOUD_NAME"),
