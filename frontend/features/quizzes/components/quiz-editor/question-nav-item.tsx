@@ -39,7 +39,7 @@ export default function QuestionNavItem({
 						<Image
 							src={question.imageUrl}
 							alt="Question visual"
-							className="w-full h-full object-cover rounded"
+							className="w-full h-full object-contain rounded"
 							width={48}
 							height={32}
 						/>
