@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Image, Play } from "lucide-react";
+import Image from "next/image"; // 1. Import Next.js Image
+import { Image as ImageIcon, Play } from "lucide-react"; // 2. Rename Lucide icon
 import { QuizWithQuestions } from "../types";
 import { useCreateLobby } from "../hooks/use-create-lobby";
 
@@ -11,16 +12,29 @@ interface QuizCardProps {
 
 export function QuizCard({ quiz }: QuizCardProps) {
 	const editHref = `/quiz/${quiz.id}/edit`;
-
 	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
 
 	return (
 		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-indigo-600">
-			{/* Image Placeholder */}
-			<Link href={editHref} className="block">
-				<div className="h-40 bg-gray-700 flex items-center justify-center text-gray-500 group-hover:opacity-90">
-					<Image className="w-12 h-12" />
-				</div>
+			{/* Image Area */}
+			<Link
+				href={editHref}
+				className="block relative h-40 bg-gray-700 group-hover:opacity-90 transition-opacity">
+				{quiz.coverUrl ? (
+					// 3. Show Real Image if URL exists
+					<Image
+						src={quiz.coverUrl}
+						alt={quiz.title || "Quiz cover"}
+						fill
+						className="object-cover"
+						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+					/>
+				) : (
+					// 4. Fallback to Lucide Icon if no URL
+					<div className="flex h-full items-center justify-center text-gray-500">
+						<ImageIcon className="w-12 h-12 opacity-50" />
+					</div>
+				)}
 			</Link>
 
 			<div className="p-4">
@@ -34,7 +48,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
 
 				<p className="text-gray-400 mb-4">
 					{quiz.questions.length}{" "}
-					{quiz.questions.length < 2 ? "question" : "questions"}
+					{quiz.questions.length === 1 ? "question" : "questions"}
 				</p>
 
 				{/* --- Action Buttons --- */}
