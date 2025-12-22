@@ -10,10 +10,17 @@ interface UploaderProps {
 		isUploading: boolean;
 		error: string | null;
 	}) => ReactNode;
+	onUploadStart?: () => void;
 	onUploadSuccess: (url: string) => Promise<void> | void;
+	onUploadError?: (error: Error) => void;
 }
 
-export const Uploader = ({ children, onUploadSuccess }: UploaderProps) => {
+export const Uploader = ({
+	children,
+	onUploadStart,
+	onUploadSuccess,
+	onUploadError,
+}: UploaderProps) => {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const { mutateAsync: getSignature } = useGetSignature();
 	const { mutateAsync: uploadToCloudinary } = useUploadToCloudinary();
@@ -31,6 +38,7 @@ export const Uploader = ({ children, onUploadSuccess }: UploaderProps) => {
 
 		setError(null);
 		setIsUploading(true);
+		onUploadStart?.();
 
 		try {
 			const signatureData = await getSignature();
@@ -53,6 +61,7 @@ export const Uploader = ({ children, onUploadSuccess }: UploaderProps) => {
 			await onUploadSuccess(res.secure_url);
 		} catch (error: any) {
 			setError(error.message);
+			onUploadError?.(error);
 		} finally {
 			setIsUploading(false);
 			if (inputRef.current) inputRef.current.value = "";

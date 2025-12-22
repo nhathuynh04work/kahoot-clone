@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import {
 	X,
@@ -12,9 +11,9 @@ import {
 import Image from "next/image";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import { Uploader } from "@/features/img-upload/components/uploader";
+import { useState } from "react";
 
 interface SettingsModalProps {
-	focusOn: "title" | null;
 	onClose: () => void;
 }
 
@@ -23,19 +22,14 @@ type SettingsFormValues = Pick<
 	"title" | "description" | "coverUrl"
 >;
 
-export default function SettingsModal({
-	focusOn,
-	onClose,
-}: SettingsModalProps) {
-	// Parent form context (where we save ONLY on "Done")
+export default function SettingsModal({ onClose }: SettingsModalProps) {
+	const [isUploading, setIsUploading] = useState(false);
 	const { getValues, setValue: setParentValue } =
 		useFormContext<QuizFullDetails>();
 
-	// Local form (for managing state INSIDE the modal)
 	const {
 		register,
 		handleSubmit,
-		setFocus,
 		watch,
 		setValue: setLocalValue,
 	} = useForm<SettingsFormValues>({
@@ -47,12 +41,6 @@ export default function SettingsModal({
 	});
 
 	const coverUrl = watch("coverUrl");
-
-	useEffect(() => {
-		if (focusOn === "title") {
-			setFocus("title");
-		}
-	}, [focusOn, setFocus]);
 
 	const onSave = (data: SettingsFormValues) => {
 		setParentValue("title", data.title, { shouldDirty: true });
@@ -89,7 +77,7 @@ export default function SettingsModal({
 							Title
 						</label>
 						<input
-							{...register("title", { required: true })}
+							{...register("title")}
 							className="w-full p-3 bg-gray-900 border border-gray-700 rounded-md text-white text-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
 							placeholder="Enter quiz title..."
 						/>
@@ -115,11 +103,14 @@ export default function SettingsModal({
 						</label>
 
 						<Uploader
+							onUploadStart={() => setIsUploading(true)}
 							onUploadSuccess={(url) => {
 								setLocalValue("coverUrl", url, {
 									shouldDirty: true,
 								});
-							}}>
+								setIsUploading(false);
+							}}
+							onUploadError={() => setIsUploading(false)}>
 							{({ isUploading, error, triggerUpload }) => (
 								<div
 									onClick={
@@ -236,8 +227,9 @@ export default function SettingsModal({
 					</button>
 					<button
 						type="submit"
+						disabled={isUploading}
 						className="font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md px-6 py-2 transition-colors shadow-lg shadow-indigo-900/20">
-						Done
+						{isUploading ? "Uploading..." : "Done"}
 					</button>
 				</div>
 			</form>

@@ -16,10 +16,8 @@ export default function Header({ isSaving }: HeaderProps) {
 	const title = watch("title");
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [focusOn, setFocusOn] = useState<"title" | null>(null);
 
 	function openTitleModal() {
-		setFocusOn("title");
 		setIsModalOpen(true);
 	}
 
@@ -41,10 +39,7 @@ export default function Header({ isSaving }: HeaderProps) {
 						{title || "Enter quiz title..."}
 					</button>
 					<button
-						onClick={() => {
-							setFocusOn(null);
-							setIsModalOpen(true);
-						}}
+						onClick={() => setIsModalOpen(true)}
 						className="bg-gray-300 hover:bg-white text-black px-3 py-1 rounded-sm text-sm font-semibold transition-colors">
 						Settings
 					</button>
@@ -74,10 +69,7 @@ export default function Header({ isSaving }: HeaderProps) {
 			</div>
 
 			{isModalOpen && (
-				<SettingsModal
-					focusOn={focusOn}
-					onClose={() => setIsModalOpen(false)}
-				/>
+				<SettingsModal onClose={() => setIsModalOpen(false)} />
 			)}
 		</>
 	);
