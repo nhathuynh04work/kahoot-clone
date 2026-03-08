@@ -6,7 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 export class UploadService {
     constructor(private configService: ConfigService) {}
 
-    generateSignature() {
+    generateSignature(folder = "kahoot-clone-uploads") {
         const apiSecret = this.configService.get<string>(
             "CLOUDINARY_API_SECRET",
         );
@@ -19,7 +19,7 @@ export class UploadService {
 
         const params = {
             timestamp: timestamp,
-            folder: "kahoot-clone-uploads",
+            folder,
         };
 
         const signature = cloudinary.utils.api_sign_request(params, apiSecret);
@@ -30,5 +30,9 @@ export class UploadService {
             apiKey: this.configService.get<string>("CLOUDINARY_API_KEY"),
             cloudName: this.configService.get<string>("CLOUDINARY_CLOUD_NAME"),
         };
+    }
+
+    generateDocumentSignature() {
+        return this.generateSignature("kahoot-documents");
     }
 }
