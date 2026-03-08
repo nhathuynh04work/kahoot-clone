@@ -2,14 +2,8 @@
 
 import { useRef, useEffect } from "react";
 import { Upload, FileText } from "lucide-react";
+import type { MockDocument } from "../types";
 import { cn } from "@/lib/utils";
-
-export interface MockDocument {
-	id: number;
-	fileName: string;
-	fileSize: number;
-	status: "READY" | "PARSING" | "UPLOADED" | "ERROR";
-}
 
 function formatBytes(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
@@ -26,9 +20,7 @@ interface DocumentAttachMenuProps {
 	onSelect: (doc: MockDocument | null) => void;
 	onUploadClick?: () => void;
 	uploadPending?: boolean;
-	/** Used storage in bytes (for limit display) */
 	usedBytes?: number;
-	/** Total limit in bytes */
 	limitBytes?: number;
 }
 
@@ -92,9 +84,7 @@ export function DocumentAttachMenu({
 		>
 			<button
 				type="button"
-				onClick={() => {
-					onUploadClick?.();
-				}}
+				onClick={() => onUploadClick?.()}
 				disabled={uploadPending}
 				role="menuitem"
 				className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-700/80 transition-colors disabled:opacity-60 disabled:pointer-events-none"

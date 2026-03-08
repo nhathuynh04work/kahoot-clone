@@ -2,34 +2,27 @@
 
 import { Plus, Check, PanelRight, CheckCircle, Circle, Pencil, Check as CheckIcon } from "lucide-react";
 import { useState } from "react";
+import type { MockGeneratedQuestion } from "../types";
 import { cn } from "@/lib/utils";
 
-/** Same option colors as quiz editor option-card (Kahoot-style) */
-const optionColors = [
+const OPTION_COLORS = [
 	"bg-red-800",
 	"bg-blue-800",
 	"bg-yellow-800",
 	"bg-green-800",
 ];
 
-/** Mock generated question for Canvas UI only */
-export interface MockGeneratedQuestion {
-	id: string;
-	text: string;
-	options: { text: string; isCorrect: boolean }[];
-}
+export type { MockGeneratedQuestion };
 
 interface GeneratedQuestionsCanvasProps {
 	questions: MockGeneratedQuestion[];
 	onAddToQuiz?: (question: MockGeneratedQuestion) => void;
-	/** Called when user edits question text, option text, or correct answer */
 	onUpdateQuestion?: (
 		questionId: string,
 		updates: Partial<Pick<MockGeneratedQuestion, "text">> & {
 			option?: { index: number; text?: string; isCorrect?: boolean };
 		}
 	) => void;
-	/** Mock: which question IDs have been "added" (for UI state) */
 	addedIds?: Set<string>;
 	onClose?: () => void;
 	className?: string;
@@ -82,21 +75,21 @@ export function GeneratedQuestionsCanvas({
 						>
 							<div className="p-3 border-b border-gray-700 flex items-start justify-between gap-2">
 								<div className="min-w-0 flex-1">
-								{editable && onUpdateQuestion ? (
-									<input
-										type="text"
-										value={q.text}
-										onChange={(e) =>
-											onUpdateQuestion(q.id, { text: e.target.value })
-										}
-										className="w-full text-sm font-medium text-gray-200 bg-gray-900 border border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500"
-										placeholder="Question text"
-									/>
-								) : (
-									<p className="text-sm font-medium text-gray-200 wrap-break-word">
-										{q.text}
-									</p>
-								)}
+									{editable && onUpdateQuestion ? (
+										<input
+											type="text"
+											value={q.text}
+											onChange={(e) =>
+												onUpdateQuestion(q.id, { text: e.target.value })
+											}
+											className="w-full text-sm font-medium text-gray-200 bg-gray-900 border border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500"
+											placeholder="Question text"
+										/>
+									) : (
+										<p className="text-sm font-medium text-gray-200 wrap-break-word">
+											{q.text}
+										</p>
+									)}
 								</div>
 								{!added && (
 									<button
@@ -123,14 +116,12 @@ export function GeneratedQuestionsCanvas({
 								{q.options.map((opt, i) => (
 									<div
 										key={i}
-										className={cn(
-											"py-1.5 px-2 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-2 min-h-0",
-										)}
+										className="py-1.5 px-2 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-2 min-h-0"
 									>
 										<div
 											className={cn(
 												"w-5 h-5 rounded shrink-0",
-												optionColors[i % optionColors.length],
+												OPTION_COLORS[i % OPTION_COLORS.length],
 											)}
 										/>
 										{editable && onUpdateQuestion ? (
@@ -192,15 +183,9 @@ export function GeneratedQuestionsCanvas({
 									)}
 								>
 									{added ? (
-										<>
-											<Check className="w-4 h-4" />
-											Added to quiz
-										</>
+										<><Check className="w-4 h-4" /> Added to quiz</>
 									) : (
-										<>
-											<Plus className="w-4 h-4" />
-											Add to quiz
-										</>
+										<><Plus className="w-4 h-4" /> Add to quiz</>
 									)}
 								</button>
 							</div>

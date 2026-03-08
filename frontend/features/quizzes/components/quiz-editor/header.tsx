@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import SettingsModal from "./settings-modal";
-import { AiChatbotPanel } from "@/features/documents/components/ai-chatbot-panel";
+import { AiChatbotPanel } from "@/features/ai-quiz-chat";
 
 interface HeaderProps {
 	isSaving: boolean;
