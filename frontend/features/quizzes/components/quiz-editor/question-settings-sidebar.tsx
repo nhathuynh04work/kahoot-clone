@@ -31,7 +31,7 @@ export default function QuestionSettingsSidebar({
 
 	return (
 		<div
-			className={`relative shrink-0 bg-gray-800 border-l border-gray-700 transition-all duration-300 ease-in-out flex flex-col ${
+			className={`relative shrink-0 bg-gray-800/50 border-l border-gray-700 transition-all duration-300 ease-in-out flex flex-col ${
 				isOpen ? "w-72" : "w-0"
 			}`}>
 			<button
@@ -45,11 +45,11 @@ export default function QuestionSettingsSidebar({
 			</button>
 
 			<div
-				className={`grow h-full p-6 overflow-y-auto min-w-[18rem] ${
+				className={`grow h-full p-5 overflow-y-auto min-w-[18rem] ${
 					!isOpen && "hidden"
 				}`}>
 				{/* Time Limit Select */}
-				<div className="mb-8">
+				<div className="mb-6">
 					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
 						<Clock className="w-4 h-4 mr-2" />
 						Time limit
@@ -73,7 +73,7 @@ export default function QuestionSettingsSidebar({
 				</div>
 
 				{/* Points Select */}
-				<div className="mb-8">
+				<div className="mb-6">
 					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
 						<Star className="w-4 h-4 mr-2" />
 						Points
@@ -98,7 +98,7 @@ export default function QuestionSettingsSidebar({
 				className={`min-w-[18rem] p-4 border-t border-gray-700 ${
 					!isOpen && "hidden"
 				}`}>
-				<div className="flex items-center gap-4">
+				<div className="flex items-center gap-3">
 					<button
 						onClick={onDelete}
 						disabled={!canDelete}
@@ -107,7 +107,7 @@ export default function QuestionSettingsSidebar({
 						Delete
 					</button>
 					<button
-						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-800 hover:bg-indigo-900 transition-colors flex-1 disabled:opacity-50"
+						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-600 hover:bg-indigo-500 transition-colors flex-1 disabled:opacity-50"
 						title="Duplicate (Coming Soon)">
 						<Copy className="w-4 h-4" />
 						Duplicate

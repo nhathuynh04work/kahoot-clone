@@ -108,11 +108,11 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 
 	return (
 		<FormProvider {...methods}>
-			<div className="flex flex-col h-screen text-white">
+			<div className="flex flex-col h-screen bg-gray-900 text-white">
 				<Header isSaving={isSaving} />
 
 				<div className="flex-1 grid grid-cols-6 grid-rows-1 overflow-hidden">
-					<div className="col-span-1 flex flex-col border-r border-gray-700 bg-gray-800">
+					<div className="col-span-1 flex flex-col border-r border-gray-700 bg-gray-800/50">
 						<QuestionNavList
 							questions={questions}
 							activeQuestionId={activeQuestionId}

@@ -65,7 +65,7 @@ export function QuizCard({ quiz }: QuizCardProps) {
 						className={`flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-medium transition-colors shadow-md ${
 							isPending
 								? "opacity-50 cursor-not-allowed"
-								: "hover:bg-indigo-700"
+								: "hover:bg-indigo-500"
 						}`}
 						onClick={() => createLobby()}>
 						{isPending ? (

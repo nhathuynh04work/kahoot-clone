@@ -28,17 +28,17 @@ export default function TopBar({ user }: { user: User }) {
 	}, [accountOpen]);
 
 	return (
-		<div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-700 bg-gray-800 text-white shrink-0">
+		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
 			<Link href="/dashboard" className="text-xl font-semibold shrink-0">
 				Kahoot!
 			</Link>
 
-			{/* Search — placeholder for future global search */}
-			<div className="flex-1 min-w-0 max-w-md">
-				<label htmlFor="topbar-search" className="sr-only">
-					Search
-				</label>
-				<div className="relative">
+			{/* Search — centered */}
+			<div className="flex-1 min-w-0 flex justify-center">
+				<div className="w-full max-w-md relative">
+					<label htmlFor="topbar-search" className="sr-only">
+						Search
+					</label>
 					<Search
 						className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
 						aria-hidden
@@ -53,7 +53,7 @@ export default function TopBar({ user }: { user: User }) {
 				</div>
 			</div>
 
-			{/* Right: CTA + account — pushed to the end so no empty gap */}
+			{/* Right: CTA + account */}
 			<div className="ml-auto flex items-center gap-2 shrink-0">
 				<Link
 					href="/"
