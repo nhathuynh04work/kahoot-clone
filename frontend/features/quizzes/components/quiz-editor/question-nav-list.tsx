@@ -19,11 +19,12 @@ export default function QuestionNavList({
 }: QuestionNavListProps) {
 	return (
 		<div className="flex-1 flex flex-col h-full">
-			<div className="grow overflow-y-auto">
+			<div className="grow overflow-y-auto py-2 space-y-1">
 				{questions.map((q, i) => (
 					<div
 						key={q.id || `temp-${i}`}
-						onClick={() => onQuestionSelect(q.id)}>
+						onClick={() => onQuestionSelect(q.id)}
+						className="px-2">
 						<QuestionNavItem
 							question={q}
 							index={i}
@@ -33,10 +34,10 @@ export default function QuestionNavList({
 				))}
 			</div>
 
-			<div className="shrink-0 w-full p-4">
+			<div className="shrink-0 w-full p-3">
 				<button
 					onClick={onAddQuestion}
-					className="flex items-center justify-center gap-2 w-full font-semibold text-white bg-indigo-800 hover:bg-indigo-900 transition-colors py-4 rounded-md cursor-pointer">
+					className="flex items-center justify-center gap-2 w-full font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors py-3 rounded-lg cursor-pointer text-sm">
 					<Plus className="w-5 h-5" />
 					<span>Add question</span>
 				</button>

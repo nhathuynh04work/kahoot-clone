@@ -32,7 +32,7 @@ export default function ImageUploader({
 					onClick={!imageUrl ? triggerUpload : undefined}
 					className={`
                         w-full max-w-md h-64 rounded-md border-2 border-dashed 
-                        flex flex-col items-center justify-center mb-6 overflow-hidden relative group transition-colors
+                        flex flex-col items-center justify-center overflow-hidden relative group transition-colors
                         ${
 							!imageUrl
 								? "cursor-pointer hover:bg-gray-800/50 hover:border-gray-500"

@@ -10,7 +10,7 @@ export default function QuestionTextInput({
 	const { register } = useFormContext();
 
 	return (
-		<div className="w-full mb-6">
+		<div className="w-full max-w-2xl">
 			<label htmlFor={`q-${questionIndex}-text`} className="sr-only">
 				Question Text
 			</label>

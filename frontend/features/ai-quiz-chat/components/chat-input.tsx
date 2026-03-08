@@ -26,11 +26,11 @@ export function ChatInput({
 	isGenerating,
 }: ChatInputProps) {
 	return (
-		<div className="shrink-0 border-t border-gray-800 bg-gray-900/50 px-4 py-4">
+		<div className="shrink-0 border-t border-gray-700 bg-gray-800 px-4 py-4">
 			<div className="max-w-2xl mx-auto">
-				<div className="rounded-2xl border border-gray-700 bg-gray-800/80 focus-within:border-indigo-500/50 transition-colors overflow-hidden">
+				<div className="rounded-2xl border border-gray-700 bg-gray-800 focus-within:border-indigo-500 transition-colors overflow-hidden">
 					{selectedDoc && (
-						<div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700/80 bg-gray-800/50">
+						<div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700 bg-gray-700/50">
 							<FileText className="w-4 h-4 text-indigo-400 shrink-0" />
 							<span className="text-sm text-gray-200 truncate flex-1 min-w-0">
 								{selectedDoc.fileName}

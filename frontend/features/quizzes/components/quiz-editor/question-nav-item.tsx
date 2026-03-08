@@ -17,7 +17,7 @@ export default function QuestionNavItem({
 }: QuestionNavItemProps) {
 	return (
 		<div
-			className={`group flex flex-col items-start gap-2 p-4 transition-colors duration-150 cursor-pointer ${
+			className={`group flex flex-col items-start gap-2 p-3 transition-colors duration-150 cursor-pointer rounded-lg ${
 				isActive ? "bg-gray-700" : ""
 			}`}>
 			<div

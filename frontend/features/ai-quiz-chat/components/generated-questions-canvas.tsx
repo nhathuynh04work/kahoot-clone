@@ -43,7 +43,7 @@ export function GeneratedQuestionsCanvas({
 	return (
 		<div
 			className={cn(
-				"flex flex-col bg-gray-900/95 border-l border-gray-700 overflow-hidden",
+				"flex flex-col bg-gray-800 border-l border-gray-700 overflow-hidden",
 				className,
 			)}
 		>
@@ -179,7 +179,7 @@ export function GeneratedQuestionsCanvas({
 										"w-full flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
 										added
 											? "bg-gray-700 text-green-400 cursor-default"
-											: "bg-indigo-800 hover:bg-indigo-700 text-white",
+											: "bg-indigo-600 hover:bg-indigo-500 text-white",
 									)}
 								>
 									{added ? (

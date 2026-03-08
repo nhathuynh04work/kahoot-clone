@@ -46,7 +46,7 @@ export default function OptionsGrid({ questionIndex }: OptionsGridProps) {
 	};
 
 	return (
-		<div className="w-full grid grid-cols-2 gap-4">
+		<div className="w-full max-w-2xl grid grid-cols-2 gap-5">
 			{fields.map((field, index) => (
 				<div key={field.id} className="relative">
 					<RealOptionCard

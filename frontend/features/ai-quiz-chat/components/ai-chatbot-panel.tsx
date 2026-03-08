@@ -24,7 +24,7 @@ export function AiChatbotPanel({ onClose, onFileSelect }: AiChatbotPanelProps) {
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex flex-col bg-gray-950"
+			className="fixed inset-0 z-50 flex flex-col bg-gray-900"
 			aria-modal
 			role="dialog"
 		>
