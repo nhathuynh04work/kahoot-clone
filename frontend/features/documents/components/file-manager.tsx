@@ -19,7 +19,7 @@ export function FileManager() {
 			{/* Storage usage bar */}
 			<div className="p-4 rounded-lg bg-gray-800 border border-gray-700">
 				<div className="flex justify-between text-sm mb-2">
-					<span className="text-gray-400">Storage used</span>
+					<span className="text-gray-400">Storage</span>
 					<span className="text-white font-medium">
 						{formatBytes(totalSize)} / {formatBytes(MAX_TOTAL_STORAGE_BYTES)}
 					</span>
@@ -39,7 +39,7 @@ export function FileManager() {
 			<div>
 				<h3 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
 					<FolderOpen className="w-5 h-5 text-gray-400" />
-					Your documents
+					Documents
 				</h3>
 
 				{isLoading ? (
@@ -48,14 +48,11 @@ export function FileManager() {
 					</div>
 				) : error ? (
 					<div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
-						Failed to load documents
+						Failed to load
 					</div>
 				) : documents.length === 0 ? (
 					<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center">
-						<p className="text-gray-400">No documents yet</p>
-						<p className="text-sm text-gray-500 mt-1">
-							Upload a PDF above to get started
-						</p>
+						<p className="text-gray-400">No documents. Upload a PDF above.</p>
 					</div>
 				) : (
 					<div className="space-y-3">

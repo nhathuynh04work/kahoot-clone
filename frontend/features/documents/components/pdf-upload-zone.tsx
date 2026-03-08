@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Upload, FileText, Loader2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import {
 	MAX_FILE_SIZE_BYTES,
 	MAX_TOTAL_STORAGE_BYTES,
@@ -131,16 +131,11 @@ export function PdfUploadZone({
 					)}
 					<div className="text-center">
 						<p className="font-medium text-white">
-							{isPending ? "Uploading..." : "Drop PDF here or click to upload"}
+							{isPending ? "Uploading..." : "Drop PDF or click to upload"}
 						</p>
 						<p className="text-sm text-gray-400 mt-1">
-							Max {formatBytes(MAX_FILE_SIZE_BYTES)} per file •{" "}
-							{formatBytes(remainingBytes)} remaining
+							{formatBytes(MAX_FILE_SIZE_BYTES)} max • {formatBytes(remainingBytes)} free
 						</p>
-					</div>
-					<div className="flex items-center gap-2 text-xs text-gray-500">
-						<FileText className="w-3.5 h-3.5" />
-						<span>PDF only</span>
 					</div>
 				</div>
 			)}
