@@ -7,6 +7,12 @@ import {
 import { Prisma, Question, Quiz } from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+
+/** Transaction client type workaround for Prisma + custom adapter */
+type TxClient = Pick<
+    PrismaService,
+    "quiz" | "question" | "option"
+>;
 import { QuizFullDetails, QuizWithQuestions } from "./dto/quiz.dto.js";
 import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
 
@@ -109,7 +115,8 @@ export class QuizService {
         const { questions, ...quizData } = data;
 
         await this.prisma.$transaction(async (tx) => {
-            await tx.quiz.update({
+            const db = tx as unknown as TxClient;
+            await db.quiz.update({
                 where: { id },
                 data: quizData,
             });
@@ -119,7 +126,7 @@ export class QuizService {
                     .filter((q) => q.id && q.id > 0)
                     .map((q) => q.id);
 
-                await tx.question.deleteMany({
+                await db.question.deleteMany({
                     where: {
                         quizId: id,
                         id: { notIn: incomingQuestionIds as number[] },
@@ -131,12 +138,12 @@ export class QuizService {
                     let savedQuestion: Question;
 
                     if (qId && qId > 0) {
-                        savedQuestion = await tx.question.update({
+                        savedQuestion = await db.question.update({
                             where: { id: qId },
                             data: qData,
                         });
                     } else {
-                        savedQuestion = await tx.question.create({
+                        savedQuestion = await db.question.create({
                             data: {
                                 ...qData,
                                 sortOrder: qData.sortOrder ?? 0,
@@ -150,7 +157,7 @@ export class QuizService {
                             .filter((o) => o.id && o.id > 0)
                             .map((o) => o.id);
 
-                        await tx.option.deleteMany({
+                        await db.option.deleteMany({
                             where: {
                                 questionId: savedQuestion.id,
                                 id: { notIn: incomingOptionIds as number[] },
@@ -160,12 +167,12 @@ export class QuizService {
                         for (const o of options) {
                             const { id: oId, ...oData } = o;
                             if (oId && oId > 0) {
-                                await tx.option.update({
+                                await db.option.update({
                                     where: { id: oId },
                                     data: oData,
                                 });
                             } else {
-                                await tx.option.create({
+                                await db.option.create({
                                     data: {
                                         ...oData,
                                         sortOrder: oData.sortOrder ?? 0,

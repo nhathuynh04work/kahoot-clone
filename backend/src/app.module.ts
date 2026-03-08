@@ -10,6 +10,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { RedisModule } from "./redis/redis.module";
 import { UploadModule } from "./upload/upload.module";
+import { DocumentModule } from "./document/document.module";
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { UploadModule } from "./upload/upload.module";
         GameModule,
         RedisModule,
         UploadModule,
+        DocumentModule,
     ],
     controllers: [AppController],
     providers: [AppService],

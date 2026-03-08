@@ -47,7 +47,7 @@ export default function ImageUploader({
 					{/* A. LOADING STATE OVERLAY */}
 					{isUploading && (
 						<div className="absolute inset-0 z-20 bg-black/70 flex flex-col items-center justify-center text-white">
-							<Loader2 className="w-10 h-10 animate-spin mb-2 text-blue-500" />
+							<Loader2 className="w-10 h-10 animate-spin mb-2 text-indigo-500" />
 							<p className="text-sm font-medium">Uploading...</p>
 						</div>
 					)}

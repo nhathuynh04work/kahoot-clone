@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CloudCheck, Loader2 } from "lucide-react";
+import { CloudCheck, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import SettingsModal from "./settings-modal";
+import { AiChatbotPanel } from "@/features/documents/components/ai-chatbot-panel";
 
 interface HeaderProps {
 	isSaving: boolean;
@@ -16,6 +17,7 @@ export default function Header({ isSaving }: HeaderProps) {
 	const title = watch("title");
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
 
 	function openTitleModal() {
 		setIsModalOpen(true);
@@ -46,6 +48,14 @@ export default function Header({ isSaving }: HeaderProps) {
 				</div>
 
 				<div className="ml-auto flex items-center gap-4">
+					<button
+						onClick={() => setIsAiPanelOpen(true)}
+						className="flex items-center gap-2 font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+					>
+						<Sparkles className="w-5 h-5" />
+						<span>Generate with AI</span>
+					</button>
+
 					<div className="text-sm text-gray-400 flex items-center gap-2">
 						{isSaving ? (
 							<>
@@ -70,6 +80,10 @@ export default function Header({ isSaving }: HeaderProps) {
 
 			{isModalOpen && (
 				<SettingsModal onClose={() => setIsModalOpen(false)} />
+			)}
+
+			{isAiPanelOpen && (
+				<AiChatbotPanel onClose={() => setIsAiPanelOpen(false)} />
 			)}
 		</>
 	);

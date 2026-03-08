@@ -9,12 +9,33 @@ datasource db {
 }
 
 model User {
-    id       Int         @id @default(autoincrement())
-    email    String      @unique
-    name     String?
-    password String
-    quizzes  Quiz[]
-    lobbies  GameLobby[]
+    id        Int        @id @default(autoincrement())
+    email     String     @unique
+    name      String?
+    password  String
+    quizzes   Quiz[]
+    lobbies   GameLobby[]
+    documents Document[]
+}
+
+model Document {
+    id        Int            @id @default(autoincrement())
+    userId    Int            @map("user_id")
+    fileName  String         @map("file_name")
+    fileUrl   String         @map("file_url")
+    fileSize  Int            @map("file_size")
+    mimeType  String         @default("application/pdf") @map("mime_type")
+    status    DocumentStatus @default(UPLOADED)
+    createdAt DateTime       @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum DocumentStatus {
+    UPLOADED
+    PARSING
+    READY
+    ERROR
 }
 
 model Quiz {

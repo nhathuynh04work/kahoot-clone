@@ -18,8 +18,8 @@ export default async function DashboardPage() {
 							No quizzes found.
 						</h3>
 						<p className="text-gray-400 my-2">
-							Get started by clicking &quot;Create&quot; in the
-							top bar!
+							Get started by clicking &quot;Create quiz&quot; in the
+							sidebar!
 						</p>
 					</div>
 				) : (
