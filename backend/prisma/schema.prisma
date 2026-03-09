@@ -28,7 +28,22 @@ model Document {
     status    DocumentStatus @default(UPLOADED)
     createdAt DateTime       @default(now()) @map("created_at")
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    chunks DocumentChunk[]
+}
+
+/// Document chunks for RAG: parsed text segments with vector embeddings (Gemini text-embedding-004 = 768 dimensions).
+/// Queried via raw SQL for cosine similarity search; embedding field is Unsupported by Prisma.
+model DocumentChunk {
+    id         Int      @id @default(autoincrement())
+    documentId Int      @map("document_id")
+    content    String   @db.Text
+    chunkIndex Int      @map("chunk_index")
+    embedding  Unsupported("vector(768)")
+
+    document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+    @@index([documentId])
 }
 
 enum DocumentStatus {
