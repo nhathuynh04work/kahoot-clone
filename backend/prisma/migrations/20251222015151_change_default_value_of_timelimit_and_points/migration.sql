@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Question" ALTER COLUMN "time_limit" SET DEFAULT 20000,
-ALTER COLUMN "points" SET DEFAULT 1000;

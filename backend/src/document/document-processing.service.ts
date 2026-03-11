@@ -86,13 +86,13 @@ export class DocumentProcessingService {
             await this.prisma.$transaction(async (tx) => {
                 await tx.$executeRaw`
                     DELETE FROM "DocumentChunk"
-                    WHERE "document_id" = ${documentId}
+                    WHERE "documentId" = ${documentId}
                 `;
 
                 for (let i = 0; i < chunks.length; i++) {
                     const embeddingStr = `[${embeddings[i].join(",")}]`;
                     await tx.$executeRaw`
-                        INSERT INTO "DocumentChunk" ("document_id", "content", "chunk_index", "embedding")
+                        INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
                         VALUES (${documentId}, ${chunks[i]}, ${i}, ${embeddingStr}::vector)
                     `;
                 }
