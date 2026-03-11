@@ -32,8 +32,8 @@ model Document {
     chunks DocumentChunk[]
 }
 
-/// Document chunks for RAG: parsed text segments with vector embeddings (Gemini text-embedding-004 = 768 dimensions).
-/// Queried via raw SQL for cosine similarity search; embedding field is Unsupported by Prisma.
+/// Document chunks for RAG: parsed text segments with vector embeddings (Gemini gemini-embedding-001, 768 dimensions).
+/// Requires pgvector extension. Queried via raw SQL for similarity search; embedding is Unsupported by Prisma.
 model DocumentChunk {
     id         Int      @id @default(autoincrement())
     documentId Int      @map("document_id")

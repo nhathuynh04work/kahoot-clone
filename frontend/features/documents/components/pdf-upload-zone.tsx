@@ -8,8 +8,11 @@ import {
 	formatBytes,
 	ALLOWED_MIME_TYPES,
 } from "../lib/constants";
-import { useUploadDocument, useDocumentsTotalSize } from "../hooks/use-documents";
-import { useSimulateParsing } from "../hooks/use-simulate-parsing";
+import {
+	useUploadDocument,
+	useDocumentsTotalSize,
+	useParseDocument,
+} from "../hooks/use-documents";
 import { ParsingProgress } from "./parsing-progress";
 import { toast } from "sonner";
 
@@ -24,8 +27,8 @@ export function PdfUploadZone({
 }: PdfUploadZoneProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const { mutateAsync: uploadDoc, isPending } = useUploadDocument();
+	const { mutateAsync: parseDoc } = useParseDocument();
 	const { data: totalSize = 0 } = useDocumentsTotalSize();
-	const { simulateParsing } = useSimulateParsing();
 	const [parsing, setParsing] = useState<{
 		fileName: string;
 		stage: string;
@@ -52,7 +55,7 @@ export function PdfUploadZone({
 				return;
 			}
 			if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-				toast.error("Only PDF files are allowed.");
+				toast.error("Only PDF and TXT files are allowed.");
 				return;
 			}
 
@@ -60,23 +63,21 @@ export function PdfUploadZone({
 				const doc = await uploadDoc(file);
 				onUploadComplete?.(doc.id);
 
-				// Mock parsing & chunking animation
 				setParsing({
 					fileName: file.name,
-					stage: "Starting...",
-					progress: 0,
+					stage: "Extracting text and indexing...",
+					progress: 50,
 				});
-				await simulateParsing(doc.id, (stage, progress) => {
-					setParsing((p) => (p ? { ...p, stage, progress } : null));
-				});
+				await parseDoc(doc.id);
+				setParsing((p) => (p ? { ...p, stage: "Done", progress: 100 } : null));
 				toast.success(`${file.name} is ready for quiz generation`);
 			} catch (err) {
-				toast.error(err instanceof Error ? err.message : "Upload failed");
+				toast.error(err instanceof Error ? err.message : "Upload or processing failed");
 			} finally {
 				setParsing(null);
 			}
 		},
-		[uploadDoc, remainingBytes, onUploadComplete, simulateParsing],
+		[uploadDoc, parseDoc, remainingBytes, onUploadComplete],
 	);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,7 +101,7 @@ export function PdfUploadZone({
 			<input
 				ref={inputRef}
 				type="file"
-				accept=".pdf,application/pdf"
+				accept=".pdf,application/pdf,.txt,text/plain"
 				onChange={handleChange}
 				className="hidden"
 			/>
@@ -131,7 +132,7 @@ export function PdfUploadZone({
 					)}
 					<div className="text-center">
 						<p className="font-medium text-white">
-							{isPending ? "Uploading..." : "Drop PDF or click to upload"}
+							{isPending ? "Uploading..." : "Drop PDF/TXT or click to upload"}
 						</p>
 						<p className="text-sm text-gray-400 mt-1">
 							{formatBytes(MAX_FILE_SIZE_BYTES)} max • {formatBytes(remainingBytes)} free

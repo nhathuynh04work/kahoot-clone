@@ -9,6 +9,7 @@ import {
 	createDocument,
 	getDocumentSignature,
 	uploadPdfToCloudinary,
+	parseDocument,
 } from "../api/client-actions";
 import type { Document } from "../types";
 
@@ -43,6 +44,16 @@ export function useUpdateDocumentStatus() {
 	return useMutation({
 		mutationFn: ({ id, status }: { id: number; status: Document["status"] }) =>
 			updateDocumentStatus(id, status),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+		},
+	});
+}
+
+export function useParseDocument() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (id: number) => parseDocument(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
 		},

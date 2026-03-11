@@ -10,6 +10,7 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import { DocumentService } from "./document.service";
+import { DocumentProcessingService } from "./document-processing.service";
 import type { JwtUser } from "../auth/user.decorator";
 import { User } from "../auth/user.decorator";
 import { JwtHttpGuard } from "../auth/guard/jwt-http.guard";
@@ -19,7 +20,10 @@ import { DocumentStatus } from "../generated/prisma/client";
 @Controller("documents")
 @UseGuards(JwtHttpGuard)
 export class DocumentController {
-    constructor(private documentService: DocumentService) {}
+    constructor(
+        private documentService: DocumentService,
+        private documentProcessingService: DocumentProcessingService,
+    ) {}
 
     @Post()
     create(@Body() dto: CreateDocumentDto, @User() user: JwtUser) {
@@ -53,5 +57,14 @@ export class DocumentController {
         @User() user: JwtUser,
     ) {
         return this.documentService.updateStatus(id, user.id, body.status);
+    }
+
+    @Post(":id/parse")
+    async parse(
+        @Param("id", ParseIntPipe) id: number,
+        @User() user: JwtUser,
+    ) {
+        await this.documentProcessingService.parseAndIndexDocument(id, user.id);
+        return { success: true };
     }
 }

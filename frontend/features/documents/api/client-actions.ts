@@ -60,3 +60,13 @@ export const updateDocumentStatus = async (
 	});
 	return data;
 };
+
+/** Parse and index document for RAG. May take 30s–2min for larger PDFs. */
+export const parseDocument = async (id: number) => {
+	const { data } = await apiClient.post<{ success: boolean }>(
+		`/documents/${id}/parse`,
+		{},
+		{ timeout: 120_000 },
+	);
+	return data;
+};

@@ -1,13 +1,11 @@
--- Enable pgvector extension for vector similarity search
-CREATE EXTENSION IF NOT EXISTS vector;
-
+-- DocumentChunk stores embeddings as double precision[] (no pgvector extension required).
 -- CreateTable
 CREATE TABLE "DocumentChunk" (
     "id" SERIAL NOT NULL,
     "document_id" INTEGER NOT NULL,
     "content" TEXT NOT NULL,
     "chunk_index" INTEGER NOT NULL,
-    "embedding" vector(768) NOT NULL,
+    "embedding" double precision[] NOT NULL,
 
     CONSTRAINT "DocumentChunk_pkey" PRIMARY KEY ("id")
 );
