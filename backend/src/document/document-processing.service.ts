@@ -6,6 +6,7 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v2 as cloudinary } from "cloudinary";
 import { PrismaService } from "../prisma/prisma.service";
 import { DocumentStatus } from "../generated/prisma/client";
+import { ParserRegistry } from "./parsers/parser.registry";
 
 const CHUNK_SIZE = 4000;
 const CHUNK_OVERLAP = 800;
@@ -27,6 +28,7 @@ export class DocumentProcessingService {
 
     constructor(
         private prisma: PrismaService,
+        private parserRegistry: ParserRegistry,
         config: ConfigService,
     ) {
         const apiKey = config.get<string>("GEMINI_API_KEY");
@@ -73,23 +75,33 @@ export class DocumentProcessingService {
         subscriber.next({ stage: "Starting...", progress: 5 });
 
         try {
+            // Fetch doc
             const response = await this.fetchDocument(doc.fileUrl, doc.cloudinaryPublicId);
-            const text = await this.parseText(response, doc.fileUrl, doc.mimeType);
+
+            // Parse doc
+            const contentType = (response.headers.get("content-type") || doc.mimeType || "").toLowerCase();
+            const parser = this.parserRegistry.resolve(contentType, doc.fileUrl);
+            const text = await parser.parse(response);
             this.logger.log(`[doc ${documentId}] Parsed text: ${text.length} chars`);
             subscriber.next({ stage: "Extracting text...", progress: 20 });
 
+            // Chunk doc
             const chunks = await this.chunkText(text);
             this.logger.log(`[doc ${documentId}] Chunked into ${chunks.length} chunks`);
             subscriber.next({ stage: "Generating chunks...", progress: 35 });
 
+            // Validate chunks
             this.validateChunks(chunks);
 
+            // Embed chunks
             const embeddings = await this.embedChunks(genai, chunks, subscriber);
             this.logger.log(`[doc ${documentId}] Embedded ${embeddings.length} chunks`);
 
+            // Store chunks
             subscriber.next({ stage: "Storing embeddings...", progress: 85 });
             await this.storeChunks(documentId, chunks, embeddings);
 
+            // Processing done
             await this.updateStatus(documentId, DocumentStatus.READY);
             subscriber.next({ stage: "Done", progress: 100 });
             this.logger.log(`[doc ${documentId}] Indexing complete`);
@@ -132,37 +144,6 @@ export class DocumentProcessingService {
             resource_type: "raw",
             type: "upload",
         });
-    }
-
-    private async parseText(
-        response: Response,
-        fileUrl: string,
-        mimeType: string,
-    ): Promise<string> {
-        const contentType = (response.headers.get("content-type") || mimeType || "").toLowerCase();
-
-        if (contentType.includes("text/plain") || fileUrl.toLowerCase().endsWith(".txt")) {
-            return response.text();
-        }
-        if (contentType.includes("pdf") || fileUrl.toLowerCase().endsWith(".pdf")) {
-            return this.parsePdf(response);
-        }
-
-        throw new BadRequestException(
-            `Unsupported document type: ${contentType || "unknown"}. Use PDF or TXT.`,
-        );
-    }
-
-    private async parsePdf(response: Response): Promise<string> {
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const { PDFParse } = await import("pdf-parse");
-        const parser = new PDFParse({ data: buffer });
-        try {
-            const result = await parser.getText();
-            return result?.text ?? "";
-        } finally {
-            await parser.destroy();
-        }
     }
 
     private async chunkText(text: string): Promise<string[]> {

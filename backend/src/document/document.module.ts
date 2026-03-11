@@ -4,11 +4,14 @@ import { DocumentService } from "./document.service";
 import { DocumentProcessingService } from "./document-processing.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { UploadModule } from "../upload/upload.module";
+import { TxtParser } from "./parsers/txt.parser";
+import { PdfParser } from "./parsers/pdf.parser";
+import { ParserRegistry } from "./parsers/parser.registry";
 
 @Module({
     imports: [PrismaModule, UploadModule],
     controllers: [DocumentController],
-    providers: [DocumentService, DocumentProcessingService],
+    providers: [TxtParser, PdfParser, ParserRegistry, DocumentService, DocumentProcessingService],
     exports: [DocumentService, DocumentProcessingService],
 })
 export class DocumentModule {}
