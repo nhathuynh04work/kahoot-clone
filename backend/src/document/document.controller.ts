@@ -7,8 +7,10 @@ import {
     ParseIntPipe,
     Patch,
     Post,
+    Sse,
     UseGuards,
 } from "@nestjs/common";
+import { catchError, lastValueFrom, map, of } from "rxjs";
 import { DocumentService } from "./document.service";
 import { DocumentProcessingService } from "./document-processing.service";
 import type { JwtUser } from "../auth/user.decorator";
@@ -40,6 +42,26 @@ export class DocumentController {
         return this.documentService.getTotalSize(user.id);
     }
 
+    @Get(":id/parse-stream")
+    @Sse()
+    parseStream(
+        @Param("id", ParseIntPipe) id: number,
+        @User() user: JwtUser,
+    ) {
+        return this.documentProcessingService.parseAndIndexDocument(id, user.id).pipe(
+            map((event) => ({ data: event })),
+            catchError((err) =>
+                of({
+                    data: {
+                        stage: "error",
+                        progress: 0,
+                        error: err instanceof Error ? err.message : String(err),
+                    },
+                }),
+            ),
+        );
+    }
+
     @Get(":id")
     findOne(@Param("id", ParseIntPipe) id: number, @User() user: JwtUser) {
         return this.documentService.findOne(id, user.id);
@@ -64,7 +86,7 @@ export class DocumentController {
         @Param("id", ParseIntPipe) id: number,
         @User() user: JwtUser,
     ) {
-        await this.documentProcessingService.parseAndIndexDocument(id, user.id);
+        await lastValueFrom(this.documentProcessingService.parseAndIndexDocument(id, user.id));
         return { success: true };
     }
 }

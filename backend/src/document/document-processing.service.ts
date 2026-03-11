@@ -1,21 +1,24 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Observable, Subscriber } from "rxjs";
 import { GoogleGenAI } from "@google/genai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v2 as cloudinary } from "cloudinary";
 import { PrismaService } from "../prisma/prisma.service";
 import { DocumentStatus } from "../generated/prisma/client";
 
-/** ~1000 tokens ≈ 4000 chars, ~200 token overlap ≈ 800 chars (rough English estimate) */
 const CHUNK_SIZE = 4000;
 const CHUNK_OVERLAP = 800;
-
-/** Max chunks to embed in a single API call to stay under limits */
 const EMBED_BATCH_SIZE = 20;
+const EMBEDDING_DIMENSIONS = 768;
+const EMBEDDING_MODEL = "gemini-embedding-001";
+const MIN_CHUNKS_FOR_RAG = 3;
+const MAX_CHUNKS = 200;
 
-/** Match Cloudinary raw URL to extract public_id: /raw/upload/v{version}/{public_id} */
-const CLOUDINARY_RAW_REGEX =
-    /res\.cloudinary\.com\/[^/]+\/raw\/upload\/v\d+\/(.+)$/;
+export interface ProgressEvent {
+    stage: string;
+    progress: number;
+}
 
 @Injectable()
 export class DocumentProcessingService {
@@ -30,7 +33,7 @@ export class DocumentProcessingService {
         if (apiKey) {
             this.genai = new GoogleGenAI({ apiKey });
         }
-        // Configure Cloudinary so signed URLs work when we fetch raw files (api_secret required for signing).
+
         cloudinary.config({
             cloud_name: config.get<string>("CLOUDINARY_CLOUD_NAME"),
             api_key: config.get<string>("CLOUDINARY_API_KEY"),
@@ -38,11 +41,27 @@ export class DocumentProcessingService {
         });
     }
 
-    /**
-     * Fetch document from URL, parse text, chunk, embed, and store in DocumentChunk.
-     * Updates document status: PARSING → READY or ERROR.
-     */
-    async parseAndIndexDocument(documentId: number, userId: number): Promise<void> {
+    parseAndIndexDocument(
+        documentId: number,
+        userId: number,
+    ): Observable<ProgressEvent> {
+        return new Observable<ProgressEvent>((subscriber) => {
+            this.processDocument(documentId, userId, subscriber)
+                .then(() => subscriber.complete())
+                .catch((err) => subscriber.error(err));
+        });
+    }
+
+    private async processDocument(
+        documentId: number,
+        userId: number,
+        subscriber: Subscriber<ProgressEvent>,
+    ): Promise<void> {
+        const genai = this.genai;
+        if (!genai) {
+            throw new Error("GEMINI_API_KEY is not configured");
+        }
+
         const doc = await this.prisma.document.findFirst({
             where: { id: documentId, userId },
         });
@@ -50,102 +69,83 @@ export class DocumentProcessingService {
             throw new BadRequestException("Document not found");
         }
 
-        await this.prisma.document.update({
-            where: { id: documentId },
-            data: { status: DocumentStatus.PARSING },
-        });
+        await this.updateStatus(documentId, DocumentStatus.PARSING);
+        subscriber.next({ stage: "Starting...", progress: 5 });
 
         try {
-            const text = await this.fetchAndParse(doc.fileUrl, doc.mimeType);
-            this.logger.log(
-                `[doc ${documentId}] Parsed text: ${text.length} chars`,
-            );
-
-            if (!text?.trim()) {
-                throw new Error("No text could be extracted from the document");
-            }
+            const response = await this.fetchDocument(doc.fileUrl, doc.cloudinaryPublicId);
+            const text = await this.parseText(response, doc.fileUrl, doc.mimeType);
+            this.logger.log(`[doc ${documentId}] Parsed text: ${text.length} chars`);
+            subscriber.next({ stage: "Extracting text...", progress: 20 });
 
             const chunks = await this.chunkText(text);
-            this.logger.log(
-                `[doc ${documentId}] Chunked into ${chunks.length} chunks`,
-            );
+            this.logger.log(`[doc ${documentId}] Chunked into ${chunks.length} chunks`);
+            subscriber.next({ stage: "Generating chunks...", progress: 35 });
 
-            if (chunks.length === 0) {
-                throw new Error("Document produced no chunks");
-            }
+            this.validateChunks(chunks);
 
-            if (!this.genai) {
-                throw new Error("GEMINI_API_KEY is not configured");
-            }
+            const embeddings = await this.embedChunks(genai, chunks, subscriber);
+            this.logger.log(`[doc ${documentId}] Embedded ${embeddings.length} chunks`);
 
-            const embeddings = await this.embedChunks(chunks);
-            this.logger.log(
-                `[doc ${documentId}] Embedded ${embeddings.length} chunks`,
-            );
+            subscriber.next({ stage: "Storing embeddings...", progress: 85 });
+            await this.storeChunks(documentId, chunks, embeddings);
 
-            await this.prisma.$transaction(async (tx) => {
-                await tx.$executeRaw`
-                    DELETE FROM "DocumentChunk"
-                    WHERE "documentId" = ${documentId}
-                `;
-
-                for (let i = 0; i < chunks.length; i++) {
-                    const embeddingStr = `[${embeddings[i].join(",")}]`;
-                    await tx.$executeRaw`
-                        INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
-                        VALUES (${documentId}, ${chunks[i]}, ${i}, ${embeddingStr}::vector)
-                    `;
-                }
-            });
-
-            await this.prisma.document.update({
-                where: { id: documentId },
-                data: { status: DocumentStatus.READY },
-            });
-            this.logger.log(`[doc ${documentId}] Indexing complete, status READY`);
+            await this.updateStatus(documentId, DocumentStatus.READY);
+            subscriber.next({ stage: "Done", progress: 100 });
+            this.logger.log(`[doc ${documentId}] Indexing complete`);
         } catch (err) {
             this.logger.warn(
                 `[doc ${documentId}] Indexing failed: ${err instanceof Error ? err.message : String(err)}`,
             );
-            await this.prisma.document.update({
-                where: { id: documentId },
-                data: { status: DocumentStatus.ERROR },
-            });
+            await this.updateStatus(documentId, DocumentStatus.ERROR);
             throw err;
         }
     }
 
-    /** Fetch file from URL and extract raw text. Uses signed URL for Cloudinary to avoid 401. */
-    private async fetchAndParse(fileUrl: string, mimeType: string): Promise<string> {
-        const fetchUrl = this.toFetchableUrl(fileUrl);
-        const res = await fetch(fetchUrl, {
-            headers: {
-                "User-Agent": "KahootClone-Backend/1.0",
-                Accept: "*/*",
-            },
+    private async updateStatus(documentId: number, status: DocumentStatus): Promise<void> {
+        await this.prisma.document.update({
+            where: { id: documentId },
+            data: { status },
+        });
+    }
+
+    private async fetchDocument(fileUrl: string, cloudinaryPublicId?: string | null): Promise<Response> {
+        const url = cloudinaryPublicId
+            ? this.getCloudinaryDownloadUrl(cloudinaryPublicId)
+            : fileUrl;
+
+        const res = await fetch(url, {
+            headers: { "User-Agent": "KahootClone-Backend/1.0", Accept: "*/*" },
         });
         if (!res.ok) {
-            throw new Error(
-                `Failed to fetch document: ${res.status} (${res.statusText})`,
-            );
+            throw new Error(`Failed to fetch document: ${res.status} (${res.statusText})`);
         }
+        return res;
+    }
 
-        const contentType = (res.headers.get("content-type") || mimeType || "").toLowerCase();
+    private getCloudinaryDownloadUrl(publicId: string): string {
+        const format = publicId.includes(".")
+            ? publicId.split(".").pop()!.toLowerCase()
+            : "pdf";
 
-        if (contentType.includes("text/plain") || fileUrl.endsWith(".txt")) {
-            return res.text();
+        return cloudinary.utils.private_download_url(publicId, format, {
+            resource_type: "raw",
+            type: "upload",
+        });
+    }
+
+    private async parseText(
+        response: Response,
+        fileUrl: string,
+        mimeType: string,
+    ): Promise<string> {
+        const contentType = (response.headers.get("content-type") || mimeType || "").toLowerCase();
+
+        if (contentType.includes("text/plain") || fileUrl.toLowerCase().endsWith(".txt")) {
+            return response.text();
         }
-
         if (contentType.includes("pdf") || fileUrl.toLowerCase().endsWith(".pdf")) {
-            const buffer = Buffer.from(await res.arrayBuffer());
-            const { PDFParse } = await import("pdf-parse");
-            const parser = new PDFParse({ data: buffer });
-            try {
-                const result = await parser.getText();
-                return result?.text ?? "";
-            } finally {
-                await parser.destroy();
-            }
+            return this.parsePdf(response);
         }
 
         throw new BadRequestException(
@@ -153,32 +153,23 @@ export class DocumentProcessingService {
         );
     }
 
-    /**
-     * For Cloudinary URLs, use the API private_download_url so the backend can fetch
-     * the file with signed params (avoids 401 from CDN signed URLs for raw).
-     * For other URLs, return as-is.
-     */
-    private toFetchableUrl(fileUrl: string): string {
-        const m = fileUrl.match(CLOUDINARY_RAW_REGEX);
-        if (!m) {
-            return fileUrl;
+    private async parsePdf(response: Response): Promise<string> {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const { PDFParse } = await import("pdf-parse");
+        const parser = new PDFParse({ data: buffer });
+        try {
+            const result = await parser.getText();
+            return result?.text ?? "";
+        } finally {
+            await parser.destroy();
         }
-        const publicId = decodeURIComponent(m[1]);
-        const format = publicId.includes(".")
-            ? publicId.split(".").pop()!.toLowerCase()
-            : "pdf";
-        const signedUrl = cloudinary.utils.private_download_url(publicId, format, {
-            resource_type: "raw",
-            type: "upload",
-        });
-        this.logger.debug(
-            `Resolved Cloudinary private_download_url for public_id=${publicId}`,
-        );
-        return signedUrl;
     }
 
-    /** Split text into semantically meaningful chunks. */
     private async chunkText(text: string): Promise<string[]> {
+        if (!text.trim()) {
+            throw new Error("No text could be extracted from the document");
+        }
+
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize: CHUNK_SIZE,
             chunkOverlap: CHUNK_OVERLAP,
@@ -187,34 +178,88 @@ export class DocumentProcessingService {
         return chunks.filter((c) => c.trim().length > 0);
     }
 
-    /** Get embeddings for chunks via Gemini API (gemini-embedding-001, 768 dimensions to match DB). */
-    private async embedChunks(chunks: string[]): Promise<number[][]> {
+    private validateChunks(chunks: string[]): void {
+        if (chunks.length === 0) {
+            throw new Error("Document produced no chunks");
+        }
+
+        if (chunks.length < MIN_CHUNKS_FOR_RAG) {
+            throw new Error(
+                `Document has too few chunks (${chunks.length}). At least ${MIN_CHUNKS_FOR_RAG} required for RAG quiz generation.`,
+            );
+        }
+
+        if (chunks.length > MAX_CHUNKS) {
+            throw new Error(
+                `Document is too large to process (${chunks.length} text chunks, max ${MAX_CHUNKS}). Try a shorter document or split it into parts.`,
+            );
+        }
+    }
+
+    private async embedChunks(
+        genai: GoogleGenAI,
+        chunks: string[],
+        subscriber: Subscriber<ProgressEvent>,
+    ): Promise<number[][]> {
+        const batches = this.toBatches(chunks, EMBED_BATCH_SIZE);
         const results: number[][] = [];
 
-        for (let i = 0; i < chunks.length; i += EMBED_BATCH_SIZE) {
-            const batch = chunks.slice(i, i + EMBED_BATCH_SIZE);
-            const response = await this.genai!.models.embedContent({
-                model: "gemini-embedding-001",
+        for (const [idx, batch] of batches.entries()) {
+            const pct = 35 + Math.round((idx / batches.length) * 45);
+            subscriber.next({ stage: "Indexing content...", progress: Math.min(pct, 80) });
+
+            const response = await genai.models.embedContent({
+                model: EMBEDDING_MODEL,
                 contents: batch,
                 config: {
                     taskType: "RETRIEVAL_DOCUMENT",
-                    outputDimensionality: 768,
+                    outputDimensionality: EMBEDDING_DIMENSIONS,
                 },
             });
 
-            const embeddings = response.embeddings ?? [];
-            for (const emb of embeddings) {
-                const values = emb.values;
-                if (values && values.length === 768) {
-                    results.push(values);
-                } else {
-                    throw new Error(
-                        `Unexpected embedding dimension: ${values?.length ?? 0}, expected 768`,
-                    );
-                }
-            }
+            results.push(...this.extractEmbeddings(response.embeddings));
         }
 
         return results;
+    }
+
+    private toBatches<T>(items: T[], size: number): T[][] {
+        return Array.from(
+            { length: Math.ceil(items.length / size) },
+            (_, i) => items.slice(i * size, i * size + size),
+        );
+    }
+
+    private extractEmbeddings(
+        embeddings?: Array<{ values?: number[] }>,
+    ): number[][] {
+        return (embeddings ?? []).map((emb) => {
+            if (emb.values?.length !== EMBEDDING_DIMENSIONS) {
+                throw new Error(
+                    `Unexpected embedding dimension: ${emb.values?.length ?? 0}, expected ${EMBEDDING_DIMENSIONS}`,
+                );
+            }
+            return emb.values;
+        });
+    }
+
+    private async storeChunks(
+        documentId: number,
+        chunks: string[],
+        embeddings: number[][],
+    ): Promise<void> {
+        await this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw`
+                DELETE FROM "DocumentChunk" WHERE "documentId" = ${documentId}
+            `;
+
+            for (let i = 0; i < chunks.length; i++) {
+                const embeddingStr = `[${embeddings[i].join(",")}]`;
+                await tx.$executeRaw`
+                    INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
+                    VALUES (${documentId}, ${chunks[i]}, ${i}, ${embeddingStr}::vector)
+                `;
+            }
+        });
     }
 }

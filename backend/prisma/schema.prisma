@@ -19,14 +19,15 @@ model User {
 }
 
 model Document {
-  id        Int            @id @default(autoincrement())
-  userId    Int
-  fileName  String
-  fileUrl   String
-  fileSize  Int
-  mimeType  String         @default("application/pdf")
-  status    DocumentStatus @default(UPLOADED)
-  createdAt DateTime       @default(now())
+  id                 Int            @id @default(autoincrement())
+  userId             Int
+  fileName           String
+  fileUrl            String
+  fileSize           Int
+  mimeType           String         @default("application/pdf")
+  cloudinaryPublicId String?
+  status             DocumentStatus @default(UPLOADED)
+  createdAt          DateTime       @default(now())
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks DocumentChunk[]

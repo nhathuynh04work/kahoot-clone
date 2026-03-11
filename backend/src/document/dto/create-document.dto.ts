@@ -1,4 +1,4 @@
-import { IsInt, IsString, IsOptional, IsEnum } from "class-validator";
+import { IsInt, IsString, IsOptional } from "class-validator";
 
 export class CreateDocumentDto {
     @IsString()
@@ -13,4 +13,8 @@ export class CreateDocumentDto {
     @IsOptional()
     @IsString()
     mimeType?: string;
+
+    @IsOptional()
+    @IsString()
+    cloudinaryPublicId?: string;
 }
