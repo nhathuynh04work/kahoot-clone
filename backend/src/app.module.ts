@@ -11,6 +11,7 @@ import { AppService } from "./app.service";
 import { RedisModule } from "./redis/redis.module";
 import { UploadModule } from "./upload/upload.module";
 import { DocumentModule } from "./document/document.module";
+import { AiModule } from "./ai/ai.module";
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { DocumentModule } from "./document/document.module";
         RedisModule,
         UploadModule,
         DocumentModule,
+        AiModule,
     ],
     controllers: [AppController],
     providers: [AppService],
