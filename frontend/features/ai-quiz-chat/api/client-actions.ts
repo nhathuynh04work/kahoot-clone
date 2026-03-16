@@ -10,8 +10,19 @@ export interface GeneratedQuestion {
 	options: GeneratedOption[];
 }
 
+type QuestionSourceMode = "rag" | "freestyle";
+
+type RagContextRelevance = "matched" | "mismatch_no_relevant_info";
+
+export interface GenerateQuestionsMeta {
+	mode: QuestionSourceMode;
+	ragContextRelevance?: RagContextRelevance;
+	note?: string;
+}
+
 export interface GenerateQuestionsResponse {
 	questions: GeneratedQuestion[];
+	meta?: GenerateQuestionsMeta;
 }
 
 export const generateQuestions = async (

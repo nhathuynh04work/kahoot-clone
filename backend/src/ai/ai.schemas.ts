@@ -4,6 +4,15 @@ import type { Schema } from "@google/genai";
 export const QUIZ_RESPONSE_SCHEMA: Schema = {
     type: Type.OBJECT,
     properties: {
+        meta: {
+            type: Type.OBJECT,
+            properties: {
+                mode: { type: Type.STRING },
+                ragContextRelevance: { type: Type.STRING },
+                note: { type: Type.STRING },
+            },
+            required: ["mode"],
+        },
         questions: {
             type: Type.ARRAY,
             items: {

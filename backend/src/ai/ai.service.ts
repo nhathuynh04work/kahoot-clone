@@ -304,11 +304,11 @@ export class AiService {
     }
 
     private parseStructuredOutput(jsonText: string): GenerateQuestionsResult {
-        let parsed: { questions?: GeneratedQuestion[] };
+        let parsed: { questions?: GeneratedQuestion[]; meta?: unknown };
 
         try {
             const clean = this.cleanJsonText(jsonText);
-            parsed = JSON.parse(clean) as { questions?: GeneratedQuestion[] };
+            parsed = JSON.parse(clean) as { questions?: GeneratedQuestion[]; meta?: unknown };
         } catch (err) {
             this.logger.warn(
                 JSON.stringify({
@@ -344,7 +344,13 @@ export class AiService {
                     })),
             }));
 
-        return { questions: validated };
+        const rawMeta = parsed?.meta as Record<string, unknown> | undefined;
+        const safeMeta = rawMeta && typeof rawMeta === "object" ? rawMeta : undefined;
+
+        return {
+            questions: validated,
+            meta: safeMeta as GenerateQuestionsResult["meta"] | undefined,
+        };
     }
 
     private cleanJsonText(text: string): string {

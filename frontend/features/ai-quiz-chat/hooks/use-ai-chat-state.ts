@@ -161,10 +161,15 @@ export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStatePr
 					options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
 				}));
 
-				const assistantContent =
+				const baseSummary =
 					questions.length > 0
-						? `I've generated ${questions.length} question${questions.length !== 1 ? "s" : ""}${docRef ? ` based on "${docRef.fileName}"` : ""}. You can edit them in the panel and add any to your quiz.`
+						? `I've generated ${questions.length} question${questions.length !== 1 ? "s" : ""}${docRef ? ` based on "${docRef.fileName}"` : ""}.`
 						: "I couldn't generate any questions from your request. Try rephrasing or providing more detail.";
+
+				const note = result.meta?.note?.trim();
+				const assistantContent = [note, questions.length > 0 ? "You can edit them in the panel and add any to your quiz." : null]
+					.filter(Boolean)
+					.join(" ") || baseSummary;
 
 				setMessages((prev) => {
 					const next = [
