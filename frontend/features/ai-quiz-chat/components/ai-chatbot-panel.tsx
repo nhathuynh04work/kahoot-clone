@@ -6,21 +6,20 @@ import { ChatMessageList } from "./chat-message-list";
 import { ChatInput } from "./chat-input";
 import { DocumentAttachMenu } from "./document-attach-menu";
 import { GeneratedQuestionsCanvas } from "./generated-questions-canvas";
-import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
-
 interface AiChatbotPanelProps {
 	onClose: () => void;
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
+	onAddQuestion?: (question: { text: string; options: { text: string; isCorrect: boolean }[] }) => void;
 }
 
-export function AiChatbotPanel({ onClose, onFileSelect }: AiChatbotPanelProps) {
-	const state = useAiChatState({ onFileSelect });
+export function AiChatbotPanel({ onClose, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {
+	const state = useAiChatState({ onFileSelect, onAddQuestion });
 	const currentQuestions = state.openCanvasMessageId
 		? state.generatedQuestionsByMessageId[state.openCanvasMessageId] ?? []
 		: [];
-	const currentAddedIds = state.openCanvasMessageId
-		? state.addedQuestionIdsByMessageId[state.openCanvasMessageId] ?? new Set()
-		: new Set();
+	const currentAddedIds: Set<string> = state.openCanvasMessageId
+		? state.addedQuestionIdsByMessageId[state.openCanvasMessageId] ?? new Set<string>()
+		: new Set<string>();
 
 	return (
 		<div
@@ -70,13 +69,14 @@ export function AiChatbotPanel({ onClose, onFileSelect }: AiChatbotPanelProps) {
 				open={state.docPopupOpen}
 				onClose={() => state.setDocPopupOpen(false)}
 				anchorRef={state.attachButtonRef}
-				mockDocuments={state.mockDocuments}
+				documents={state.documents}
 				selectedId={state.selectedDoc?.id ?? null}
 				onSelect={state.handleSelectDocument}
-				onUploadClick={state.handleMockUpload}
+				onUpload={state.handleUpload}
 				uploadPending={state.uploadPending}
-				usedBytes={state.mockDocuments.reduce((a, d) => a + d.fileSize, 0)}
-				limitBytes={MAX_TOTAL_STORAGE_BYTES}
+				parsingStage={state.parsingStage}
+				usedBytes={state.usedBytes}
+				limitBytes={state.limitBytes}
 			/>
 		</div>
 	);

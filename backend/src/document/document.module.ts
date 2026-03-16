@@ -7,9 +7,10 @@ import { UploadModule } from "../upload/upload.module";
 import { TxtParser } from "./parsers/txt.parser";
 import { PdfParser } from "./parsers/pdf.parser";
 import { ParserRegistry } from "./parsers/parser.registry";
+import { AiModule } from "../ai/ai.module";
 
 @Module({
-    imports: [PrismaModule, UploadModule],
+    imports: [PrismaModule, UploadModule, AiModule],
     controllers: [DocumentController],
     providers: [TxtParser, PdfParser, ParserRegistry, DocumentService, DocumentProcessingService],
     exports: [DocumentService, DocumentProcessingService],

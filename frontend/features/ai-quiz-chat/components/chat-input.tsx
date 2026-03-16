@@ -1,14 +1,13 @@
 "use client";
 
 import { X, FileText, Send, Paperclip } from "lucide-react";
-import type { MockDocument } from "../types";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
 	input: string;
 	onInputChange: (value: string) => void;
 	onSend: () => void;
-	selectedDoc: MockDocument | null;
+	selectedDoc: { fileName: string } | null;
 	onRemoveDoc: () => void;
 	onAttachClick: () => void;
 	attachButtonRef: React.RefObject<HTMLButtonElement | null>;
@@ -90,9 +89,6 @@ export function ChatInput({
 						</button>
 					</div>
 				</div>
-				<p className="text-xs text-gray-500 mt-2 text-center">
-					Mock UI — use &quot;Generate 5 questions&quot; to see the canvas.
-				</p>
 			</div>
 		</div>
 	);

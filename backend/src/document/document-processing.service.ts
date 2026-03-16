@@ -1,18 +1,16 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Observable, Subscriber } from "rxjs";
-import { GoogleGenAI } from "@google/genai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v2 as cloudinary } from "cloudinary";
 import { PrismaService } from "../prisma/prisma.service";
 import { DocumentStatus } from "../generated/prisma/client";
 import { ParserRegistry } from "./parsers/parser.registry";
+import { AiClient } from "../ai/ai.client";
 
 const CHUNK_SIZE = 4000;
 const CHUNK_OVERLAP = 800;
 const EMBED_BATCH_SIZE = 20;
-const EMBEDDING_DIMENSIONS = 768;
-const EMBEDDING_MODEL = "gemini-embedding-001";
 const MIN_CHUNKS_FOR_RAG = 3;
 const MAX_CHUNKS = 200;
 
@@ -24,18 +22,13 @@ export interface ProgressEvent {
 @Injectable()
 export class DocumentProcessingService {
     private readonly logger = new Logger(DocumentProcessingService.name);
-    private readonly genai: GoogleGenAI | null = null;
 
     constructor(
         private prisma: PrismaService,
         private parserRegistry: ParserRegistry,
+        private readonly aiClient: AiClient,
         config: ConfigService,
     ) {
-        const apiKey = config.get<string>("GEMINI_API_KEY");
-        if (apiKey) {
-            this.genai = new GoogleGenAI({ apiKey });
-        }
-
         cloudinary.config({
             cloud_name: config.get<string>("CLOUDINARY_CLOUD_NAME"),
             api_key: config.get<string>("CLOUDINARY_API_KEY"),
@@ -59,11 +52,6 @@ export class DocumentProcessingService {
         userId: number,
         subscriber: Subscriber<ProgressEvent>,
     ): Promise<void> {
-        const genai = this.genai;
-        if (!genai) {
-            throw new Error("GEMINI_API_KEY is not configured");
-        }
-
         const doc = await this.prisma.document.findFirst({
             where: { id: documentId, userId },
         });
@@ -94,7 +82,7 @@ export class DocumentProcessingService {
             this.validateChunks(chunks);
 
             // Embed chunks
-            const embeddings = await this.embedChunks(genai, chunks, subscriber);
+            const embeddings = await this.embedChunks(chunks, subscriber);
             this.logger.log(`[doc ${documentId}] Embedded ${embeddings.length} chunks`);
 
             // Store chunks
@@ -178,7 +166,6 @@ export class DocumentProcessingService {
     }
 
     private async embedChunks(
-        genai: GoogleGenAI,
         chunks: string[],
         subscriber: Subscriber<ProgressEvent>,
     ): Promise<number[][]> {
@@ -189,16 +176,8 @@ export class DocumentProcessingService {
             const pct = 35 + Math.round((idx / batches.length) * 45);
             subscriber.next({ stage: "Indexing content...", progress: Math.min(pct, 80) });
 
-            const response = await genai.models.embedContent({
-                model: EMBEDDING_MODEL,
-                contents: batch,
-                config: {
-                    taskType: "RETRIEVAL_DOCUMENT",
-                    outputDimensionality: EMBEDDING_DIMENSIONS,
-                },
-            });
-
-            results.push(...this.extractEmbeddings(response.embeddings));
+            const embeddings = await this.aiClient.embedContents(batch, "RETRIEVAL_DOCUMENT");
+            results.push(...embeddings);
         }
 
         return results;
@@ -209,19 +188,6 @@ export class DocumentProcessingService {
             { length: Math.ceil(items.length / size) },
             (_, i) => items.slice(i * size, i * size + size),
         );
-    }
-
-    private extractEmbeddings(
-        embeddings?: Array<{ values?: number[] }>,
-    ): number[][] {
-        return (embeddings ?? []).map((emb) => {
-            if (emb.values?.length !== EMBEDDING_DIMENSIONS) {
-                throw new Error(
-                    `Unexpected embedding dimension: ${emb.values?.length ?? 0}, expected ${EMBEDDING_DIMENSIONS}`,
-                );
-            }
-            return emb.values;
-        });
     }
 
     private async storeChunks(

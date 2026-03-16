@@ -94,6 +94,7 @@ export function useDocumentParser() {
 					setProgress({ stage: event.stage, progress: event.progress });
 				}
 			} finally {
+				setProgress(null);
 				queryClient.invalidateQueries({ queryKey: documentsQueryKey });
 			}
 		},

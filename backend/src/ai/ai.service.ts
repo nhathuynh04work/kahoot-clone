@@ -1,77 +1,23 @@
-import { Injectable, BadRequestException, ForbiddenException, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { GoogleGenAI } from "@google/genai";
-import { DocumentStatus, Prisma } from "../generated/prisma/client";
+import {
+    Injectable,
+    BadRequestException,
+    ForbiddenException,
+    HttpException,
+    HttpStatus,
+    Logger,
+} from "@nestjs/common";
+import { DocumentStatus } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-
-const EMBEDDING_MODEL = "text-embedding-004";
-const EMBEDDING_DIMENSIONS = 768;
-const GENERATION_MODEL = "gemini-1.5-flash";
-const RAG_TOP_K = 10;
-
-const PROMPT_VALIDATION_SYSTEM = `You must determine if a user's request is appropriate for generating educational quiz questions.
-
-Consider: Is the request clear enough to understand what topic or questions to generate? Is it a legitimate educational topic? Is it not offensive, harmful, or inappropriate?
-
-Reply ONLY with valid JSON (no markdown): {"valid": true} or {"valid": false, "reason": "brief explanation why it's unclear or inappropriate"}`;
-
-const SYSTEM_PROMPT_RAG = `You are a quiz generator. Given document context and a user prompt, generate multiple-choice quiz questions as structured JSON.
-
-Output ONLY valid JSON in this exact format (no markdown, no code fences):
-{
-  "questions": [
-    {
-      "text": "Question text here?",
-      "options": [
-        { "text": "Option A", "isCorrect": false },
-        { "text": "Option B", "isCorrect": true }
-      ]
-    }
-  ]
-}
-
-Rules:
-- Use ONLY information from the provided context. Do not invent facts.
-- Each question must have between 2 and 4 options.
-- Exactly one option per question must have "isCorrect": true.
-- Questions should be clear, unambiguous, and appropriate for the topic.
-- Generate 3-8 questions based on the context quality and user request.`;
-
-const SYSTEM_PROMPT_FREEFORM = `You are a quiz generator. Given a user's topic or request, generate multiple-choice quiz questions using your knowledge.
-
-Output ONLY valid JSON in this exact format (no markdown, no code fences):
-{
-  "questions": [
-    {
-      "text": "Question text here?",
-      "options": [
-        { "text": "Option A", "isCorrect": false },
-        { "text": "Option B", "isCorrect": true }
-      ]
-    }
-  ]
-}
-
-Rules:
-- Generate questions based on the user's topic or request. Use accurate, educational content.
-- Each question must have between 2 and 4 options.
-- Exactly one option per question must have "isCorrect": true.
-- Questions should be clear, unambiguous, and appropriate.
-- Generate 3-8 questions.`;
-
-export interface GeneratedOption {
-    text: string;
-    isCorrect: boolean;
-}
-
-export interface GeneratedQuestion {
-    text: string;
-    options: GeneratedOption[];
-}
-
-export interface GenerateQuestionsResult {
-    questions: GeneratedQuestion[];
-}
+import {
+    EMBEDDING_DIMENSIONS,
+    GENERATION_MODEL,
+    PROMPT_VALIDATION_SYSTEM,
+    RAG_TOP_K,
+    SYSTEM_PROMPT_FREEFORM,
+    SYSTEM_PROMPT_RAG,
+} from "./ai.constants";
+import type { GenerateQuestionsResult, GeneratedQuestion } from "./ai.types";
+import { AiClient } from "./ai.client";
 
 interface DocumentChunkRow {
     id: number;
@@ -83,67 +29,133 @@ interface DocumentChunkRow {
 @Injectable()
 export class AiService {
     private readonly logger = new Logger(AiService.name);
-    private readonly genai: GoogleGenAI | null = null;
 
     constructor(
         private prisma: PrismaService,
-        config: ConfigService,
-    ) {
-        const apiKey = config.get<string>("GEMINI_API_KEY");
-        if (apiKey) {
-            this.genai = new GoogleGenAI({ apiKey });
-        }
-    }
+        private readonly aiClient: AiClient,
+    ) {}
 
-    /**
-     * Generates quiz questions from a user prompt.
-     * - With documentId: uses RAG (embedding + cosine similarity) to retrieve context, then generates from that context.
-     * - Without documentId: generates questions purely from the user's prompt using AI knowledge.
-     *
-     * Rejects unclear or inappropriate prompts with a helpful message.
-     */
     async generateQuestions(
         userId: number,
         userPrompt: string,
         documentId?: number | null,
     ): Promise<GenerateQuestionsResult> {
-        const genai = this.genai;
-        if (!genai) {
-            throw new BadRequestException("GEMINI_API_KEY is not configured");
-        }
-
         if (!userPrompt?.trim()) {
             throw new BadRequestException("User prompt is required");
         }
 
-        const validation = await this.validatePrompt(genai, userPrompt);
-        if (!validation.valid) {
-            const message = validation.reason ?? "Your prompt is unclear or not appropriate for quiz generation.";
-            throw new BadRequestException(message);
-        }
-
-        if (documentId != null) {
-            return this.generateWithRag(genai, userId, documentId, userPrompt);
-        }
-
-        return this.generateFreestyle(genai, userPrompt);
-    }
-
-    private async validatePrompt(genai: GoogleGenAI, prompt: string): Promise<{ valid: boolean; reason?: string }> {
-        const fullPrompt = `${PROMPT_VALIDATION_SYSTEM}\n\nUser request: ${prompt}`;
-        const response = await genai.models.generateContent({
-            model: GENERATION_MODEL,
-            contents: fullPrompt,
-            config: {
-                responseMimeType: "application/json",
-            },
-        });
-
-        const text = response.text?.trim();
-        if (!text) return { valid: true };
+        const trimmedPrompt = userPrompt.trim();
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateQuestions.start",
+                userId,
+                hasDocumentId: documentId != null,
+                promptLength: trimmedPrompt.length,
+            }),
+        );
 
         try {
-            const clean = text.replace(/^```json\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+            if (documentId != null) {
+                this.logger.log(
+                    JSON.stringify({
+                        event: "ai.generateQuestions.route",
+                        mode: "rag",
+                        userId,
+                        documentId,
+                    }),
+                );
+                return await this.generateWithRag(userId, documentId, userPrompt);
+            }
+
+            this.logger.log(
+                JSON.stringify({
+                    event: "ai.generateQuestions.route",
+                    mode: "freestyle",
+                    userId,
+                    documentId: null,
+                }),
+            );
+
+            const validation = await this.validatePrompt(userPrompt);
+            if (!validation.valid) {
+                const message =
+                    validation.reason ?? "Your prompt is unclear or not appropriate for quiz generation.";
+                this.logger.warn(
+                    JSON.stringify({
+                        event: "ai.generateQuestions.prompt_invalid",
+                        userId,
+                        reason: message,
+                    }),
+                );
+                throw new BadRequestException(message);
+            }
+
+            return await this.generateFreestyle(userPrompt);
+        } catch (err) {
+            this.handleAiError(err);
+        }
+    }
+
+    private handleAiError(err: unknown): never {
+        if (err instanceof BadRequestException || err instanceof ForbiddenException) {
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.error.client",
+                    type: err.constructor.name,
+                    message: err.message,
+                }),
+            );
+            throw err;
+        }
+
+        const errObj = err as Error & { status?: number; response?: unknown; body?: unknown };
+
+        this.logger.error(
+            JSON.stringify({
+                event: "ai.error.unexpected",
+                message: errObj?.message ?? "unknown",
+                status: errObj?.status,
+                hasResponse: errObj?.response !== undefined,
+                hasBody: errObj?.body !== undefined,
+            }),
+        );
+
+        const status = errObj?.status;
+        const isQuotaError =
+            status === 429 ||
+            errObj?.message?.includes("RESOURCE_EXHAUSTED") ||
+            errObj?.message?.includes("quota");
+
+        if (isQuotaError) {
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.error.quota",
+                    message: errObj?.message ?? "",
+                }),
+            );
+            throw new HttpException(
+                {
+                    statusCode: HttpStatus.TOO_MANY_REQUESTS,
+                    message:
+                        "AI quota exceeded. Please try again later or check your Gemini API plan and billing.",
+                    error: "Too Many Requests",
+                },
+                HttpStatus.TOO_MANY_REQUESTS,
+            );
+        }
+
+        throw errObj;
+    }
+
+    private async validatePrompt(prompt: string): Promise<{ valid: boolean; reason?: string }> {
+        const jsonText = await this.aiClient.generateJsonContent({
+            systemPrompt: PROMPT_VALIDATION_SYSTEM,
+            userMessage: `User request: ${prompt}`,
+            responseMimeType: "application/json",
+        });
+
+        try {
+            const clean = this.cleanJsonText(jsonText);
             const parsed = JSON.parse(clean) as { valid?: boolean; reason?: string };
             return {
                 valid: parsed.valid === true,
@@ -155,7 +167,6 @@ export class AiService {
     }
 
     private async generateWithRag(
-        genai: GoogleGenAI,
         userId: number,
         documentId: number,
         userPrompt: string,
@@ -164,67 +175,115 @@ export class AiService {
             where: { id: documentId, userId },
         });
         if (!doc) {
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.generateWithRag.document_not_found",
+                    documentId,
+                    userId,
+                }),
+            );
             throw new ForbiddenException("Document not found");
         }
 
         if (doc.status !== DocumentStatus.READY) {
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.generateWithRag.document_not_ready",
+                    documentId,
+                    userId,
+                    status: doc.status,
+                }),
+            );
             throw new BadRequestException(
                 `Document is not ready for quiz generation (status: ${doc.status}). Wait for indexing to complete.`,
             );
         }
 
-        this.logger.log(`[doc ${documentId}] Generating questions for prompt: "${userPrompt.slice(0, 60)}..."`);
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateWithRag.start",
+                documentId,
+                userId,
+            }),
+        );
 
-        const embedding = await this.embedQuery(genai, userPrompt);
+        const embedding = await this.embedQuery(userPrompt);
         const chunks = await this.retrieveChunks(documentId, embedding);
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateWithRag.chunks_selected",
+                documentId,
+                userId,
+                chunkCount: chunks.length,
+            }),
+        );
+
         const context = chunks.map((c) => c.content).join("\n\n");
 
         if (!context.trim()) {
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.generateWithRag.no_context",
+                    documentId,
+                    userId,
+                }),
+            );
             throw new BadRequestException(
                 "No relevant context found in the document. The document may need to be re-indexed with the same embedding model.",
             );
         }
 
         const userMessage = `Context from the document:\n\n${context}\n\n---\n\nUser request: ${userPrompt}`;
-        const jsonText = await this.generateWithGemini(genai, SYSTEM_PROMPT_RAG, userMessage);
-        const result = this.parseStructuredOutput(jsonText);
-
-        this.logger.log(`[doc ${documentId}] Generated ${result.questions.length} questions`);
-
-        return result;
-    }
-
-    private async generateFreestyle(
-        genai: GoogleGenAI,
-        userPrompt: string,
-    ): Promise<GenerateQuestionsResult> {
-        this.logger.log(`Generating freestyle questions for prompt: "${userPrompt.slice(0, 60)}..."`);
-
-        const jsonText = await this.generateWithGemini(genai, SYSTEM_PROMPT_FREEFORM, userPrompt);
-        const result = this.parseStructuredOutput(jsonText);
-
-        this.logger.log(`Generated ${result.questions.length} freestyle questions`);
-
-        return result;
-    }
-
-    private async embedQuery(genai: GoogleGenAI, text: string): Promise<number[]> {
-        const response = await genai.models.embedContent({
-            model: EMBEDDING_MODEL,
-            contents: text,
-            config: {
-                taskType: "RETRIEVAL_QUERY",
-                outputDimensionality: EMBEDDING_DIMENSIONS,
-            },
+        const jsonText = await this.aiClient.generateJsonContent({
+            systemPrompt: SYSTEM_PROMPT_RAG,
+            userMessage,
+            responseMimeType: "application/json",
         });
+        const result = this.parseStructuredOutput(jsonText);
 
-        const values = response.embeddings?.[0]?.values;
-        if (!values || values.length !== EMBEDDING_DIMENSIONS) {
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateWithRag.completed",
+                documentId,
+                userId,
+                questionCount: result.questions.length,
+            }),
+        );
+
+        return result;
+    }
+
+    private async generateFreestyle(userPrompt: string): Promise<GenerateQuestionsResult> {
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateFreestyle.start",
+            }),
+        );
+
+        const jsonText = await this.aiClient.generateJsonContent({
+            systemPrompt: SYSTEM_PROMPT_FREEFORM,
+            userMessage: userPrompt,
+            responseMimeType: "application/json",
+        });
+        const result = this.parseStructuredOutput(jsonText);
+
+        this.logger.log(
+            JSON.stringify({
+                event: "ai.generateFreestyle.completed",
+                questionCount: result.questions.length,
+            }),
+        );
+
+        return result;
+    }
+
+    private async embedQuery(text: string): Promise<number[]> {
+        const values = await this.aiClient.embedQuery(text);
+        if (values.length !== EMBEDDING_DIMENSIONS) {
             throw new Error(
-                `Unexpected embedding dimension: ${values?.length ?? 0}, expected ${EMBEDDING_DIMENSIONS}`,
+                `Unexpected embedding dimension: ${values.length}, expected ${EMBEDDING_DIMENSIONS}`,
             );
         }
-
         return values;
     }
 
@@ -239,47 +298,26 @@ export class AiService {
             SELECT id, "documentId", content, "chunkIndex"
             FROM "DocumentChunk"
             WHERE "documentId" = ${documentId}
-            ORDER BY embedding <=> ${Prisma.raw(vectorStr)}::vector
+            ORDER BY embedding <=> ${vectorStr}::vector
             LIMIT ${limit}
         `;
 
         return rows;
     }
 
-    private async generateWithGemini(
-        genai: GoogleGenAI,
-        systemPrompt: string,
-        userMessage: string,
-    ): Promise<string> {
-        const fullPrompt = `${systemPrompt}\n\n${userMessage}`;
-
-        const response = await genai.models.generateContent({
-            model: GENERATION_MODEL,
-            contents: fullPrompt,
-            config: {
-                responseMimeType: "application/json",
-            },
-        });
-
-        const text = response.text;
-        if (!text?.trim()) {
-            throw new Error("Gemini returned empty response");
-        }
-
-        return text.trim();
-    }
-
     private parseStructuredOutput(jsonText: string): GenerateQuestionsResult {
         let parsed: { questions?: GeneratedQuestion[] };
 
         try {
-            const clean = jsonText
-                .replace(/^```json\s*/i, "")
-                .replace(/\s*```\s*$/i, "")
-                .trim();
+            const clean = this.cleanJsonText(jsonText);
             parsed = JSON.parse(clean) as { questions?: GeneratedQuestion[] };
         } catch (err) {
-            this.logger.warn(`Failed to parse Gemini JSON: ${err instanceof Error ? err.message : String(err)}`);
+            this.logger.warn(
+                JSON.stringify({
+                    event: "ai.parseStructuredOutput.parse_error",
+                    message: err instanceof Error ? err.message : String(err),
+                }),
+            );
             throw new Error("Failed to parse generated questions as JSON");
         }
 
@@ -303,11 +341,15 @@ export class AiService {
                 options: q.options
                     .filter((o) => o && typeof o.text === "string")
                     .map((o) => ({
-                        text: (o.text as string).trim(),
+                        text: String(o.text).trim(),
                         isCorrect: Boolean(o.isCorrect),
                     })),
             }));
 
         return { questions: validated };
+    }
+
+    private cleanJsonText(text: string): string {
+        return text.replace(/^```json\s*/i, "").replace(/\s*```\s*$/i, "").trim();
     }
 }
