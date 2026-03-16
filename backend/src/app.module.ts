@@ -12,11 +12,13 @@ import { RedisModule } from "./redis/redis.module";
 import { UploadModule } from "./upload/upload.module";
 import { DocumentModule } from "./document/document.module";
 import { AiModule } from "./ai/ai.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         EventEmitterModule.forRoot(),
+        ScheduleModule.forRoot(),
         AuthModule,
         UserModule,
         PrismaModule,

@@ -28,11 +28,35 @@ export interface GenerateQuestionsResponse {
 export const generateQuestions = async (
 	prompt: string,
 	documentId?: number | null,
+	quizId?: number | null,
 ): Promise<GenerateQuestionsResponse> => {
 	const { data } = await apiClient.post<GenerateQuestionsResponse>(
 		"/ai/generate-questions",
-		{ prompt, documentId: documentId ?? undefined },
+		{
+			prompt,
+			documentId: documentId ?? undefined,
+			quizId: quizId ?? undefined,
+		},
 		{ timeout: 60_000 },
 	);
+	return data;
+};
+
+export interface QuizChatMessage {
+	id: number;
+	role: "user" | "assistant";
+	content: string;
+	createdAt: string;
+	attachedDocument?: { id: number; fileName: string };
+	generatedCount?: number;
+	generatedQuestions?: GeneratedQuestion[];
+}
+
+export interface GetQuizChatResponse {
+	messages: QuizChatMessage[];
+}
+
+export const getQuizChat = async (quizId: number): Promise<GetQuizChatResponse> => {
+	const { data } = await apiClient.get<GetQuizChatResponse>(`/ai/quiz/${quizId}/chat`);
 	return data;
 };

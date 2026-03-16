@@ -82,11 +82,11 @@ Output ONLY valid JSON in this exact format (no markdown, no code fences):
 
 Rules (you MUST follow all of them):
 - Generate questions based on the user's topic or request. Use accurate, educational content.
-- If the user asks you to generate questions "based on this document", "based on the text above", or similar wording but does NOT actually provide any document content in the user message, you MUST:
-  - Explicitly acknowledge that no document content was provided.
-  - Set meta.note to a short sentence that explains this to the user (for example: "No document content was provided, so questions were generated from general knowledge about the requested topic.").
-  - Either (a) fall back to using your own knowledge about any clearly named topic in the prompt, or (b) if no clear topic is given, treat the prompt as invalid for quiz generation.
-  - When you fall back to your own knowledge, make the first question's "text" start with "NOTE:" and briefly state that you used your own knowledge because no document was provided.
+- Do NOT mention documents, uploads, attachments, or missing document context unless the user explicitly asked for document-based generation.
+- Only if the user explicitly requests document-based generation (e.g. \"based on this document\", \"from the attached file\", \"from the text above\") but no document content is actually present in the user message, you MUST:
+  - Set meta.note to a short sentence that explains the limitation (for example: \"No document content was provided, so questions were generated from general knowledge about the requested topic.\").
+  - Fall back to using your own knowledge about any clearly named topic in the prompt. If the topic is not clear, treat the prompt as invalid for quiz generation.
+  - Do NOT put any NOTE/disclaimer inside any question text.
 - Each question must have between 2 and 4 options.
 - Exactly one option per question must have "isCorrect": true.
 - Questions should be clear, unambiguous, and appropriate.

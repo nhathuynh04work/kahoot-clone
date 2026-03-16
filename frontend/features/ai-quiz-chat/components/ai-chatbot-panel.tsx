@@ -8,12 +8,13 @@ import { DocumentAttachMenu } from "./document-attach-menu";
 import { GeneratedQuestionsCanvas } from "./generated-questions-canvas";
 interface AiChatbotPanelProps {
 	onClose: () => void;
+	quizId?: number | null;
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
 	onAddQuestion?: (question: { text: string; options: { text: string; isCorrect: boolean }[] }) => void;
 }
 
-export function AiChatbotPanel({ onClose, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {
-	const state = useAiChatState({ onFileSelect, onAddQuestion });
+export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {
+	const state = useAiChatState({ quizId, onFileSelect, onAddQuestion });
 	const currentQuestions = state.openCanvasMessageId
 		? state.generatedQuestionsByMessageId[state.openCanvasMessageId] ?? []
 		: [];
@@ -38,6 +39,7 @@ export function AiChatbotPanel({ onClose, onFileSelect, onAddQuestion }: AiChatb
 						<ChatMessageList
 							messages={state.messages}
 							isGenerating={state.isGenerating}
+							isHistoryLoading={state.isHistoryLoading}
 							onOpenCanvas={state.setOpenCanvasMessageId}
 						/>
 					</div>

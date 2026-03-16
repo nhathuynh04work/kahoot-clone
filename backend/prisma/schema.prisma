@@ -16,6 +16,7 @@ model User {
   quizzes   Quiz[]
   lobbies   GameLobby[]
   documents Document[]
+  aiQuizChatSessions AiQuizChatSession[]
 }
 
 model Document {
@@ -31,6 +32,7 @@ model Document {
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks DocumentChunk[]
+  aiChatMessages AiQuizChatMessage[]
 }
 
 model DocumentChunk {
@@ -62,6 +64,7 @@ model Quiz {
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions   Question[]
   lobby       GameLobby[]
+  aiChat      AiQuizChatSession[]
 }
 
 model Question {
@@ -78,6 +81,43 @@ model Question {
   answers PlayerAnswer[]
 
   @@unique([quizId, sortOrder])
+}
+
+model AiQuizChatSession {
+  id             Int      @id @default(autoincrement())
+  quizId         Int
+  userId         Int
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+
+  quiz     Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiQuizChatMessage[]
+
+  @@unique([quizId, userId])
+  @@index([userId])
+  @@index([lastActivityAt])
+}
+
+model AiQuizChatMessage {
+  id        Int               @id @default(autoincrement())
+  sessionId Int
+  role      AiChatRole
+  content   String            @db.Text
+  documentId Int?
+  generatedCount Int?
+  generatedQuestions Json?
+  createdAt DateTime          @default(now())
+
+  session  AiQuizChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  document Document?         @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId, createdAt])
+}
+
+enum AiChatRole {
+  user
+  assistant
 }
 
 model Option {

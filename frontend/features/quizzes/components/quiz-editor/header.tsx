@@ -111,6 +111,7 @@ export default function Header({ isSaving }: HeaderProps) {
 			{isAiPanelOpen && (
 				<AiChatbotPanel
 					onClose={() => setIsAiPanelOpen(false)}
+					quizId={watch("id")}
 					onAddQuestion={handleAddQuestion}
 				/>
 			)}
