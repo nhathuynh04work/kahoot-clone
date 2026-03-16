@@ -1,21 +1,31 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { ChatMessage, MockDocument, MockGeneratedQuestion } from "../types";
-import { MAX_CHAT_MESSAGES, MOCK_DOCUMENTS, MOCK_INITIAL_MESSAGE } from "../constants";
-import { getRandomGeneratedQuestions } from "../lib/mock-questions";
+import { useState, useRef, useEffect, useCallback } from "react";
+import type { ChatMessage, MockGeneratedQuestion } from "../types";
+import type { GeneratedQuestion } from "../api/client-actions";
+import type { AttachDocument } from "../components/document-attach-menu";
+import { MAX_CHAT_MESSAGES } from "../constants";
+import { generateQuestions } from "../api/client-actions";
+import { useDocuments, useUploadDocument, useDocumentParser } from "@/features/documents/hooks/use-documents";
+import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
+
+const INITIAL_MESSAGE: ChatMessage = {
+	id: "welcome",
+	role: "assistant",
+	content:
+		"Hi! I can help you generate quiz questions. Attach a document (optional) using the paperclip, then describe what questions you want (e.g. \"Generate 5 questions about photosynthesis\" or \"Create a quiz on World War 2\"). I'll show them in the panel on the right and you can add any to your quiz.",
+};
 
 interface UseAiChatStateProps {
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
+	onAddQuestion?: (question: GeneratedQuestion) => void;
 }
 
-export function useAiChatState({ onFileSelect }: UseAiChatStateProps = {}) {
-	const [messages, setMessages] = useState<ChatMessage[]>([MOCK_INITIAL_MESSAGE]);
+export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStateProps = {}) {
+	const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
 	const [input, setInput] = useState("");
 	const [docPopupOpen, setDocPopupOpen] = useState(false);
-	const [mockDocuments, setMockDocuments] = useState<MockDocument[]>(MOCK_DOCUMENTS);
-	const [selectedDoc, setSelectedDoc] = useState<MockDocument | null>(null);
-	const [uploadPending, setUploadPending] = useState(false);
+	const [selectedDoc, setSelectedDoc] = useState<AttachDocument | null>(null);
 	const [generatedQuestionsByMessageId, setGeneratedQuestionsByMessageId] = useState<
 		Record<string, MockGeneratedQuestion[]>
 	>({});
@@ -27,120 +37,180 @@ export function useAiChatState({ onFileSelect }: UseAiChatStateProps = {}) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const attachButtonRef = useRef<HTMLButtonElement>(null);
 
+	const { data: documents = [] } = useDocuments();
+	const uploadMutation = useUploadDocument();
+	const { parse, isParsing, stage: parsingStage, progress } = useDocumentParser();
+
+	const docsForMenu: AttachDocument[] = documents.map((d) => ({
+		id: d.id,
+		fileName: d.fileName,
+		fileSize: d.fileSize,
+		status: d.status,
+	}));
+
+	const usedBytes = documents.reduce((a, d) => a + d.fileSize, 0);
+
 	useEffect(() => {
 		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
 	}, [messages]);
 
-	const handleSelectDocument = (doc: MockDocument | null) => {
-		setSelectedDoc(doc);
-		onFileSelect?.(doc ? { id: doc.id, fileName: doc.fileName } : null);
-	};
+	const handleSelectDocument = useCallback(
+		(doc: AttachDocument | null) => {
+			setSelectedDoc(doc);
+			onFileSelect?.(doc ? { id: doc.id, fileName: doc.fileName } : null);
+		},
+		[onFileSelect],
+	);
 
-	const handleMockUpload = () => {
-		setUploadPending(true);
-		setTimeout(() => {
-			setMockDocuments((prev) => [
+	const handleUpload = useCallback(
+		async (file: File) => {
+			try {
+				const doc = await uploadMutation.mutateAsync(file);
+				await parse(doc.id);
+			} catch (err) {
+				console.error("Upload/parse failed:", err);
+				throw err;
+			}
+		},
+		[uploadMutation, parse],
+	);
+
+	const handleAddToQuiz = useCallback(
+		(question: MockGeneratedQuestion) => {
+			if (!openCanvasMessageId) return;
+			setAddedQuestionIdsByMessageId((prev) => ({
 				...prev,
-				{
-					id: Date.now(),
-					fileName: `Uploaded doc ${prev.length + 1}.pdf`,
-					fileSize: 1024 * 1024,
-					status: "READY",
-				},
-			]);
-			setUploadPending(false);
-		}, 1500);
-	};
-
-	const handleAddToQuiz = (question: MockGeneratedQuestion) => {
-		if (!openCanvasMessageId) return;
-		setAddedQuestionIdsByMessageId((prev) => ({
-			...prev,
-			[openCanvasMessageId]: new Set(prev[openCanvasMessageId] ?? []).add(question.id),
-		}));
-	};
-
-	const handleUpdateQuestion = (
-		questionId: string,
-		updates: Partial<Pick<MockGeneratedQuestion, "text">> & {
-			option?: { index: number; text?: string; isCorrect?: boolean };
-		}
-	) => {
-		if (!openCanvasMessageId) return;
-		setGeneratedQuestionsByMessageId((prev) => {
-			const list = prev[openCanvasMessageId] ?? [];
-			return {
-				...prev,
-				[openCanvasMessageId]: list.map((q) => {
-					if (q.id !== questionId) return q;
-					if (updates.text !== undefined) return { ...q, text: updates.text };
-					if (updates.option !== undefined) {
-						const { index, text: optText, isCorrect } = updates.option;
-						const newOptions = q.options.map((o, i) => {
-							if (i !== index) {
-								if (isCorrect === true) return { ...o, isCorrect: false };
-								return o;
-							}
-							return {
-								...o,
-								...(optText !== undefined && { text: optText }),
-								...(isCorrect !== undefined && { isCorrect }),
-							};
-						});
-						return { ...q, options: newOptions };
-					}
-					return q;
-				}),
+				[openCanvasMessageId]: new Set([...(prev[openCanvasMessageId] ?? new Set<string>()), question.id]),
+			}));
+			const genQuestion: GeneratedQuestion = {
+				text: question.text,
+				options: question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
 			};
-		});
-	};
+			onAddQuestion?.(genQuestion);
+		},
+		[openCanvasMessageId, onAddQuestion],
+	);
 
-	const sendMessage = (text: string) => {
-		const trimmed = text.trim();
-		if (!trimmed) return;
-
-		const userMsg: ChatMessage = {
-			id: `user-${Date.now()}`,
-			role: "user",
-			content: trimmed,
-			attachedDocument: selectedDoc
-				? { id: selectedDoc.id, fileName: selectedDoc.fileName }
-				: undefined,
-		};
-		setMessages((prev) => {
-			const next = [...prev, userMsg];
-			return next.length > MAX_CHAT_MESSAGES ? next.slice(-MAX_CHAT_MESSAGES) : next;
-		});
-		setInput("");
-		setIsGenerating(true);
-
-		const looksLikeGenerate = /generate|questions|quiz/i.test(trimmed);
-		const docRef = selectedDoc;
-		setTimeout(() => {
-			const questions = looksLikeGenerate ? getRandomGeneratedQuestions() : [];
-			const msgId = `assistant-${Date.now()}`;
-			const assistantContent = looksLikeGenerate
-				? `I've generated ${questions.length} questions based on your document${docRef ? ` "${docRef.fileName}"` : ""}. You can edit them in the panel and add any to your quiz.`
-				: "This is a mock response. Try asking to \"Generate 5 questions\" to see the generated questions panel.";
-			setMessages((prev) => {
-				const next = [
+	const handleUpdateQuestion = useCallback(
+		(
+			questionId: string,
+			updates: Partial<Pick<MockGeneratedQuestion, "text">> & {
+				option?: { index: number; text?: string; isCorrect?: boolean };
+			},
+		) => {
+			if (!openCanvasMessageId) return;
+			setGeneratedQuestionsByMessageId((prev) => {
+				const list = prev[openCanvasMessageId] ?? [];
+				return {
 					...prev,
-					{
-						id: msgId,
-						role: "assistant",
-						content: assistantContent,
-						generatedCount: questions.length > 0 ? questions.length : undefined,
-					} as ChatMessage,
-				];
+					[openCanvasMessageId]: list.map((q) => {
+						if (q.id !== questionId) return q;
+						if (updates.text !== undefined) return { ...q, text: updates.text };
+						if (updates.option !== undefined) {
+							const { index, text: optText, isCorrect } = updates.option;
+							const newOptions = q.options.map((o, i) => {
+								if (i !== index) {
+									if (isCorrect === true) return { ...o, isCorrect: false };
+									return o;
+								}
+								return {
+									...o,
+									...(optText !== undefined && { text: optText }),
+									...(isCorrect !== undefined && { isCorrect }),
+								};
+							});
+							return { ...q, options: newOptions };
+						}
+						return q;
+					}),
+				};
+			});
+		},
+		[openCanvasMessageId],
+	);
+
+	const sendMessage = useCallback(
+		async (text: string) => {
+			const trimmed = text.trim();
+			if (!trimmed) return;
+
+			const userMsg: ChatMessage = {
+				id: `user-${Date.now()}`,
+				role: "user",
+				content: trimmed,
+				attachedDocument: selectedDoc
+					? { id: selectedDoc.id, fileName: selectedDoc.fileName }
+					: undefined,
+			};
+			setMessages((prev) => {
+				const next = [...prev, userMsg];
 				return next.length > MAX_CHAT_MESSAGES ? next.slice(-MAX_CHAT_MESSAGES) : next;
 			});
-			if (looksLikeGenerate && questions.length > 0) {
-				setGeneratedQuestionsByMessageId((prev) => ({ ...prev, [msgId]: questions }));
-				setOpenCanvasMessageId(msgId);
+			setInput("");
+			setIsGenerating(true);
+
+			const docRef = selectedDoc;
+			const msgId = `assistant-${Date.now()}`;
+
+			try {
+				const result = await generateQuestions(trimmed, selectedDoc?.id);
+
+				const questions: MockGeneratedQuestion[] = result.questions.map((q, i) => ({
+					id: `gen-${msgId}-${i}`,
+					text: q.text,
+					options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
+				}));
+
+				const baseSummary =
+					questions.length > 0
+						? `I've generated ${questions.length} question${questions.length !== 1 ? "s" : ""}${docRef ? ` based on "${docRef.fileName}"` : ""}.`
+						: "I couldn't generate any questions from your request. Try rephrasing or providing more detail.";
+
+				const note = result.meta?.note?.trim();
+				const assistantContent = [note, questions.length > 0 ? "You can edit them in the panel and add any to your quiz." : null]
+					.filter(Boolean)
+					.join(" ") || baseSummary;
+
+				setMessages((prev) => {
+					const next = [
+						...prev,
+						{
+							id: msgId,
+							role: "assistant",
+							content: assistantContent,
+							generatedCount: questions.length > 0 ? questions.length : undefined,
+						} as ChatMessage,
+					];
+					return next.length > MAX_CHAT_MESSAGES ? next.slice(-MAX_CHAT_MESSAGES) : next;
+				});
+
+				if (questions.length > 0) {
+					setGeneratedQuestionsByMessageId((prev) => ({ ...prev, [msgId]: questions }));
+					setOpenCanvasMessageId(msgId);
+				}
+			} catch (err) {
+				const errorMessage =
+					err && typeof err === "object" && "response" in err
+						? (err as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+						: null;
+				const msg = Array.isArray(errorMessage) ? errorMessage[0] : errorMessage ?? "Something went wrong.";
+				setMessages((prev) => {
+					const next = [
+						...prev,
+						{
+							id: msgId,
+							role: "assistant",
+							content: msg,
+						} as ChatMessage,
+					];
+					return next.length > MAX_CHAT_MESSAGES ? next.slice(-MAX_CHAT_MESSAGES) : next;
+				});
+			} finally {
+				setIsGenerating(false);
 			}
-			setIsGenerating(false);
-		}, 1200);
-	};
+		},
+		[selectedDoc],
+	);
 
 	return {
 		messages,
@@ -148,9 +218,12 @@ export function useAiChatState({ onFileSelect }: UseAiChatStateProps = {}) {
 		setInput,
 		docPopupOpen,
 		setDocPopupOpen,
-		mockDocuments,
+		documents: docsForMenu,
 		selectedDoc,
-		uploadPending,
+		uploadPending: uploadMutation.isPending,
+		parsingStage: isParsing ? `${parsingStage} ${Math.round(progress)}%` : undefined,
+		usedBytes,
+		limitBytes: MAX_TOTAL_STORAGE_BYTES,
 		generatedQuestionsByMessageId,
 		openCanvasMessageId,
 		setOpenCanvasMessageId,
@@ -159,7 +232,7 @@ export function useAiChatState({ onFileSelect }: UseAiChatStateProps = {}) {
 		scrollRef,
 		attachButtonRef,
 		handleSelectDocument,
-		handleMockUpload,
+		handleUpload,
 		handleAddToQuiz,
 		handleUpdateQuestion,
 		sendMessage,

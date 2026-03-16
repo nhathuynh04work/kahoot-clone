@@ -1,0 +1,23 @@
+export const DOCUMENT_CHUNKING = {
+    CHUNK_SIZE: 4000,
+    CHUNK_OVERLAP: 800,
+    MIN_CHUNKS_FOR_RAG: 3,
+    MAX_CHUNKS: 200,
+} as const;
+
+export const DOCUMENT_PROGRESS = {
+    STARTING: 5,
+    EXTRACTING: 20,
+    CHUNKING: 35,
+    STORING: 85,
+    DONE: 100,
+} as const;
+
+export const DOCUMENT_EMBEDDING = {
+    BATCH_SIZE: 20,
+    CHUNK_INSERT_BATCH_SIZE: 50,
+    PROGRESS_START: 35,
+    PROGRESS_RANGE: 45,
+    PROGRESS_MAX: 80,
+} as const;
+

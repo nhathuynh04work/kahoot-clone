@@ -7,6 +7,7 @@ export interface Document {
 	fileUrl: string;
 	fileSize: number;
 	mimeType: string;
+	cloudinaryPublicId?: string;
 	status: DocumentStatus;
 	createdAt: string;
 }

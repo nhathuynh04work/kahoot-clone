@@ -4,7 +4,7 @@ export const MAX_TOTAL_STORAGE_BYTES = 50 * 1024 * 1024;
 // 10MB per-file limit for upload
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
-export const ALLOWED_MIME_TYPES = ["application/pdf"];
+export const ALLOWED_MIME_TYPES = ["application/pdf", "text/plain"];
 
 export const formatBytes = (bytes: number): string => {
 	if (bytes < 1024) return `${bytes} B`;

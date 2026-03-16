@@ -32,7 +32,7 @@ export function GeneratedQuestionsCanvas({
 	questions,
 	onAddToQuiz,
 	onUpdateQuestion,
-	addedIds = new Set(),
+	addedIds = new Set<string>(),
 	onClose,
 	className,
 }: GeneratedQuestionsCanvasProps) {

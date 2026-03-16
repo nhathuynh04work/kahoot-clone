@@ -1,0 +1,229 @@
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Observable, Subscriber } from "rxjs";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { v2 as cloudinary } from "cloudinary";
+import { DocumentStatus, Prisma } from "../generated/prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { ParserRegistry } from "./parsers/parser.registry";
+import { AiClient } from "../ai/ai.client";
+import {
+    DOCUMENT_CHUNKING,
+    DOCUMENT_EMBEDDING,
+    DOCUMENT_PROGRESS,
+} from "./document-processing.constants";
+
+export interface ProgressEvent {
+    stage: string;
+    progress: number;
+}
+
+@Injectable()
+export class DocumentProcessingService {
+    private readonly logger = new Logger(DocumentProcessingService.name);
+
+    constructor(
+        private prisma: PrismaService,
+        private parserRegistry: ParserRegistry,
+        private readonly aiClient: AiClient,
+        config: ConfigService,
+    ) {
+        cloudinary.config({
+            cloud_name: config.get<string>("CLOUDINARY_CLOUD_NAME"),
+            api_key: config.get<string>("CLOUDINARY_API_KEY"),
+            api_secret: config.get<string>("CLOUDINARY_API_SECRET"),
+        });
+    }
+
+    parseAndIndexDocument(
+        documentId: number,
+        userId: number,
+    ): Observable<ProgressEvent> {
+        return new Observable<ProgressEvent>((subscriber) => {
+            this.processDocument(documentId, userId, subscriber)
+                .then(() => subscriber.complete())
+                .catch((err) => subscriber.error(err));
+        });
+    }
+
+    private async processDocument(
+        documentId: number,
+        userId: number,
+        subscriber: Subscriber<ProgressEvent>,
+    ): Promise<void> {
+        const doc = await this.prisma.document.findFirst({
+            where: { id: documentId, userId },
+        });
+        if (!doc) {
+            throw new BadRequestException("Document not found");
+        }
+
+        await this.updateStatus(documentId, DocumentStatus.PARSING);
+        subscriber.next({ stage: "Starting...", progress: DOCUMENT_PROGRESS.STARTING });
+
+        try {
+            // Fetch doc
+            const response = await this.fetchDocument(doc.fileUrl, doc.cloudinaryPublicId);
+
+            // Parse doc
+            const contentType = (response.headers.get("content-type") || doc.mimeType || "").toLowerCase();
+            const parser = this.parserRegistry.resolve(contentType, doc.fileUrl);
+            const text = await parser.parse(response);
+            this.logger.log(`[doc ${documentId}] Parsed text: ${text.length} chars`);
+            subscriber.next({ stage: "Extracting text...", progress: DOCUMENT_PROGRESS.EXTRACTING });
+
+            // Chunk doc
+            const chunks = await this.chunkText(text);
+            this.logger.log(`[doc ${documentId}] Chunked into ${chunks.length} chunks`);
+            subscriber.next({ stage: "Generating chunks...", progress: DOCUMENT_PROGRESS.CHUNKING });
+
+            // Validate chunks
+            this.validateChunks(chunks);
+
+            // Embed chunks
+            const embeddings = await this.embedChunks(chunks, subscriber);
+            this.logger.log(`[doc ${documentId}] Embedded ${embeddings.length} chunks`);
+
+            // Store chunks
+            subscriber.next({ stage: "Storing embeddings...", progress: DOCUMENT_PROGRESS.STORING });
+            await this.storeChunks(documentId, chunks, embeddings);
+
+            // Processing done
+            await this.updateStatus(documentId, DocumentStatus.READY);
+            subscriber.next({ stage: "Done", progress: DOCUMENT_PROGRESS.DONE });
+            this.logger.log(`[doc ${documentId}] Indexing complete`);
+        } catch (err) {
+            this.logger.warn(
+                `[doc ${documentId}] Indexing failed: ${err instanceof Error ? err.message : String(err)}`,
+            );
+            await this.updateStatus(documentId, DocumentStatus.ERROR);
+            throw err;
+        }
+    }
+
+    private async updateStatus(documentId: number, status: DocumentStatus): Promise<void> {
+        await this.prisma.document.update({
+            where: { id: documentId },
+            data: { status },
+        });
+    }
+
+    private async fetchDocument(fileUrl: string, cloudinaryPublicId?: string | null): Promise<Response> {
+        const url = cloudinaryPublicId
+            ? this.getCloudinaryDownloadUrl(cloudinaryPublicId)
+            : fileUrl;
+
+        const res = await fetch(url, {
+            headers: { "User-Agent": "KahootClone-Backend/1.0", Accept: "*/*" },
+        });
+        if (!res.ok) {
+            throw new Error(`Failed to fetch document: ${res.status} (${res.statusText})`);
+        }
+        return res;
+    }
+
+    private getCloudinaryDownloadUrl(publicId: string): string {
+        const format = publicId.includes(".")
+            ? publicId.split(".").pop()!.toLowerCase()
+            : "pdf";
+
+        return cloudinary.utils.private_download_url(publicId, format, {
+            resource_type: "raw",
+            type: "upload",
+        });
+    }
+
+    private async chunkText(text: string): Promise<string[]> {
+        if (!text.trim()) {
+            throw new Error("No text could be extracted from the document");
+        }
+
+        const splitter = new RecursiveCharacterTextSplitter({
+            chunkSize: DOCUMENT_CHUNKING.CHUNK_SIZE,
+            chunkOverlap: DOCUMENT_CHUNKING.CHUNK_OVERLAP,
+        });
+        const chunks = await splitter.splitText(text);
+        return chunks.filter((c) => c.trim().length > 0);
+    }
+
+    private validateChunks(chunks: string[]): void {
+        if (chunks.length === 0) {
+            throw new Error("Document produced no chunks");
+        }
+
+        if (chunks.length < DOCUMENT_CHUNKING.MIN_CHUNKS_FOR_RAG) {
+            throw new Error(
+                `Document has too few chunks (${chunks.length}). At least ${DOCUMENT_CHUNKING.MIN_CHUNKS_FOR_RAG} required for RAG quiz generation.`,
+            );
+        }
+
+        if (chunks.length > DOCUMENT_CHUNKING.MAX_CHUNKS) {
+            throw new Error(
+                `Document is too large to process (${chunks.length} text chunks, max ${DOCUMENT_CHUNKING.MAX_CHUNKS}). Try a shorter document or split it into parts.`,
+            );
+        }
+    }
+
+    private async embedChunks(
+        chunks: string[],
+        subscriber: Subscriber<ProgressEvent>,
+    ): Promise<number[][]> {
+        const batches = this.toBatches(chunks, DOCUMENT_EMBEDDING.BATCH_SIZE);
+        const results: number[][] = [];
+
+        for (const [idx, batch] of batches.entries()) {
+            const pct =
+                DOCUMENT_EMBEDDING.PROGRESS_START +
+                Math.round((idx / batches.length) * DOCUMENT_EMBEDDING.PROGRESS_RANGE);
+            subscriber.next({
+                stage: "Indexing content...",
+                progress: Math.min(pct, DOCUMENT_EMBEDDING.PROGRESS_MAX),
+            });
+
+            const embeddings = await this.aiClient.embedContents(batch, "RETRIEVAL_DOCUMENT");
+            results.push(...embeddings);
+        }
+
+        return results;
+    }
+
+    private toBatches<T>(items: T[], size: number): T[][] {
+        return Array.from(
+            { length: Math.ceil(items.length / size) },
+            (_, i) => items.slice(i * size, i * size + size),
+        );
+    }
+
+    private async storeChunks(
+        documentId: number,
+        chunks: string[],
+        embeddings: number[][],
+    ): Promise<void> {
+        if (chunks.length !== embeddings.length) {
+            throw new Error(
+                `Chunk/embedding length mismatch: ${chunks.length} chunks, ${embeddings.length} embeddings`,
+            );
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw`
+                DELETE FROM "DocumentChunk" WHERE "documentId" = ${documentId}
+            `;
+
+            for (let offset = 0; offset < chunks.length; offset += DOCUMENT_EMBEDDING.CHUNK_INSERT_BATCH_SIZE) {
+                const batchChunks = chunks.slice(offset, offset + DOCUMENT_EMBEDDING.CHUNK_INSERT_BATCH_SIZE);
+                const rows = batchChunks.map((content, i) => {
+                    const idx = offset + i;
+                    const embeddingStr = `[${embeddings[idx].join(",")}]`;
+                    return Prisma.sql`(${documentId}, ${content}, ${idx}, ${embeddingStr}::vector)`;
+                });
+                if (rows.length > 0) {
+                    await tx.$executeRaw`
+                        INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
+                        VALUES ${Prisma.join(rows, ",")}
+                    `;
+                }
+            }
+        });
+    }
+}

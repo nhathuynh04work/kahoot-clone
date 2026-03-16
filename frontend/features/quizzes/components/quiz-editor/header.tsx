@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { CloudCheck, Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useState, useCallback } from "react";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
+import type { GeneratedQuestion } from "@/features/ai-quiz-chat/api/client-actions";
 import SettingsModal from "./settings-modal";
 import { AiChatbotPanel } from "@/features/ai-quiz-chat";
 
@@ -13,11 +14,38 @@ interface HeaderProps {
 }
 
 export default function Header({ isSaving }: HeaderProps) {
-	const { watch } = useFormContext<QuizFullDetails>();
+	const { watch, control } = useFormContext<QuizFullDetails>();
 	const title = watch("title");
+	const questions = watch("questions") ?? [];
+	const { append } = useFieldArray({ control, name: "questions" });
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+
+	const handleAddQuestion = useCallback(
+		(gen: GeneratedQuestion) => {
+			const lastSortOrder =
+				questions.length > 0 ? questions[questions.length - 1]?.sortOrder ?? -1 : -1;
+			const newId = Date.now() * -1;
+			append({
+				id: newId,
+				quizId: watch("id"),
+				text: gen.text,
+				timeLimit: 20000,
+				points: 1000,
+				imageUrl: undefined,
+				sortOrder: lastSortOrder + 1,
+				options: gen.options.map((o, i) => ({
+					id: newId * 10 - i,
+					questionId: newId,
+					text: o.text,
+					isCorrect: o.isCorrect,
+					sortOrder: i,
+				})),
+			});
+		},
+		[append, questions.length, watch],
+	);
 
 	function openTitleModal() {
 		setIsModalOpen(true);
@@ -81,7 +109,10 @@ export default function Header({ isSaving }: HeaderProps) {
 			)}
 
 			{isAiPanelOpen && (
-				<AiChatbotPanel onClose={() => setIsAiPanelOpen(false)} />
+				<AiChatbotPanel
+					onClose={() => setIsAiPanelOpen(false)}
+					onAddQuestion={handleAddQuestion}
+				/>
 			)}
 		</>
 	);

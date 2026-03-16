@@ -1,127 +1,141 @@
 generator client {
-    provider     = "prisma-client"
-    output       = "../src/generated/prisma"
-    moduleFormat = "cjs"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
-    provider = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
-    id        Int        @id @default(autoincrement())
-    email     String     @unique
-    name      String?
-    password  String
-    quizzes   Quiz[]
-    lobbies   GameLobby[]
-    documents Document[]
+  id        Int         @id @default(autoincrement())
+  email     String      @unique
+  name      String?
+  password  String
+  quizzes   Quiz[]
+  lobbies   GameLobby[]
+  documents Document[]
 }
 
 model Document {
-    id        Int            @id @default(autoincrement())
-    userId    Int            @map("user_id")
-    fileName  String         @map("file_name")
-    fileUrl   String         @map("file_url")
-    fileSize  Int            @map("file_size")
-    mimeType  String         @default("application/pdf") @map("mime_type")
-    status    DocumentStatus @default(UPLOADED)
-    createdAt DateTime       @default(now()) @map("created_at")
+  id                 Int            @id @default(autoincrement())
+  userId             Int
+  fileName           String
+  fileUrl            String
+  fileSize           Int
+  mimeType           String         @default("application/pdf")
+  cloudinaryPublicId String?
+  status             DocumentStatus @default(UPLOADED)
+  createdAt          DateTime       @default(now())
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks DocumentChunk[]
+}
+
+model DocumentChunk {
+  id         Int                        @id @default(autoincrement())
+  documentId Int
+  content    String                     @db.Text
+  chunkIndex Int
+  embedding  Unsupported("vector(768)")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
 }
 
 enum DocumentStatus {
-    UPLOADED
-    PARSING
-    READY
-    ERROR
+  UPLOADED
+  PARSING
+  READY
+  ERROR
 }
 
 model Quiz {
-    id          Int         @id @default(autoincrement())
-    userId      Int         @map("user_id")
-    title       String
-    description String?
-    coverUrl    String?     @map("cover_url")
-    createdAt   DateTime    @default(now()) @map("created_at")
-    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    questions   Question[]
-    lobby       GameLobby[]
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  title       String
+  description String?
+  coverUrl    String?
+  createdAt   DateTime    @default(now())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  lobby       GameLobby[]
 }
 
 model Question {
-    id        Int     @id @default(autoincrement())
-    quizId    Int     @map("quiz_id")
-    text      String?
-    timeLimit Int     @default(20000) @map("time_limit")
-    points    Int     @default(1000)
-    imageUrl  String? @map("image_url")
-    sortOrder Int     @map("sort_order")
+  id        Int     @id @default(autoincrement())
+  quizId    Int
+  text      String?
+  timeLimit Int     @default(20000)
+  points    Int     @default(1000)
+  imageUrl  String?
+  sortOrder Int
 
-    quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-    options Option[]
-    answers PlayerAnswer[]
+  quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options Option[]
+  answers PlayerAnswer[]
 
-    @@unique([quizId, sortOrder])
+  @@unique([quizId, sortOrder])
 }
 
 model Option {
-    id         Int     @id @default(autoincrement())
-    questionId Int     @map("question_id")
-    text       String?
-    isCorrect  Boolean @default(false) @map("is_correct")
-    sortOrder  Int     @map("sort_order")
+  id         Int     @id @default(autoincrement())
+  questionId Int
+  text       String?
+  isCorrect  Boolean @default(false)
+  sortOrder  Int
 
-    question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
-    answers  PlayerAnswer[]
+  question Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  PlayerAnswer[]
 
-    @@unique([questionId, sortOrder])
+  @@unique([questionId, sortOrder])
 }
 
 model GameLobby {
-    id        Int         @id @default(autoincrement())
-    pin       String      @db.Char(6)
-    quizId    Int
-    hostId    Int
-    status    LobbyStatus @default(CREATED)
-    createdAt DateTime    @default(now())
+  id        Int         @id @default(autoincrement())
+  pin       String      @db.Char(6)
+  quizId    Int
+  hostId    Int
+  status    LobbyStatus @default(CREATED)
+  createdAt DateTime    @default(now())
 
-    players GamePlayer[]
-    host    User         @relation(fields: [hostId], references: [id])
-    quiz    Quiz         @relation(fields: [quizId], references: [id])
+  players GamePlayer[]
+  host    User         @relation(fields: [hostId], references: [id])
+  quiz    Quiz         @relation(fields: [quizId], references: [id])
 }
 
 enum LobbyStatus {
-    CREATED
-    WAITING
-    IN_PROGRESS
-    CLOSED
+  CREATED
+  WAITING
+  IN_PROGRESS
+  CLOSED
 }
 
 model GamePlayer {
-    id       Int    @id @default(autoincrement())
-    nickname String
-    points   Int    @default(0)
-    lobbyId  Int
+  id       Int    @id @default(autoincrement())
+  nickname String
+  points   Int    @default(0)
+  lobbyId  Int
 
-    lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
-    answers PlayerAnswer[]
+  lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
+  answers PlayerAnswer[]
 
-    @@unique([lobbyId, nickname])
+  @@unique([lobbyId, nickname])
 }
 
 model PlayerAnswer {
-    id         Int     @id @default(autoincrement())
-    playerId   Int
-    questionId Int
-    optionId   Int
-    isCorrect  Boolean
-    points     Int     @default(0)
+  id         Int     @id @default(autoincrement())
+  playerId   Int
+  questionId Int
+  optionId   Int
+  isCorrect  Boolean
+  points     Int     @default(0)
 
-    player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
-    question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-    option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
-    @@unique([playerId, questionId])
+  @@unique([playerId, questionId])
 }

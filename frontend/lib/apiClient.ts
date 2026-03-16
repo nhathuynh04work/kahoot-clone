@@ -10,7 +10,13 @@ apiClient.interceptors.response.use(
 	(response) => response,
 
 	(error: AxiosError) => {
-		// Cast 'data' to 'any' to bypass the 'unknown' type check
+		if (error.code === "ECONNABORTED") {
+			return Promise.reject(
+				new Error(
+					"The AI took too long to respond. Try a smaller document or splitting it into parts.",
+				),
+			);
+		}
 		const data: any = error.response?.data;
 		const errorMessage = data?.message || "An error occurred";
 

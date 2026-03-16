@@ -2,8 +2,15 @@
 
 import { useRef, useEffect } from "react";
 import { Upload, FileText } from "lucide-react";
-import type { MockDocument } from "../types";
 import { cn } from "@/lib/utils";
+
+/** Document shape for attach menu (from API or mock) */
+export interface AttachDocument {
+	id: number;
+	fileName: string;
+	fileSize: number;
+	status: "READY" | "PARSING" | "UPLOADED" | "ERROR";
+}
 
 function formatBytes(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
@@ -15,11 +22,13 @@ interface DocumentAttachMenuProps {
 	open: boolean;
 	onClose: () => void;
 	anchorRef: React.RefObject<HTMLElement | null>;
-	mockDocuments: MockDocument[];
+	documents: AttachDocument[];
 	selectedId: number | null;
-	onSelect: (doc: MockDocument | null) => void;
-	onUploadClick?: () => void;
+	onSelect: (doc: AttachDocument | null) => void;
+	/** Called when user selects a file. Triggers upload + parse. */
+	onUpload?: (file: File) => void | Promise<void>;
 	uploadPending?: boolean;
+	parsingStage?: string;
 	usedBytes?: number;
 	limitBytes?: number;
 }
@@ -28,15 +37,29 @@ export function DocumentAttachMenu({
 	open,
 	onClose,
 	anchorRef,
-	mockDocuments,
+	documents,
 	selectedId,
 	onSelect,
-	onUploadClick,
+	onUpload,
 	uploadPending = false,
+	parsingStage,
 	usedBytes = 0,
 	limitBytes,
 }: DocumentAttachMenuProps) {
 	const menuRef = useRef<HTMLDivElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleUploadClick = () => {
+		if (!onUpload) return;
+		fileInputRef.current?.click();
+	};
+
+	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		e.target.value = "";
+		if (!file || !onUpload) return;
+		await onUpload(file);
+	};
 
 	useEffect(() => {
 		if (!open) return;
@@ -74,7 +97,8 @@ export function DocumentAttachMenu({
 
 	if (!open) return null;
 
-	const readyDocs = mockDocuments.filter((d) => d.status === "READY");
+	const readyDocs = documents.filter((d) => d.status === "READY");
+	const isBusy = uploadPending || !!parsingStage;
 
 	return (
 		<div
@@ -82,16 +106,31 @@ export function DocumentAttachMenu({
 			className="min-w-[220px] max-w-[280px] rounded-xl border border-gray-700 bg-gray-900 shadow-xl py-1.5"
 			role="menu"
 		>
-			<button
-				type="button"
-				onClick={() => onUploadClick?.()}
-				disabled={uploadPending}
-				role="menuitem"
-				className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-700/80 transition-colors disabled:opacity-60 disabled:pointer-events-none"
-			>
-				<Upload className="w-4 h-4 text-gray-400 shrink-0" />
-				<span>{uploadPending ? "Uploading..." : "Upload files"}</span>
-			</button>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept=".pdf,application/pdf"
+				className="hidden"
+				onChange={handleFileChange}
+			/>
+			{onUpload && (
+				<button
+					type="button"
+					onClick={handleUploadClick}
+					disabled={isBusy}
+					role="menuitem"
+					className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-700/80 transition-colors disabled:opacity-60 disabled:pointer-events-none"
+				>
+					<Upload className="w-4 h-4 text-gray-400 shrink-0" />
+					<span>
+						{uploadPending
+							? "Uploading..."
+							: parsingStage
+								? parsingStage
+								: "Upload files"}
+					</span>
+				</button>
+			)}
 
 			{readyDocs.length > 0 && (
 				<>

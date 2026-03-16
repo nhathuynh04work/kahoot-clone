@@ -31,6 +31,16 @@
 $ npm install
 ```
 
+## Database (pgvector)
+
+Document upload and RAG features require the [pgvector](https://github.com/pgvector/pgvector) extension in PostgreSQL. **Install pgvector before running migrations.** See **[docs/PGVECTOR_SETUP.md](docs/PGVECTOR_SETUP.md)** for:
+
+- macOS (EDB PostgreSQL 15): build from source
+- macOS (Homebrew PostgreSQL 15): `brew install pgvector` or build from source
+- Docker: use `pgvector/pgvector:pg15` image
+
+After installing pgvector, run `npx prisma migrate deploy`.
+
 ## Compile and run the project
 
 ```bash
