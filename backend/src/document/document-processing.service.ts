@@ -3,16 +3,15 @@ import { ConfigService } from "@nestjs/config";
 import { Observable, Subscriber } from "rxjs";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v2 as cloudinary } from "cloudinary";
+import { DocumentStatus, Prisma } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { DocumentStatus } from "../generated/prisma/client";
 import { ParserRegistry } from "./parsers/parser.registry";
 import { AiClient } from "../ai/ai.client";
-
-const CHUNK_SIZE = 4000;
-const CHUNK_OVERLAP = 800;
-const EMBED_BATCH_SIZE = 20;
-const MIN_CHUNKS_FOR_RAG = 3;
-const MAX_CHUNKS = 200;
+import {
+    DOCUMENT_CHUNKING,
+    DOCUMENT_EMBEDDING,
+    DOCUMENT_PROGRESS,
+} from "./document-processing.constants";
 
 export interface ProgressEvent {
     stage: string;
@@ -60,7 +59,7 @@ export class DocumentProcessingService {
         }
 
         await this.updateStatus(documentId, DocumentStatus.PARSING);
-        subscriber.next({ stage: "Starting...", progress: 5 });
+        subscriber.next({ stage: "Starting...", progress: DOCUMENT_PROGRESS.STARTING });
 
         try {
             // Fetch doc
@@ -71,12 +70,12 @@ export class DocumentProcessingService {
             const parser = this.parserRegistry.resolve(contentType, doc.fileUrl);
             const text = await parser.parse(response);
             this.logger.log(`[doc ${documentId}] Parsed text: ${text.length} chars`);
-            subscriber.next({ stage: "Extracting text...", progress: 20 });
+            subscriber.next({ stage: "Extracting text...", progress: DOCUMENT_PROGRESS.EXTRACTING });
 
             // Chunk doc
             const chunks = await this.chunkText(text);
             this.logger.log(`[doc ${documentId}] Chunked into ${chunks.length} chunks`);
-            subscriber.next({ stage: "Generating chunks...", progress: 35 });
+            subscriber.next({ stage: "Generating chunks...", progress: DOCUMENT_PROGRESS.CHUNKING });
 
             // Validate chunks
             this.validateChunks(chunks);
@@ -86,12 +85,12 @@ export class DocumentProcessingService {
             this.logger.log(`[doc ${documentId}] Embedded ${embeddings.length} chunks`);
 
             // Store chunks
-            subscriber.next({ stage: "Storing embeddings...", progress: 85 });
+            subscriber.next({ stage: "Storing embeddings...", progress: DOCUMENT_PROGRESS.STORING });
             await this.storeChunks(documentId, chunks, embeddings);
 
             // Processing done
             await this.updateStatus(documentId, DocumentStatus.READY);
-            subscriber.next({ stage: "Done", progress: 100 });
+            subscriber.next({ stage: "Done", progress: DOCUMENT_PROGRESS.DONE });
             this.logger.log(`[doc ${documentId}] Indexing complete`);
         } catch (err) {
             this.logger.warn(
@@ -140,8 +139,8 @@ export class DocumentProcessingService {
         }
 
         const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize: CHUNK_SIZE,
-            chunkOverlap: CHUNK_OVERLAP,
+            chunkSize: DOCUMENT_CHUNKING.CHUNK_SIZE,
+            chunkOverlap: DOCUMENT_CHUNKING.CHUNK_OVERLAP,
         });
         const chunks = await splitter.splitText(text);
         return chunks.filter((c) => c.trim().length > 0);
@@ -152,15 +151,15 @@ export class DocumentProcessingService {
             throw new Error("Document produced no chunks");
         }
 
-        if (chunks.length < MIN_CHUNKS_FOR_RAG) {
+        if (chunks.length < DOCUMENT_CHUNKING.MIN_CHUNKS_FOR_RAG) {
             throw new Error(
-                `Document has too few chunks (${chunks.length}). At least ${MIN_CHUNKS_FOR_RAG} required for RAG quiz generation.`,
+                `Document has too few chunks (${chunks.length}). At least ${DOCUMENT_CHUNKING.MIN_CHUNKS_FOR_RAG} required for RAG quiz generation.`,
             );
         }
 
-        if (chunks.length > MAX_CHUNKS) {
+        if (chunks.length > DOCUMENT_CHUNKING.MAX_CHUNKS) {
             throw new Error(
-                `Document is too large to process (${chunks.length} text chunks, max ${MAX_CHUNKS}). Try a shorter document or split it into parts.`,
+                `Document is too large to process (${chunks.length} text chunks, max ${DOCUMENT_CHUNKING.MAX_CHUNKS}). Try a shorter document or split it into parts.`,
             );
         }
     }
@@ -169,12 +168,17 @@ export class DocumentProcessingService {
         chunks: string[],
         subscriber: Subscriber<ProgressEvent>,
     ): Promise<number[][]> {
-        const batches = this.toBatches(chunks, EMBED_BATCH_SIZE);
+        const batches = this.toBatches(chunks, DOCUMENT_EMBEDDING.BATCH_SIZE);
         const results: number[][] = [];
 
         for (const [idx, batch] of batches.entries()) {
-            const pct = 35 + Math.round((idx / batches.length) * 45);
-            subscriber.next({ stage: "Indexing content...", progress: Math.min(pct, 80) });
+            const pct =
+                DOCUMENT_EMBEDDING.PROGRESS_START +
+                Math.round((idx / batches.length) * DOCUMENT_EMBEDDING.PROGRESS_RANGE);
+            subscriber.next({
+                stage: "Indexing content...",
+                progress: Math.min(pct, DOCUMENT_EMBEDDING.PROGRESS_MAX),
+            });
 
             const embeddings = await this.aiClient.embedContents(batch, "RETRIEVAL_DOCUMENT");
             results.push(...embeddings);
@@ -195,17 +199,30 @@ export class DocumentProcessingService {
         chunks: string[],
         embeddings: number[][],
     ): Promise<void> {
+        if (chunks.length !== embeddings.length) {
+            throw new Error(
+                `Chunk/embedding length mismatch: ${chunks.length} chunks, ${embeddings.length} embeddings`,
+            );
+        }
+
         await this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`
                 DELETE FROM "DocumentChunk" WHERE "documentId" = ${documentId}
             `;
 
-            for (let i = 0; i < chunks.length; i++) {
-                const embeddingStr = `[${embeddings[i].join(",")}]`;
-                await tx.$executeRaw`
-                    INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
-                    VALUES (${documentId}, ${chunks[i]}, ${i}, ${embeddingStr}::vector)
-                `;
+            for (let offset = 0; offset < chunks.length; offset += DOCUMENT_EMBEDDING.CHUNK_INSERT_BATCH_SIZE) {
+                const batchChunks = chunks.slice(offset, offset + DOCUMENT_EMBEDDING.CHUNK_INSERT_BATCH_SIZE);
+                const rows = batchChunks.map((content, i) => {
+                    const idx = offset + i;
+                    const embeddingStr = `[${embeddings[idx].join(",")}]`;
+                    return Prisma.sql`(${documentId}, ${content}, ${idx}, ${embeddingStr}::vector)`;
+                });
+                if (rows.length > 0) {
+                    await tx.$executeRaw`
+                        INSERT INTO "DocumentChunk" ("documentId", "content", "chunkIndex", "embedding")
+                        VALUES ${Prisma.join(rows, ",")}
+                    `;
+                }
             }
         });
     }

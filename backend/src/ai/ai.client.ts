@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GoogleGenAI } from "@google/genai";
+import type { Schema } from "@google/genai";
 import {
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
@@ -29,6 +30,7 @@ export class AiClient {
         systemPrompt: string;
         userMessage: string;
         responseMimeType?: string;
+        responseSchema?: Schema;
     }): Promise<string> {
         const client = this.getClientOrThrow();
         const fullPrompt = `${options.systemPrompt}\n\n${options.userMessage}`;
@@ -38,6 +40,7 @@ export class AiClient {
             contents: fullPrompt,
             config: {
                 responseMimeType: options.responseMimeType ?? "application/json",
+                responseSchema: options.responseSchema,
             },
         });
 

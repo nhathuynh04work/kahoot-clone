@@ -22,23 +22,29 @@ export class DocumentService {
     }
 
     async create(userId: number, dto: CreateDocumentDto) {
-        const totalSize = await this.getTotalSize(userId);
-        if (totalSize + dto.fileSize > this.MAX_TOTAL_SIZE_BYTES) {
-            throw new ForbiddenException(
-                `Total storage limit exceeded. You have ${this.formatSize(totalSize)} used. Maximum allowed is ${this.formatSize(this.MAX_TOTAL_SIZE_BYTES)}.`,
-            );
-        }
-
-        return this.prisma.document.create({
-            data: {
-                userId,
-                fileName: dto.fileName,
-                fileUrl: dto.fileUrl,
-                fileSize: dto.fileSize,
-                mimeType: dto.mimeType ?? "application/pdf",
-                cloudinaryPublicId: dto.cloudinaryPublicId,
-                status: DocumentStatus.UPLOADED,
-            },
+        return this.prisma.$transaction(async (tx) => {
+            await tx.$executeRaw`SELECT 1 FROM "User" WHERE id = ${userId} FOR UPDATE`;
+            const result = await tx.document.aggregate({
+                where: { userId },
+                _sum: { fileSize: true },
+            });
+            const totalSize = result._sum.fileSize ?? 0;
+            if (totalSize + dto.fileSize > this.MAX_TOTAL_SIZE_BYTES) {
+                throw new ForbiddenException(
+                    `Total storage limit exceeded. You have ${this.formatSize(totalSize)} used. Maximum allowed is ${this.formatSize(this.MAX_TOTAL_SIZE_BYTES)}.`,
+                );
+            }
+            return tx.document.create({
+                data: {
+                    userId,
+                    fileName: dto.fileName,
+                    fileUrl: dto.fileUrl,
+                    fileSize: dto.fileSize,
+                    mimeType: dto.mimeType ?? "application/pdf",
+                    cloudinaryPublicId: dto.cloudinaryPublicId,
+                    status: DocumentStatus.UPLOADED,
+                },
+            });
         });
     }
 

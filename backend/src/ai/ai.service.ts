@@ -10,7 +10,6 @@ import { DocumentStatus } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
     EMBEDDING_DIMENSIONS,
-    GENERATION_MODEL,
     PROMPT_VALIDATION_SYSTEM,
     RAG_TOP_K,
     SYSTEM_PROMPT_FREEFORM,
@@ -18,6 +17,7 @@ import {
 } from "./ai.constants";
 import type { GenerateQuestionsResult, GeneratedQuestion } from "./ai.types";
 import { AiClient } from "./ai.client";
+import { QUIZ_RESPONSE_SCHEMA } from "./ai.schemas";
 
 interface DocumentChunkRow {
     id: number;
@@ -234,13 +234,7 @@ export class AiService {
         }
 
         const userMessage = `Context from the document:\n\n${context}\n\n---\n\nUser request: ${userPrompt}`;
-        const jsonText = await this.aiClient.generateJsonContent({
-            systemPrompt: SYSTEM_PROMPT_RAG,
-            userMessage,
-            responseMimeType: "application/json",
-        });
-        const result = this.parseStructuredOutput(jsonText);
-
+        const result = await this.generateQuizFromPrompt(SYSTEM_PROMPT_RAG, userMessage);
         this.logger.log(
             JSON.stringify({
                 event: "ai.generateWithRag.completed",
@@ -249,7 +243,6 @@ export class AiService {
                 questionCount: result.questions.length,
             }),
         );
-
         return result;
     }
 
@@ -259,22 +252,27 @@ export class AiService {
                 event: "ai.generateFreestyle.start",
             }),
         );
-
-        const jsonText = await this.aiClient.generateJsonContent({
-            systemPrompt: SYSTEM_PROMPT_FREEFORM,
-            userMessage: userPrompt,
-            responseMimeType: "application/json",
-        });
-        const result = this.parseStructuredOutput(jsonText);
-
+        const result = await this.generateQuizFromPrompt(SYSTEM_PROMPT_FREEFORM, userPrompt);
         this.logger.log(
             JSON.stringify({
                 event: "ai.generateFreestyle.completed",
                 questionCount: result.questions.length,
             }),
         );
-
         return result;
+    }
+
+    private async generateQuizFromPrompt(
+        systemPrompt: string,
+        userMessage: string,
+    ): Promise<GenerateQuestionsResult> {
+        const jsonText = await this.aiClient.generateJsonContent({
+            systemPrompt,
+            userMessage,
+            responseMimeType: "application/json",
+            responseSchema: QUIZ_RESPONSE_SCHEMA,
+        });
+        return this.parseStructuredOutput(jsonText);
     }
 
     private async embedQuery(text: string): Promise<number[]> {
