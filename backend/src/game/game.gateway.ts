@@ -19,7 +19,10 @@ import {
 import { JwtWsGuard } from "../auth/guard/jwt-ws.guard";
 import { type JwtUser, User } from "../auth/user.decorator";
 import { SocketService } from "./services/socket.service";
-import { LobbyStatus } from "../generated/prisma/client";
+import {
+    LobbyEndReason,
+    LobbyStatus,
+} from "../generated/prisma/client";
 import { QuestionWithOptions } from "../quiz/dto/quiz.dto";
 
 @WebSocketGateway()
@@ -58,9 +61,9 @@ export class GameGateway
 
             this.socketService.emitToRoom(lobbyId.toString(), "hostLeft");
 
-            await this.lobbyService.updateLobbyStatus(
+            await this.lobbyService.finalizeLobbyAndPersistReport(
                 lobbyId,
-                LobbyStatus.CLOSED,
+                LobbyEndReason.HOST_DISCONNECT,
             );
 
             return;
@@ -396,9 +399,9 @@ export class GameGateway
                 leaderboard,
             });
 
-            await this.lobbyService.updateLobbyStatus(
+            await this.lobbyService.finalizeLobbyAndPersistReport(
                 lobby.id,
-                LobbyStatus.CLOSED,
+                LobbyEndReason.COMPLETED,
             );
 
             return { success: true };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, FileText, Plus, Loader2 } from "lucide-react";
+import { LayoutGrid, FileText, History, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
@@ -10,6 +10,7 @@ import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 const navItems = [
 	{ href: "/dashboard", label: "Quizzes", icon: LayoutGrid },
 	{ href: "/dashboard/files", label: "Files", icon: FileText },
+	{ href: "/dashboard/history", label: "History", icon: History },
 ] as const;
 
 export function DashboardSidebar() {

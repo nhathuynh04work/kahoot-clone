@@ -1,5 +1,5 @@
 import { getQuizzes } from "@/features/quizzes/api/server-actions";
-import { QuizCard } from "@/features/quizzes/components/quiz-card";
+import { QuizGridClient } from "@/features/quizzes/components/quiz-grid-client";
 
 export default async function DashboardPage() {
 	const quizzes = await getQuizzes();
@@ -11,7 +11,6 @@ export default async function DashboardPage() {
 					Your Quizzes
 				</h2>
 
-				{/* Check if quizzes array is empty */}
 				{quizzes.length === 0 ? (
 					<div className="text-center bg-gray-800 p-10 rounded-lg shadow-sm border border-gray-700">
 						<h3 className="text-xl font-medium text-white">
@@ -23,11 +22,7 @@ export default async function DashboardPage() {
 						</p>
 					</div>
 				) : (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{quizzes.map((quiz) => (
-							<QuizCard key={quiz.id} quiz={quiz} />
-						))}
-					</div>
+					<QuizGridClient quizzes={quizzes} />
 				)}
 			</div>
 		</div>

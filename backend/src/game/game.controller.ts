@@ -19,6 +19,37 @@ export class GameController {
 
     constructor(private lobbyService: LobbyService) {}
 
+    @Get("history/quiz/:quizId")
+    @UseGuards(JwtHttpGuard)
+    async getSessionsForQuiz(
+        @User() user: JwtUser,
+        @Param("quizId", ParseIntPipe) quizId: number,
+    ) {
+        return this.lobbyService.getSessionsForQuiz(quizId, user.id);
+    }
+
+    @Get("history/:lobbyId")
+    @UseGuards(JwtHttpGuard)
+    async getSessionReport(
+        @User() user: JwtUser,
+        @Param("lobbyId", ParseIntPipe) lobbyId: number,
+    ) {
+        return this.lobbyService.getSessionReport(lobbyId, user.id);
+    }
+
+    @Get("history")
+    @UseGuards(JwtHttpGuard)
+    async getRecentSessions(
+        @User() user: JwtUser,
+        @Query("limit") limit?: string,
+        @Query("cursor") cursor?: string,
+    ) {
+        return this.lobbyService.getRecentSessionsForHost(user.id, {
+            limit: limit ? parseInt(limit, 10) : 20,
+            cursor: cursor ? parseInt(cursor, 10) : undefined,
+        });
+    }
+
     @Get("lobby")
     async getActiveLobby(@Query("pin") pin: string) {
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);

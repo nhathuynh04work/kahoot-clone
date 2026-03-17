@@ -8,43 +8,75 @@ import { useCreateLobby } from "../hooks/use-create-lobby";
 
 interface QuizCardProps {
 	quiz: QuizWithQuestions;
+	onCardClick?: () => void;
 }
 
-export function QuizCard({ quiz }: QuizCardProps) {
+export function QuizCard({ quiz, onCardClick }: QuizCardProps) {
 	const editHref = `/quiz/${quiz.id}/edit`;
 	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
+
+	const imageAreaClass =
+		"block relative h-40 bg-gray-700 group-hover:opacity-90 transition-opacity";
+	const titleClass =
+		"block group-hover:text-indigo-400 transition-colors w-full text-left";
 
 	return (
 		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-indigo-600">
 			{/* Image Area */}
-			<Link
-				href={editHref}
-				className="block relative h-40 bg-gray-700 group-hover:opacity-90 transition-opacity">
-				{quiz.coverUrl ? (
-					// 3. Show Real Image if URL exists
-					<Image
-						src={quiz.coverUrl}
-						alt={quiz.title || "Quiz cover"}
-						fill
-						className="object-cover"
-						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-					/>
-				) : (
-					// 4. Fallback to Lucide Icon if no URL
-					<div className="flex h-full items-center justify-center text-gray-500">
-						<ImageIcon className="w-12 h-12 opacity-50" />
-					</div>
-				)}
-			</Link>
+			{onCardClick ? (
+				<button
+					type="button"
+					onClick={onCardClick}
+					className={`${imageAreaClass} w-full text-left`}>
+					{quiz.coverUrl ? (
+						<Image
+							src={quiz.coverUrl}
+							alt={quiz.title || "Quiz cover"}
+							fill
+							className="object-cover"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+						/>
+					) : (
+						<div className="flex h-full items-center justify-center text-gray-500">
+							<ImageIcon className="w-12 h-12 opacity-50" />
+						</div>
+					)}
+				</button>
+			) : (
+				<Link href={editHref} className={imageAreaClass}>
+					{quiz.coverUrl ? (
+						<Image
+							src={quiz.coverUrl}
+							alt={quiz.title || "Quiz cover"}
+							fill
+							className="object-cover"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+						/>
+					) : (
+						<div className="flex h-full items-center justify-center text-gray-500">
+							<ImageIcon className="w-12 h-12 opacity-50" />
+						</div>
+					)}
+				</Link>
+			)}
 
 			<div className="p-4">
-				<Link
-					href={editHref}
-					className="block group-hover:text-indigo-400 transition-colors">
-					<h3 className="text-xl font-semibold text-white mb-2 truncate">
-						{quiz.title || "Untitled Quiz"}
-					</h3>
-				</Link>
+				{onCardClick ? (
+					<button
+						type="button"
+						onClick={onCardClick}
+						className={titleClass}>
+						<h3 className="text-xl font-semibold text-white mb-2 truncate">
+							{quiz.title || "Untitled Quiz"}
+						</h3>
+					</button>
+				) : (
+					<Link href={editHref} className={titleClass}>
+						<h3 className="text-xl font-semibold text-white mb-2 truncate">
+							{quiz.title || "Untitled Quiz"}
+						</h3>
+					</Link>
+				)}
 
 				<p className="text-gray-400 mb-4">
 					{quiz.questions.length}{" "}
