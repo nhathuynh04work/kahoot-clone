@@ -56,7 +56,7 @@ export function ChatMessageList({
 					</div>
 					<div
 						className={cn(
-							"rounded-2xl px-4 py-3 max-w-[85%] flex flex-col gap-2",
+							"rounded-2xl px-4 py-3 max-w-[85%] min-w-0 flex flex-col gap-2",
 							msg.role === "user"
 								? "bg-indigo-600 text-white"
 								: "bg-gray-800 text-gray-100 border border-gray-700",
@@ -68,7 +68,9 @@ export function ChatMessageList({
 								<span className="text-xs truncate">{msg.attachedDocument.fileName}</span>
 							</div>
 						)}
-						<p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+						<p className="text-sm whitespace-pre-wrap wrap-anywhere">
+							{msg.content}
+						</p>
 						{msg.role === "assistant" &&
 							msg.generatedCount != null &&
 							msg.generatedCount > 0 && (
