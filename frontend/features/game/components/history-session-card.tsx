@@ -1,0 +1,220 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+	AlertTriangle,
+	Calendar,
+	CheckCircle2,
+	Target,
+	ChevronRight,
+	Users,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { SessionListItem } from "@/features/game/api/server-actions";
+import { cn } from "@/lib/utils";
+import { HistoryMiniAccuracyChart } from "./history-mini-accuracy-chart";
+
+function formatDate(iso: string | null) {
+	if (!iso) return "—";
+	return new Date(iso).toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+}
+
+function formatDurationMs(ms: number | null) {
+	if (ms === null || !Number.isFinite(ms) || ms <= 0) return "—";
+	const totalSeconds = Math.round(ms / 1000);
+	const minutes = Math.floor(totalSeconds / 60);
+	const seconds = totalSeconds % 60;
+	if (minutes <= 0) return `${seconds}s`;
+	return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+function MetricChip({
+	icon: Icon,
+	label,
+	value,
+	className,
+}: {
+	icon: React.ComponentType<{ className?: string }>;
+	label: string;
+	value: React.ReactNode;
+	className?: string;
+}) {
+	return (
+		<div
+			className={cn(
+				"inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5",
+				"bg-gray-900/40 border-gray-700 text-gray-300",
+				className,
+			)}
+		>
+			<Icon className="w-4 h-4 text-gray-400" />
+			<div className="text-xs leading-none">
+				<div className="text-gray-400">{label}</div>
+				<div className="mt-0.5 text-white font-semibold tabular-nums">
+					{value}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function HistorySessionCard({
+	item,
+	href,
+	onClick,
+	onQuizTitleClick,
+	quizTitleLoading = false,
+}: {
+	item: SessionListItem;
+	href?: string;
+	onClick?: () => void;
+	onQuizTitleClick?: () => void;
+	quizTitleLoading?: boolean;
+}) {
+	const router = useRouter();
+	const endedIso = item.endedAt ?? null;
+	const createdIso = item.createdAt ?? null;
+	const endedAt = useMemo(
+		() => (endedIso ? new Date(endedIso).getTime() : null),
+		[endedIso],
+	);
+	const createdAt = useMemo(
+		() => (createdIso ? new Date(createdIso).getTime() : null),
+		[createdIso],
+	);
+	const durationMs =
+		endedAt !== null && createdAt !== null ? endedAt - createdAt : null;
+
+	const isCompleted = item.endReason === "COMPLETED";
+	const StatusIcon = isCompleted ? CheckCircle2 : AlertTriangle;
+	const statusText = isCompleted ? "Completed" : "Ended early";
+	const statusTone = isCompleted ? "text-emerald-500" : "text-amber-400";
+
+	const accuracyPct = item.avgAccuracy * 100;
+	const displayTitle = item.quizTitle?.trim() ? item.quizTitle : "Untitled Quiz";
+
+	const handleCardClick = () => {
+		if (href) {
+			router.push(href);
+			return;
+		}
+		onClick?.();
+	};
+
+	const handleCardKeyDown: React.KeyboardEventHandler<HTMLElement> = (e) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			handleCardClick();
+		}
+	};
+
+	const CardInner = (
+		<div className="group rounded-lg border border-gray-700 bg-gray-800/50 overflow-hidden transition-colors hover:bg-gray-800 hover:border-indigo-500/40 focus-within:border-indigo-500/60">
+			<div className="p-4">
+				<div className="flex items-start gap-4">
+					<div className="shrink-0">
+						<div className="w-12 h-12 rounded-lg bg-gray-700/60 border border-gray-700 flex items-center justify-center group-hover:border-indigo-500/30 transition-colors">
+							<StatusIcon className={cn("w-6 h-6", statusTone)} />
+						</div>
+					</div>
+
+					<div className="min-w-0 flex-1">
+						<div className="flex items-start justify-between gap-3">
+							<div className="min-w-0">
+								<div className="flex items-center gap-2">
+									{onQuizTitleClick ? (
+										<button
+											type="button"
+											disabled={quizTitleLoading}
+											onClick={(e) => {
+												e.stopPropagation();
+												onQuizTitleClick();
+											}}
+											className={cn(
+												"text-white font-semibold truncate text-left",
+												"hover:text-indigo-300 transition-colors",
+												"disabled:opacity-60 disabled:cursor-not-allowed",
+											)}
+											aria-label={`Open quiz details: ${displayTitle}`}
+										>
+											{displayTitle}
+										</button>
+									) : (
+										<p className="text-white font-semibold truncate">
+											{displayTitle}
+										</p>
+									)}
+									<span
+										className={cn(
+											"shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border",
+											"bg-gray-900/40 border-gray-700",
+											statusTone,
+										)}
+									>
+										{statusText}
+									</span>
+								</div>
+								<div className="mt-1 flex items-center gap-2 text-sm text-gray-400">
+									<Calendar className="w-4 h-4 text-gray-500" />
+									<span className="truncate">
+										{formatDate(item.endedAt ?? item.createdAt)}
+									</span>
+									<span className="text-gray-600">•</span>
+									<span className="text-gray-400 tabular-nums">
+										{formatDurationMs(durationMs)}
+									</span>
+								</div>
+							</div>
+
+							<div className="shrink-0 hidden sm:block">
+								<HistoryMiniAccuracyChart value={item.avgAccuracy} />
+							</div>
+						</div>
+
+						<div className="mt-3 flex flex-wrap items-center gap-2">
+							<MetricChip
+								icon={Users}
+								label="Players"
+								value={item.totalPlayers}
+							/>
+							<MetricChip
+								icon={Target}
+								label="Accuracy"
+								value={`${accuracyPct.toFixed(1)}%`}
+							/>
+
+							<div className="ml-auto flex items-center gap-2 text-gray-400 group-hover:text-indigo-300 transition-colors">
+								<span className="text-sm font-medium">Details</span>
+								<ChevronRight className="w-4 h-4" />
+							</div>
+						</div>
+
+						<div className="mt-3 sm:hidden">
+							<HistoryMiniAccuracyChart value={item.avgAccuracy} />
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+
+	return (
+		<div
+			role="button"
+			tabIndex={0}
+			onClick={handleCardClick}
+			onKeyDown={handleCardKeyDown}
+			aria-label={`View session details: ${displayTitle}`}
+			className="block text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded-lg cursor-pointer"
+		>
+			{CardInner}
+		</div>
+	);
+}
+

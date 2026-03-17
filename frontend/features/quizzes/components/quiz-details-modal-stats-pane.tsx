@@ -5,6 +5,13 @@ import type {
 	SessionListItem,
 	SessionReport,
 } from "@/features/game/api/server-actions";
+import { HistorySessionCard } from "@/features/game/components/history-session-card";
+import {
+	LeaderboardList,
+	PerQuestionAccuracyChart,
+	PerQuestionStatsList,
+	SessionStatTiles,
+} from "@/features/game/components/session-report-blocks";
 
 function formatDate(iso: string | null) {
 	if (!iso) return "—";
@@ -49,7 +56,7 @@ export function StatsPane({
 					<button
 						type="button"
 						onClick={onBackToSessions}
-						className="text-sm text-indigo-400 hover:text-indigo-300">
+						className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
 						← Back to sessions
 					</button>
 					{reportLoading ? (
@@ -61,21 +68,24 @@ export function StatsPane({
 					)}
 				</div>
 			) : (
-				<div className="space-y-2">
+				<div className="space-y-3">
+					<p className="text-sm text-gray-400">
+						Select a session to view a quick report.
+					</p>
 					{sessions.map((s) => (
-						<button
-							key={s.lobbyId}
-							type="button"
-							onClick={() => onViewSession(s.lobbyId)}
-							className="w-full text-left p-3 rounded-lg bg-gray-900/50 hover:bg-gray-900 border border-gray-700 hover:border-gray-600 transition-colors">
-							<p className="text-white font-medium">
-								{formatDate(s.endedAt ?? s.createdAt)}
-							</p>
-							<p className="text-gray-400 text-sm">
+						<div key={s.lobbyId}>
+							<HistorySessionCard
+								item={{
+									...s,
+									quizTitle: `${formatDate(s.endedAt ?? s.createdAt)}`,
+								}}
+								onClick={() => onViewSession(s.lobbyId)}
+							/>
+							<div className="mt-1 text-xs text-gray-500 px-1">
 								{s.totalPlayers} players ·{" "}
 								{(s.avgAccuracy * 100).toFixed(1)}% accuracy
-							</p>
-						</button>
+							</div>
+						</div>
 					))}
 				</div>
 			)}
@@ -86,39 +96,12 @@ export function StatsPane({
 function SessionReportInline({ report }: { report: SessionReport }) {
 	return (
 		<div className="space-y-4">
-			<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-				<div className="bg-gray-900/50 rounded-lg p-2">
-					<p className="text-gray-400 text-xs">Players</p>
-					<p className="text-white font-semibold">
-						{report.aggregates.totalPlayers}
-					</p>
-				</div>
-				<div className="bg-gray-900/50 rounded-lg p-2">
-					<p className="text-gray-400 text-xs">Accuracy</p>
-					<p className="text-white font-semibold">
-						{(report.aggregates.avgAccuracy * 100).toFixed(1)}%
-					</p>
-				</div>
+			<SessionStatTiles report={report} />
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+				<PerQuestionAccuracyChart report={report} limit={8} />
+				<LeaderboardList report={report} limit={8} />
 			</div>
-			<div>
-				<h4 className="text-sm font-medium text-gray-400 mb-2">
-					Leaderboard
-				</h4>
-				<div className="space-y-1">
-					{report.leaderboard.map((entry, i) => (
-						<div
-							key={entry.nickname}
-							className="flex justify-between py-1.5 px-2 rounded bg-gray-900/50">
-							<span className="text-white text-sm">
-								{i + 1}. {entry.nickname}
-							</span>
-							<span className="text-indigo-400 text-sm font-medium">
-								{entry.points} pts
-							</span>
-						</div>
-					))}
-				</div>
-			</div>
+			<PerQuestionStatsList report={report} limit={8} />
 		</div>
 	);
 }

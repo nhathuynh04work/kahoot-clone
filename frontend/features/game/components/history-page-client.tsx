@@ -5,24 +5,20 @@ import {
 	getRecentSessions,
 	type RecentSessionsResponse,
 } from "@/features/game/api/server-actions";
-import { SessionReportModal } from "./session-report-modal";
-import { Loader2 } from "lucide-react";
-
-function formatDate(iso: string | null) {
-	if (!iso) return "—";
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-}
+import { Clock3, Loader2 } from "lucide-react";
+import { HistorySessionCard } from "./history-session-card";
+import { getQuiz } from "@/features/quizzes/api/server-actions";
+import type { QuizWithQuestions } from "@/features/quizzes/types";
+import { QuizDetailsModal } from "@/features/quizzes/components/quiz-details-modal";
 
 export function HistoryPageClient() {
 	const [data, setData] = useState<RecentSessionsResponse | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [selectedLobbyId, setSelectedLobbyId] = useState<number | null>(null);
+	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(
+		null,
+	);
+	const [quizLoadingId, setQuizLoadingId] = useState<number | null>(null);
+	const [quizError, setQuizError] = useState<string | null>(null);
 
 	useEffect(() => {
 		getRecentSessions({ limit: 30 })
@@ -41,12 +37,15 @@ export function HistoryPageClient() {
 
 	if (!data || data.items.length === 0) {
 		return (
-			<div className="text-center bg-gray-800 p-10 rounded-lg shadow-sm border border-gray-700">
-				<h3 className="text-xl font-medium text-white">
+			<div className="text-center bg-gray-800/50 p-10 rounded-lg border border-gray-700">
+				<div className="mx-auto w-12 h-12 rounded-xl bg-gray-700/60 border border-gray-700 flex items-center justify-center">
+					<Clock3 className="w-6 h-6 text-indigo-300" />
+				</div>
+				<h3 className="mt-4 text-xl font-semibold text-white">
 					No sessions yet
 				</h3>
-				<p className="text-gray-400 my-2">
-					Complete a quiz game to see session reports here.
+				<p className="text-gray-400 mt-2">
+					Complete a quiz game to see your session snapshots and reports here.
 				</p>
 			</div>
 		);
@@ -54,56 +53,43 @@ export function HistoryPageClient() {
 
 	return (
 		<>
-			<div className="rounded-lg border border-gray-700 overflow-hidden">
-				<table className="w-full text-left">
-					<thead className="bg-gray-800/80 text-gray-400 text-sm">
-						<tr>
-							<th className="px-4 py-3 font-medium">Quiz</th>
-							<th className="px-4 py-3 font-medium">Date</th>
-							<th className="px-4 py-3 font-medium">Players</th>
-							<th className="px-4 py-3 font-medium">Accuracy</th>
-							<th className="px-4 py-3 font-medium"></th>
-						</tr>
-					</thead>
-					<tbody className="divide-y divide-gray-700">
-						{data.items.map((item) => (
-							<tr
-								key={item.lobbyId}
-								className="hover:bg-gray-800/50 transition-colors">
-								<td className="px-4 py-3 text-white font-medium">
-									{item.quizTitle}
-								</td>
-								<td className="px-4 py-3 text-gray-400 text-sm">
-									{formatDate(item.endedAt ?? item.createdAt)}
-								</td>
-								<td className="px-4 py-3 text-gray-300">
-									{item.totalPlayers}
-								</td>
-								<td className="px-4 py-3 text-gray-300">
-									{(item.avgAccuracy * 100).toFixed(1)}%
-								</td>
-								<td className="px-4 py-3">
-									<button
-										type="button"
-										onClick={() =>
-											setSelectedLobbyId(item.lobbyId)
-										}
-										className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-										View
-									</button>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+			<div className="space-y-4">
+				{quizError ? (
+					<div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+						{quizError}
+					</div>
+				) : null}
+				{data.items.map((item) => (
+					<HistorySessionCard
+						key={item.lobbyId}
+						item={item}
+						href={`/dashboard/history/${item.lobbyId}`}
+						quizTitleLoading={quizLoadingId === item.quizId}
+						onQuizTitleClick={() => {
+							if (quizLoadingId !== null) return;
+							setQuizError(null);
+							setQuizLoadingId(item.quizId);
+							getQuiz(String(item.quizId))
+								.then((q) => setSelectedQuiz(q as unknown as QuizWithQuestions))
+								.catch((e) =>
+									setQuizError(
+										e instanceof Error
+											? e.message
+											: "Failed to load quiz details.",
+									),
+								)
+								.finally(() => setQuizLoadingId(null));
+						}}
+					/>
+				))}
 			</div>
 
-			{selectedLobbyId !== null && (
-				<SessionReportModal
-					lobbyId={selectedLobbyId}
-					onClose={() => setSelectedLobbyId(null)}
+			{selectedQuiz ? (
+				<QuizDetailsModal
+					quiz={selectedQuiz}
+					onClose={() => setSelectedQuiz(null)}
 				/>
-			)}
+			) : null}
 		</>
 	);
 }
