@@ -17,6 +17,7 @@ interface QuestionSettingsSidebarProps {
 	isOpen: boolean;
 	onToggle: () => void;
 	onDelete: () => void;
+	onDuplicate: () => void;
 	canDelete: boolean;
 }
 
@@ -25,6 +26,7 @@ export default function QuestionSettingsSidebar({
 	isOpen,
 	onToggle,
 	onDelete,
+	onDuplicate,
 	canDelete,
 }: QuestionSettingsSidebarProps) {
 	const { register } = useFormContext<QuizFullDetails>();
@@ -107,8 +109,9 @@ export default function QuestionSettingsSidebar({
 						Delete
 					</button>
 					<button
-						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-600 hover:bg-indigo-500 transition-colors flex-1 disabled:opacity-50"
-						title="Duplicate (Coming Soon)">
+						onClick={onDuplicate}
+						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md bg-indigo-600 hover:bg-indigo-500 transition-colors flex-1"
+						title="Duplicate">
 						<Copy className="w-4 h-4" />
 						Duplicate
 					</button>

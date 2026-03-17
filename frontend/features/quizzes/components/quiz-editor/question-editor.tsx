@@ -17,7 +17,7 @@ export default function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 	if (!question) return null;
 
 	return (
-		<div className="h-full flex flex-col items-center p-8 md:p-10 overflow-y-auto bg-gray-900 gap-10">
+		<div className="flex flex-col items-center p-8 md:p-10 bg-gray-900 gap-10">
 			<QuestionTextInput
 				key={`text-${questionIndex}`}
 				questionIndex={questionIndex}
