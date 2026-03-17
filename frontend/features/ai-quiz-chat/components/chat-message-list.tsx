@@ -7,14 +7,31 @@ import { cn } from "@/lib/utils";
 interface ChatMessageListProps {
 	messages: ChatMessageType[];
 	isGenerating: boolean;
+	isHistoryLoading?: boolean;
 	onOpenCanvas: (messageId: string) => void;
 }
 
 export function ChatMessageList({
 	messages,
 	isGenerating,
+	isHistoryLoading = false,
 	onOpenCanvas,
 }: ChatMessageListProps) {
+	if (isHistoryLoading) {
+		return (
+			<div className="max-w-2xl mx-auto space-y-6 animate-pulse">
+				{Array.from({ length: 6 }).map((_, i) => (
+					<div key={i} className={cn("flex gap-3", i % 2 === 1 && "flex-row-reverse")}>
+						<div className="shrink-0 w-8 h-8 rounded-full bg-gray-700" />
+						<div className="rounded-2xl px-4 py-3 w-[70%] bg-gray-800 border border-gray-700">
+							<div className="h-3 bg-gray-700 rounded w-[85%]" />
+							<div className="h-3 bg-gray-700 rounded w-[65%] mt-2" />
+						</div>
+					</div>
+				))}
+			</div>
+		);
+	}
 	return (
 		<div className="max-w-2xl mx-auto space-y-6">
 			{messages.map((msg) => (
@@ -39,7 +56,7 @@ export function ChatMessageList({
 					</div>
 					<div
 						className={cn(
-							"rounded-2xl px-4 py-3 max-w-[85%] flex flex-col gap-2",
+							"rounded-2xl px-4 py-3 max-w-[85%] min-w-0 flex flex-col gap-2",
 							msg.role === "user"
 								? "bg-indigo-600 text-white"
 								: "bg-gray-800 text-gray-100 border border-gray-700",
@@ -51,7 +68,9 @@ export function ChatMessageList({
 								<span className="text-xs truncate">{msg.attachedDocument.fileName}</span>
 							</div>
 						)}
-						<p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+						<p className="text-sm whitespace-pre-wrap wrap-anywhere">
+							{msg.content}
+						</p>
 						{msg.role === "assistant" &&
 							msg.generatedCount != null &&
 							msg.generatedCount > 0 && (

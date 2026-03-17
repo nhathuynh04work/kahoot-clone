@@ -8,4 +8,8 @@ export class GenerateQuestionsDto {
     @IsOptional()
     @IsNumber()
     documentId?: number;
+
+    @IsOptional()
+    @IsNumber()
+    quizId?: number;
 }

@@ -32,7 +32,7 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 
 	const { control, formState } = methods;
 
-	const { remove, append } = useFieldArray({
+	const { remove, append, insert, move } = useFieldArray({
 		control,
 		name: "questions",
 		keyName: "fieldId",
@@ -106,6 +106,55 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 		if (nextId) setActiveQuestionId(nextId);
 	};
 
+	const normalizeSortOrders = () => {
+		const current = methods.getValues("questions") || [];
+		current.forEach((q, i) => {
+			methods.setValue(`questions.${i}.sortOrder`, i, {
+				shouldDirty: true,
+			});
+		});
+	};
+
+	const handleDuplicateQuestion = () => {
+		const source = activeQuestion;
+		if (!source) return;
+
+		const newId = Date.now() * -1;
+		const baseOptionId = newId * 10;
+
+		const duplicatedOptions = (source.options || [])
+			.sort((a, b) => a.sortOrder - b.sortOrder)
+			.map((opt, i) => ({
+				...opt,
+				id: baseOptionId - i,
+				questionId: newId,
+				sortOrder: i,
+			}));
+
+		const duplicatedQuestion = {
+			...source,
+			id: newId,
+			quizId: quiz.id,
+			text: source.text ?? "",
+			imageUrl: source.imageUrl ?? "",
+			sortOrder: activeIndex + 1,
+			options: duplicatedOptions,
+		};
+
+		insert(activeIndex + 1, duplicatedQuestion);
+		normalizeSortOrders();
+		setActiveQuestionId(newId);
+	};
+
+	const handleMoveQuestion = (fromIndex: number, toIndex: number) => {
+		if (fromIndex === toIndex) return;
+		if (fromIndex < 0 || fromIndex >= questions.length) return;
+		if (toIndex < 0 || toIndex >= questions.length) return;
+
+		move(fromIndex, toIndex);
+		normalizeSortOrders();
+	};
+
 	return (
 		<FormProvider {...methods}>
 			<div className="flex flex-col h-screen bg-gray-900 text-white">
@@ -118,11 +167,12 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 							activeQuestionId={activeQuestionId}
 							onQuestionSelect={setActiveQuestionId}
 							onAddQuestion={handleAddQuestion}
+							onMoveQuestion={handleMoveQuestion}
 						/>
 					</div>
 
 					<div className="col-span-5 flex overflow-hidden">
-						<div className="flex-1 overflow-y-auto">
+						<div className="flex-1 min-h-0 overflow-y-auto">
 							{activeQuestion && (
 								<QuestionEditor questionIndex={activeIndex} />
 							)}
@@ -137,6 +187,7 @@ export default function QuizEditor({ quiz }: QuizEditorProps) {
 									setIsSettingsOpen(!isSettingsOpen)
 								}
 								onDelete={handleDeleteQuestion}
+								onDuplicate={handleDuplicateQuestion}
 								canDelete={questions.length > 1}
 							/>
 						)}

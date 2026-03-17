@@ -18,7 +18,12 @@ apiClient.interceptors.response.use(
 			);
 		}
 		const data: any = error.response?.data;
-		const errorMessage = data?.message || "An error occurred";
+		const rawMessage: unknown = data?.message;
+		const errorMessage = Array.isArray(rawMessage)
+			? String(rawMessage[0] ?? "An error occurred")
+			: typeof rawMessage === "string"
+				? rawMessage
+				: "An error occurred";
 
 		// 401 Unauthorized
 		if (error.response && error.response.status === 401) {

@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { DocumentStatus } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AiQuizChatService } from "./ai-quiz-chat.service";
 import {
     EMBEDDING_DIMENSIONS,
     PROMPT_VALIDATION_SYSTEM,
@@ -33,12 +34,14 @@ export class AiService {
     constructor(
         private prisma: PrismaService,
         private readonly aiClient: AiClient,
+        private readonly aiQuizChatService: AiQuizChatService,
     ) {}
 
     async generateQuestions(
         userId: number,
         userPrompt: string,
         documentId?: number | null,
+        quizId?: number | null,
     ): Promise<GenerateQuestionsResult> {
         if (!userPrompt?.trim()) {
             throw new BadRequestException("User prompt is required");
@@ -50,11 +53,22 @@ export class AiService {
                 event: "ai.generateQuestions.start",
                 userId,
                 hasDocumentId: documentId != null,
+                hasQuizId: quizId != null,
                 promptLength: trimmedPrompt.length,
             }),
         );
 
         try {
+            if (quizId != null) {
+                await this.aiQuizChatService.appendMessage({
+                    userId,
+                    quizId,
+                    role: "user",
+                    content: trimmedPrompt,
+                    documentId,
+                });
+            }
+
             if (documentId != null) {
                 this.logger.log(
                     JSON.stringify({
@@ -64,7 +78,18 @@ export class AiService {
                         documentId,
                     }),
                 );
-                return await this.generateWithRag(userId, documentId, userPrompt);
+                const result = await this.generateWithRag(userId, documentId, userPrompt);
+                if (quizId != null) {
+                    await this.aiQuizChatService.appendMessage({
+                        userId,
+                        quizId,
+                        role: "assistant",
+                        content: this.buildAssistantSummary(result, documentId),
+                        generatedCount: result.questions.length,
+                        generatedQuestions: result.questions,
+                    });
+                }
+                return result;
             }
 
             this.logger.log(
@@ -90,7 +115,18 @@ export class AiService {
                 throw new BadRequestException(message);
             }
 
-            return await this.generateFreestyle(userPrompt);
+            const result = await this.generateFreestyle(userPrompt);
+            if (quizId != null) {
+                await this.aiQuizChatService.appendMessage({
+                    userId,
+                    quizId,
+                    role: "assistant",
+                    content: this.buildAssistantSummary(result, null),
+                    generatedCount: result.questions.length,
+                    generatedQuestions: result.questions,
+                });
+            }
+            return result;
         } catch (err) {
             this.handleAiError(err);
         }
@@ -162,7 +198,11 @@ export class AiService {
                 reason: parsed.reason,
             };
         } catch {
-            return { valid: true };
+            return {
+                valid: false,
+                reason:
+                    "I couldn’t understand that request. Try something like “Generate 5 multiple-choice questions about photosynthesis” or “Create a quiz on World War 2”.",
+            };
         }
     }
 
@@ -303,6 +343,14 @@ export class AiService {
         return rows;
     }
 
+    private sanitizeQuestionText(text: string): string {
+        let t = (text ?? "").trim();
+        // Defensive cleanup: some models leak disclaimers into question text.
+        t = t.replace(/^note\s*[:\-—]\s*/i, "");
+        t = t.replace(/^based on general knowledge\.\s*/i, "");
+        return t.trim();
+    }
+
     private parseStructuredOutput(jsonText: string): GenerateQuestionsResult {
         let parsed: { questions?: GeneratedQuestion[]; meta?: unknown };
 
@@ -316,12 +364,16 @@ export class AiService {
                     message: err instanceof Error ? err.message : String(err),
                 }),
             );
-            throw new Error("Failed to parse generated questions as JSON");
+            throw new BadRequestException(
+                "I couldn’t generate questions from that. Try rephrasing, adding more detail, or specifying the number of questions you want.",
+            );
         }
 
         const questions = parsed?.questions;
         if (!Array.isArray(questions) || questions.length === 0) {
-            throw new Error("Generated output has no questions array");
+            throw new BadRequestException(
+                "I couldn’t generate any valid questions from that request. Try being more specific about the topic and difficulty.",
+            );
         }
 
         const validated: GeneratedQuestion[] = questions
@@ -335,7 +387,7 @@ export class AiService {
                 return correctCount === 1;
             })
             .map((q) => ({
-                text: q.text.trim(),
+                text: this.sanitizeQuestionText(q.text),
                 options: q.options
                     .filter((o) => o && typeof o.text === "string")
                     .map((o) => ({
@@ -351,6 +403,17 @@ export class AiService {
             questions: validated,
             meta: safeMeta as GenerateQuestionsResult["meta"] | undefined,
         };
+    }
+
+    private buildAssistantSummary(result: GenerateQuestionsResult, documentId: number | null) {
+        const note = result.meta?.note?.trim();
+        if (note) return note;
+        const count = result.questions?.length ?? 0;
+        const base =
+            count > 0
+                ? `Generated ${count} question${count === 1 ? "" : "s"}.`
+                : "I couldn't generate any questions from that request.";
+        return documentId != null ? `${base} (Using attached document.)` : base;
     }
 
     private cleanJsonText(text: string): string {

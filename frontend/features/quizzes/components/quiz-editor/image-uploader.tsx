@@ -31,7 +31,7 @@ export default function ImageUploader({
 				<div
 					onClick={!imageUrl ? triggerUpload : undefined}
 					className={`
-                        w-full max-w-md h-64 rounded-md border-2 border-dashed 
+                        w-full max-w-md h-64 shrink-0 rounded-md border-2 border-dashed 
                         flex flex-col items-center justify-center overflow-hidden relative group transition-colors
                         ${
 							!imageUrl
@@ -109,11 +109,8 @@ export default function ImageUploader({
 									<p className="font-semibold mb-1 text-gray-300">
 										Add Image
 									</p>
-									<p className="text-sm opacity-70 mb-4 max-w-[200px]">
-										Click to browse files
-									</p>
 
-									<div className="px-4 py-2 bg-gray-800 rounded-full text-xs font-medium text-gray-300 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center gap-2">
+									<div className="px-4 py-2 bg-gray-800 rounded-full text-xs font-medium text-gray-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors flex items-center gap-2">
 										<UploadCloud className="w-4 h-4" />
 										Upload File
 									</div>

@@ -5,7 +5,7 @@ import type { ChatMessage, MockGeneratedQuestion } from "../types";
 import type { GeneratedQuestion } from "../api/client-actions";
 import type { AttachDocument } from "../components/document-attach-menu";
 import { MAX_CHAT_MESSAGES } from "../constants";
-import { generateQuestions } from "../api/client-actions";
+import { generateQuestions, getQuizChat } from "../api/client-actions";
 import { useDocuments, useUploadDocument, useDocumentParser } from "@/features/documents/hooks/use-documents";
 import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
 
@@ -17,15 +17,17 @@ const INITIAL_MESSAGE: ChatMessage = {
 };
 
 interface UseAiChatStateProps {
+	quizId?: number | null;
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
 	onAddQuestion?: (question: GeneratedQuestion) => void;
 }
 
-export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStateProps = {}) {
+export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiChatStateProps = {}) {
 	const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
 	const [input, setInput] = useState("");
 	const [docPopupOpen, setDocPopupOpen] = useState(false);
 	const [selectedDoc, setSelectedDoc] = useState<AttachDocument | null>(null);
+	const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 	const [generatedQuestionsByMessageId, setGeneratedQuestionsByMessageId] = useState<
 		Record<string, MockGeneratedQuestion[]>
 	>({});
@@ -49,6 +51,57 @@ export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStatePr
 	}));
 
 	const usedBytes = documents.reduce((a, d) => a + d.fileSize, 0);
+
+	useEffect(() => {
+		let cancelled = false;
+		(async () => {
+			if (!quizId || quizId <= 0) {
+				setMessages([INITIAL_MESSAGE]);
+				setGeneratedQuestionsByMessageId({});
+				setOpenCanvasMessageId(null);
+				setIsHistoryLoading(false);
+				return;
+			}
+			setIsHistoryLoading(true);
+			try {
+				const data = await getQuizChat(quizId);
+				if (cancelled) return;
+				const hydrated: ChatMessage[] = data.messages.map((m) => ({
+					id: `persisted-${m.id}`,
+					role: m.role,
+					content: m.content,
+					attachedDocument: m.attachedDocument,
+					generatedCount: m.generatedCount,
+				}));
+
+				const hydratedQuestions: Record<string, MockGeneratedQuestion[]> = {};
+				for (const m of data.messages) {
+					if (m.role !== "assistant") continue;
+					if (!m.generatedQuestions || m.generatedQuestions.length === 0) continue;
+					const msgId = `persisted-${m.id}`;
+					hydratedQuestions[msgId] = m.generatedQuestions.map((q, i) => ({
+						id: `persisted-gen-${m.id}-${i}`,
+						text: q.text,
+						options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
+					}));
+				}
+
+				setMessages([INITIAL_MESSAGE, ...hydrated].slice(-MAX_CHAT_MESSAGES));
+				setGeneratedQuestionsByMessageId(hydratedQuestions);
+				setOpenCanvasMessageId(null);
+				setIsHistoryLoading(false);
+			} catch {
+				// If chat history load fails, keep a working local chat instead of blocking the UI.
+				setMessages([INITIAL_MESSAGE]);
+				setGeneratedQuestionsByMessageId({});
+				setOpenCanvasMessageId(null);
+				setIsHistoryLoading(false);
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [quizId]);
 
 	useEffect(() => {
 		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -153,7 +206,7 @@ export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStatePr
 			const msgId = `assistant-${Date.now()}`;
 
 			try {
-				const result = await generateQuestions(trimmed, selectedDoc?.id);
+				const result = await generateQuestions(trimmed, selectedDoc?.id, quizId);
 
 				const questions: MockGeneratedQuestion[] = result.questions.map((q, i) => ({
 					id: `gen-${msgId}-${i}`,
@@ -189,11 +242,10 @@ export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStatePr
 					setOpenCanvasMessageId(msgId);
 				}
 			} catch (err) {
-				const errorMessage =
-					err && typeof err === "object" && "response" in err
-						? (err as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
-						: null;
-				const msg = Array.isArray(errorMessage) ? errorMessage[0] : errorMessage ?? "Something went wrong.";
+				const msg =
+					err instanceof Error
+						? err.message
+						: "I couldn’t generate questions from that. Try describing a topic and how many questions you want.";
 				setMessages((prev) => {
 					const next = [
 						...prev,
@@ -209,13 +261,14 @@ export function useAiChatState({ onFileSelect, onAddQuestion }: UseAiChatStatePr
 				setIsGenerating(false);
 			}
 		},
-		[selectedDoc],
+		[selectedDoc, quizId],
 	);
 
 	return {
 		messages,
 		input,
 		setInput,
+		isHistoryLoading,
 		docPopupOpen,
 		setDocPopupOpen,
 		documents: docsForMenu,
