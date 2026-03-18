@@ -54,6 +54,56 @@ export class QuizService {
         });
     }
 
+    async getQuizPage(
+        userId: number,
+        options: { q?: string; page: number; pageSize: number },
+    ) {
+        const user = await this.userService.getUser({ id: userId });
+        if (!user) throw new BadRequestException("User not found");
+
+        const page = Number.isFinite(options.page) ? Math.max(1, options.page) : 1;
+        const pageSize = Number.isFinite(options.pageSize)
+            ? Math.min(50, Math.max(1, options.pageSize))
+            : 20;
+        const q = options.q?.trim();
+
+        const where: Prisma.QuizWhereInput = {
+            userId,
+            ...(q
+                ? {
+                      OR: [
+                          { title: { contains: q, mode: "insensitive" } },
+                          // Treat empty titles as "Untitled" in UI; searching "untitled" should match those.
+                          ...(q.toLowerCase() === "untitled"
+                              ? [{ title: "" }]
+                              : []),
+                      ],
+                  }
+                : {}),
+        };
+
+        const totalItems = await this.prisma.quiz.count({ where });
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const items = await this.prisma.quiz.findMany({
+            where,
+            include: { questions: true },
+            orderBy: [{ id: "desc" }],
+            skip,
+            take: pageSize,
+        });
+
+        return {
+            items,
+            page: safePage,
+            pageSize,
+            totalItems,
+            totalPages,
+        };
+    }
+
     async create(userId: number): Promise<Quiz> {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");

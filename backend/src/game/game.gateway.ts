@@ -58,10 +58,7 @@ export class GameGateway
 
             this.socketService.emitToRoom(lobbyId.toString(), "hostLeft");
 
-            await this.lobbyService.updateLobbyStatus(
-                lobbyId,
-                LobbyStatus.CLOSED,
-            );
+            await this.lobbyService.closeLobbyWithoutReport(lobbyId);
 
             return;
         }
@@ -396,10 +393,7 @@ export class GameGateway
                 leaderboard,
             });
 
-            await this.lobbyService.updateLobbyStatus(
-                lobby.id,
-                LobbyStatus.CLOSED,
-            );
+            await this.lobbyService.persistCompletedLobbyReport(lobby.id);
 
             return { success: true };
         }

@@ -6,7 +6,11 @@ import {
     Logger,
     NotFoundException,
 } from "@nestjs/common";
-import { GameLobby, LobbyStatus, Prisma } from "../../generated/prisma/client";
+import {
+    GameLobby,
+    LobbyStatus,
+    Prisma,
+} from "../../generated/prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import Redis from "ioredis";
 import { QuestionWithOptions } from "../../quiz/dto/quiz.dto";
@@ -82,6 +86,371 @@ export class LobbyService {
         }
 
         return updated;
+    }
+
+    async closeLobbyWithoutReport(lobbyId: number) {
+        const lobby = await this.prisma.gameLobby.findUnique({
+            where: { id: lobbyId },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException(`Lobby ${lobbyId} not found`);
+        }
+
+        await this.prisma.gameLobby.update({
+            where: { id: lobbyId },
+            data: {
+                status: LobbyStatus.CLOSED,
+                endedAt: new Date(),
+            },
+        });
+
+        await this.redis.del(lobbyPinKey(lobby.pin));
+        await this.redis.del(lobbyCurrentQuestionIndexKey(lobbyId));
+    }
+
+    async persistCompletedLobbyReport(lobbyId: number) {
+        const existingReport = await this.prisma.gameLobbyReport.findUnique({
+            where: { lobbyId },
+        });
+        if (existingReport) {
+            this.logger.debug(`Lobby ${lobbyId} already has a report, skipping`);
+            await this.updateLobbyStatus(lobbyId, LobbyStatus.CLOSED);
+            return;
+        }
+
+        const lobby = await this.prisma.gameLobby.findUnique({
+            where: { id: lobbyId },
+            include: {
+                quiz: { include: { questions: { include: { options: true } } } },
+                players: { include: { answers: true } },
+            },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException(`Lobby ${lobbyId} not found`);
+        }
+
+        const questions = lobby.quiz.questions.sort(
+            (a, b) => a.sortOrder - b.sortOrder,
+        );
+        const totalQuestions = questions.length;
+        const totalPlayers = lobby.players.length;
+
+        const totalAnswers = lobby.players.reduce(
+            (sum, p) => sum + p.answers.length,
+            0,
+        );
+        const totalCorrect = lobby.players.reduce(
+            (sum, p) => sum + p.answers.filter((a) => a.isCorrect).length,
+            0,
+        );
+        const totalIncorrect = totalAnswers - totalCorrect;
+        const avgAccuracy =
+            totalAnswers > 0 ? totalCorrect / totalAnswers : 0;
+
+        const leaderboard = lobby.players
+            .map((p) => ({ nickname: p.nickname, points: p.points }))
+            .sort((a, b) => b.points - a.points);
+
+        const questionReports = questions.map((q, sortIndex) => {
+            const answersForQuestion = lobby.players.flatMap((p) =>
+                p.answers.filter((a) => a.questionId === q.id),
+            );
+            const correctCount = answersForQuestion.filter(
+                (a) => a.isCorrect,
+            ).length;
+            const incorrectCount = answersForQuestion.length - correctCount;
+            const correctRate =
+                answersForQuestion.length > 0
+                    ? correctCount / answersForQuestion.length
+                    : 0;
+
+            const optionCounts: Record<string, number> = {};
+            q.options.forEach((opt) => {
+                optionCounts[opt.id.toString()] = 0;
+            });
+            answersForQuestion.forEach((a) => {
+                const key = a.optionId.toString();
+                optionCounts[key] = (optionCounts[key] ?? 0) + 1;
+            });
+
+            return {
+                lobbyId,
+                questionId: q.id,
+                sortIndex,
+                correctCount,
+                incorrectCount,
+                correctRate,
+                optionCountsJson: optionCounts as unknown as Prisma.JsonObject,
+            };
+        });
+
+        const playerReports = lobby.players.map((p) => {
+            const answered = p.answers.length;
+            const correct = p.answers.filter((a) => a.isCorrect).length;
+            const accuracy = answered > 0 ? correct / answered : 0;
+
+            return {
+                lobbyId,
+                playerId: p.id,
+                nickname: p.nickname,
+                answeredCount: answered,
+                correctCount: correct,
+                accuracy,
+                finalScore: p.points,
+            };
+        });
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.gameLobby.update({
+                where: { id: lobbyId },
+                data: {
+                    status: LobbyStatus.CLOSED,
+                    endedAt: new Date(),
+                },
+            });
+
+            const report = await tx.gameLobbyReport.create({
+                data: {
+                    lobbyId,
+                    totalPlayers,
+                    totalQuestions,
+                    totalAnswers,
+                    totalCorrect,
+                    totalIncorrect,
+                    avgAccuracy,
+                    leaderboardJson: leaderboard as unknown as Prisma.JsonArray,
+                },
+            });
+
+            await tx.gameLobbyQuestionReport.createMany({
+                data: questionReports.map((qr) => ({
+                    ...qr,
+                    reportId: report.id,
+                })),
+            });
+
+            await tx.gameLobbyPlayerReport.createMany({
+                data: playerReports.map((pr) => ({
+                    ...pr,
+                    reportId: report.id,
+                })),
+            });
+        });
+
+        await this.redis.del(lobbyPinKey(lobby.pin));
+        await this.redis.del(lobbyCurrentQuestionIndexKey(lobbyId));
+
+        this.logger.log(`Persisted report for lobby ${lobbyId}`);
+    }
+
+    async getRecentSessionsForHost(
+        hostId: number,
+        options: { limit?: number; cursor?: number } = {},
+    ) {
+        const { limit = 20, cursor } = options;
+
+        const lobbies = await this.prisma.gameLobby.findMany({
+            where: {
+                hostId,
+                status: LobbyStatus.CLOSED,
+                report: { isNot: null },
+            },
+            include: {
+                quiz: { select: { id: true, title: true } },
+                report: true,
+            },
+            orderBy: { endedAt: "desc" },
+            take: limit + 1,
+            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        });
+
+        const hasMore = lobbies.length > limit;
+        const items = hasMore ? lobbies.slice(0, limit) : lobbies;
+        const nextCursor = hasMore ? items[items.length - 1]?.id : null;
+
+        return {
+            items: items.map((l) => ({
+                lobbyId: l.id,
+                quizId: l.quizId,
+                quizTitle: l.quiz?.title ?? "Untitled",
+                createdAt: l.createdAt,
+                endedAt: l.endedAt,
+                totalPlayers: l.report?.totalPlayers ?? 0,
+                avgAccuracy: l.report?.avgAccuracy ?? 0,
+            })),
+            nextCursor,
+        };
+    }
+
+    async getHistoryPageForHost(
+        hostId: number,
+        options: {
+            page: number;
+            pageSize: number;
+            quizId?: number;
+            sort?:
+                | "endedAt_desc"
+                | "endedAt_asc"
+                | "players_desc"
+                | "players_asc"
+                | "accuracy_desc"
+                | "accuracy_asc";
+        },
+    ) {
+        const page = Number.isFinite(options.page) ? Math.max(1, options.page) : 1;
+        const pageSize = Number.isFinite(options.pageSize)
+            ? Math.min(100, Math.max(1, options.pageSize))
+            : 20;
+
+        const where: Prisma.GameLobbyWhereInput = {
+            hostId,
+            status: LobbyStatus.CLOSED,
+            report: { isNot: null },
+            ...(options.quizId ? { quizId: options.quizId } : {}),
+        };
+
+        const stableTies: Prisma.GameLobbyOrderByWithRelationInput[] = [
+            { endedAt: "desc" },
+            { id: "desc" },
+        ];
+
+        const sort = options.sort ?? "endedAt_desc";
+        const orderBy: Prisma.GameLobbyOrderByWithRelationInput[] = (() => {
+            switch (sort) {
+                case "endedAt_asc":
+                    return [{ endedAt: "asc" }, { id: "asc" }];
+                case "endedAt_desc":
+                    return stableTies;
+                case "players_asc":
+                    return [{ report: { totalPlayers: "asc" } }, ...stableTies];
+                case "players_desc":
+                    return [{ report: { totalPlayers: "desc" } }, ...stableTies];
+                case "accuracy_asc":
+                    return [{ report: { avgAccuracy: "asc" } }, ...stableTies];
+                case "accuracy_desc":
+                    return [{ report: { avgAccuracy: "desc" } }, ...stableTies];
+                default:
+                    return stableTies;
+            }
+        })();
+
+        const totalItems = await this.prisma.gameLobby.count({ where });
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const lobbies = await this.prisma.gameLobby.findMany({
+            where,
+            include: {
+                quiz: { select: { id: true, title: true } },
+                report: true,
+            },
+            orderBy,
+            skip,
+            take: pageSize,
+        });
+
+        return {
+            items: lobbies.map((l) => ({
+                lobbyId: l.id,
+                quizId: l.quizId,
+                quizTitle: l.quiz?.title ?? "Untitled",
+                createdAt: l.createdAt,
+                endedAt: l.endedAt,
+                totalPlayers: l.report?.totalPlayers ?? 0,
+                avgAccuracy: l.report?.avgAccuracy ?? 0,
+            })),
+            page: safePage,
+            pageSize,
+            totalItems,
+            totalPages,
+        };
+    }
+
+    async getSessionReport(lobbyId: number, hostId: number) {
+        const lobby = await this.prisma.gameLobby.findFirst({
+            where: { id: lobbyId, hostId },
+            include: {
+                quiz: { include: { questions: { include: { options: true } } } },
+                report: {
+                    include: {
+                        questionReports: { orderBy: { sortIndex: "asc" } },
+                        playerReports: true,
+                    },
+                },
+            },
+        });
+
+        if (!lobby || !lobby.report) {
+            throw new NotFoundException(`Session report not found`);
+        }
+
+        const leaderboard = lobby.report.leaderboardJson as {
+            nickname: string;
+            points: number;
+        }[];
+
+        return {
+            session: {
+                lobbyId: lobby.id,
+                quizId: lobby.quizId,
+                quizTitle: lobby.quiz?.title ?? "Untitled",
+                hostId: lobby.hostId,
+                createdAt: lobby.createdAt,
+                endedAt: lobby.endedAt,
+            },
+            aggregates: {
+                totalPlayers: lobby.report.totalPlayers,
+                totalQuestions: lobby.report.totalQuestions,
+                totalAnswers: lobby.report.totalAnswers,
+                totalCorrect: lobby.report.totalCorrect,
+                totalIncorrect: lobby.report.totalIncorrect,
+                avgAccuracy: lobby.report.avgAccuracy,
+            },
+            questions: lobby.report.questionReports.map((qr) => ({
+                questionId: qr.questionId,
+                sortIndex: qr.sortIndex,
+                correctCount: qr.correctCount,
+                incorrectCount: qr.incorrectCount,
+                correctRate: qr.correctRate,
+                optionCounts: qr.optionCountsJson as Record<string, number>,
+                question: lobby.quiz.questions.find((q) => q.id === qr.questionId),
+            })),
+            players: lobby.report.playerReports.map((pr) => ({
+                playerId: pr.playerId,
+                nickname: pr.nickname,
+                answeredCount: pr.answeredCount,
+                correctCount: pr.correctCount,
+                accuracy: pr.accuracy,
+                finalScore: pr.finalScore,
+            })),
+            leaderboard,
+        };
+    }
+
+    async getSessionsForQuiz(quizId: number, hostId: number) {
+        const lobbies = await this.prisma.gameLobby.findMany({
+            where: {
+                quizId,
+                hostId,
+                status: LobbyStatus.CLOSED,
+                report: { isNot: null },
+            },
+            include: { report: true },
+            orderBy: { endedAt: "desc" },
+            take: 50,
+        });
+
+        return lobbies.map((l) => ({
+            lobbyId: l.id,
+            quizId: l.quizId,
+            createdAt: l.createdAt,
+            endedAt: l.endedAt,
+            totalPlayers: l.report?.totalPlayers ?? 0,
+            avgAccuracy: l.report?.avgAccuracy ?? 0,
+        }));
     }
 
     private async getUniquePin() {

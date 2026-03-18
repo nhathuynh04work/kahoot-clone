@@ -134,16 +134,20 @@ model Option {
 }
 
 model GameLobby {
-  id        Int         @id @default(autoincrement())
-  pin       String      @db.Char(6)
+  id        Int          @id @default(autoincrement())
+  pin       String       @db.Char(6)
   quizId    Int
   hostId    Int
-  status    LobbyStatus @default(CREATED)
-  createdAt DateTime    @default(now())
+  status    LobbyStatus  @default(CREATED)
+  createdAt DateTime     @default(now())
+  endedAt   DateTime?
 
-  players GamePlayer[]
-  host    User         @relation(fields: [hostId], references: [id])
-  quiz    Quiz         @relation(fields: [quizId], references: [id])
+  players         GamePlayer[]
+  host            User          @relation(fields: [hostId], references: [id])
+  quiz            Quiz          @relation(fields: [quizId], references: [id])
+  report          GameLobbyReport?
+  questionReports GameLobbyQuestionReport[]
+  playerReports   GameLobbyPlayerReport[]
 }
 
 enum LobbyStatus {
@@ -159,8 +163,9 @@ model GamePlayer {
   points   Int    @default(0)
   lobbyId  Int
 
-  lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
-  answers PlayerAnswer[]
+  lobby          GameLobby             @relation(fields: [lobbyId], references: [id])
+  answers        PlayerAnswer[]
+  playerReports  GameLobbyPlayerReport[]
 
   @@unique([lobbyId, nickname])
 }
@@ -178,4 +183,60 @@ model PlayerAnswer {
   option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, questionId])
+}
+
+model GameLobbyReport {
+  id          Int      @id @default(autoincrement())
+  lobbyId     Int      @unique
+  totalPlayers Int
+  totalQuestions Int
+  totalAnswers   Int
+  totalCorrect   Int
+  totalIncorrect Int
+  avgAccuracy    Float
+  leaderboardJson Json
+  createdAt   DateTime @default(now())
+
+  lobby       GameLobby                @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+  questionReports GameLobbyQuestionReport[]
+  playerReports   GameLobbyPlayerReport[]
+
+  @@index([lobbyId])
+}
+
+model GameLobbyQuestionReport {
+  id         Int     @id @default(autoincrement())
+  lobbyId    Int
+  reportId   Int
+  questionId Int
+  sortIndex  Int
+  correctCount Int
+  incorrectCount Int
+  correctRate   Float
+  optionCountsJson Json
+
+  report   GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  lobby    GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, questionId])
+  @@index([lobbyId])
+}
+
+model GameLobbyPlayerReport {
+  id          Int      @id @default(autoincrement())
+  lobbyId     Int
+  reportId    Int
+  playerId    Int
+  nickname    String
+  answeredCount Int
+  correctCount  Int
+  accuracy     Float
+  finalScore   Int
+
+  report GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  lobby  GameLobby      @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+  player GamePlayer     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, playerId])
+  @@index([lobbyId])
 }
