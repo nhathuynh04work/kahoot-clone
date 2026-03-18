@@ -1,11 +1,7 @@
 "use client";
 
 import { X, Loader2 } from "lucide-react";
-import {
-	getSessionReport,
-	type SessionReport,
-} from "@/features/game/api/server-actions";
-import { useEffect, useState } from "react";
+import { useSessionReportQuery } from "@/features/game/hooks/use-session-report-query";
 
 interface SessionReportModalProps {
 	lobbyId: number;
@@ -18,16 +14,14 @@ function formatDate(iso: string | null) {
 }
 
 export function SessionReportModal({ lobbyId, onClose }: SessionReportModalProps) {
-	const [report, setReport] = useState<SessionReport | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		getSessionReport(lobbyId)
-			.then(setReport)
-			.catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
-			.finally(() => setLoading(false));
-	}, [lobbyId]);
+	const reportQuery = useSessionReportQuery(lobbyId);
+	const report = reportQuery.data ?? null;
+	const loading = reportQuery.isLoading;
+	const error = reportQuery.isError
+		? reportQuery.error instanceof Error
+			? reportQuery.error.message
+			: "Failed to load"
+		: null;
 
 	return (
 		<div

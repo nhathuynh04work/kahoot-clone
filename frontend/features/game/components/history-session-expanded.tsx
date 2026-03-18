@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-	getSessionReport,
-	type SessionReport,
-} from "@/features/game/api/server-actions";
+import { useSessionReportQuery } from "@/features/game/hooks/use-session-report-query";
 
 function StatTile({
 	label,
@@ -40,34 +37,8 @@ function StatTile({
 }
 
 export function HistorySessionExpanded({ lobbyId }: { lobbyId: number }) {
-	const [report, setReport] = useState<SessionReport | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		let cancelled = false;
-		setLoading(true);
-		setError(null);
-		setReport(null);
-
-		getSessionReport(lobbyId)
-			.then((r) => {
-				if (cancelled) return;
-				setReport(r);
-			})
-			.catch((e) => {
-				if (cancelled) return;
-				setError(e instanceof Error ? e.message : "Failed to load report");
-			})
-			.finally(() => {
-				if (cancelled) return;
-				setLoading(false);
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [lobbyId]);
+	const reportQuery = useSessionReportQuery(lobbyId);
+	const report = reportQuery.data;
 
 	const perQuestion = useMemo(() => {
 		if (!report) return [];
@@ -78,7 +49,7 @@ export function HistorySessionExpanded({ lobbyId }: { lobbyId: number }) {
 		}));
 	}, [report]);
 
-	if (loading) {
+	if (reportQuery.isLoading) {
 		return (
 			<div className="flex items-center justify-center py-6">
 				<Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
@@ -86,8 +57,14 @@ export function HistorySessionExpanded({ lobbyId }: { lobbyId: number }) {
 		);
 	}
 
-	if (error) {
-		return <p className="text-sm text-red-400">{error}</p>;
+	if (reportQuery.isError) {
+		return (
+			<p className="text-sm text-red-400">
+				{reportQuery.error instanceof Error
+					? reportQuery.error.message
+					: "Failed to load report"}
+			</p>
+		);
 	}
 
 	if (!report) return null;

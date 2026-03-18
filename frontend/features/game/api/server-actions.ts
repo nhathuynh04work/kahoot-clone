@@ -19,6 +19,22 @@ export type RecentSessionsResponse = {
 	nextCursor: number | null;
 };
 
+export type HistorySort =
+	| "endedAt_desc"
+	| "endedAt_asc"
+	| "players_desc"
+	| "players_asc"
+	| "accuracy_desc"
+	| "accuracy_asc";
+
+export type HistoryPageResponse = {
+	items: SessionListItem[];
+	page: number;
+	pageSize: number;
+	totalItems: number;
+	totalPages: number;
+};
+
 export async function getRecentSessions(options?: {
 	limit?: number;
 	cursor?: number;
@@ -28,6 +44,22 @@ export async function getRecentSessions(options?: {
 	if (options?.limit) params.set("limit", String(options.limit));
 	if (options?.cursor) params.set("cursor", String(options.cursor));
 	const { data } = await api.get(`/game/history?${params.toString()}`);
+	return data;
+}
+
+export async function getHistoryPage(options: {
+	page: number;
+	pageSize: number;
+	quizId?: number;
+	sort?: HistorySort;
+}): Promise<HistoryPageResponse> {
+	const api = await apiServer();
+	const params = new URLSearchParams();
+	params.set("page", String(options.page));
+	params.set("pageSize", String(options.pageSize));
+	if (options.quizId) params.set("quizId", String(options.quizId));
+	if (options.sort) params.set("sort", options.sort);
+	const { data } = await api.get(`/game/history/page?${params.toString()}`);
 	return data;
 }
 

@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { getQuiz } from "@/features/quizzes/api/server-actions";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { QuizDetailsModal } from "@/features/quizzes/components/quiz-details-modal";
+import { useQueryClient } from "@tanstack/react-query";
+import { quizQueryKeys } from "@/features/quizzes/hooks/use-quiz-search-infinite";
 import {
 	LeaderboardList,
 	PerQuestionAccuracyChart,
@@ -44,6 +46,7 @@ export function SessionReportDetails({
 	backHref?: string;
 	showBack?: boolean;
 }) {
+	const queryClient = useQueryClient();
 	const displayTitle = report.session.quizTitle?.trim()
 		? report.session.quizTitle
 		: "Untitled Quiz";
@@ -90,7 +93,11 @@ export function SessionReportDetails({
 									onClick={() => {
 										if (quizLoading) return;
 										setQuizLoading(true);
-										getQuiz(String(report.session.quizId))
+										queryClient
+											.fetchQuery({
+												queryKey: quizQueryKeys.details(report.session.quizId),
+												queryFn: () => getQuiz(String(report.session.quizId)),
+											})
 											.then((q) =>
 												setSelectedQuiz(q as unknown as QuizWithQuestions),
 											)

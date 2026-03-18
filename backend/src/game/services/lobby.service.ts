@@ -284,6 +284,91 @@ export class LobbyService {
         };
     }
 
+    async getHistoryPageForHost(
+        hostId: number,
+        options: {
+            page: number;
+            pageSize: number;
+            quizId?: number;
+            sort?:
+                | "endedAt_desc"
+                | "endedAt_asc"
+                | "players_desc"
+                | "players_asc"
+                | "accuracy_desc"
+                | "accuracy_asc";
+        },
+    ) {
+        const page = Number.isFinite(options.page) ? Math.max(1, options.page) : 1;
+        const pageSize = Number.isFinite(options.pageSize)
+            ? Math.min(100, Math.max(1, options.pageSize))
+            : 20;
+
+        const where: Prisma.GameLobbyWhereInput = {
+            hostId,
+            status: LobbyStatus.CLOSED,
+            report: { isNot: null },
+            ...(options.quizId ? { quizId: options.quizId } : {}),
+        };
+
+        const stableTies: Prisma.GameLobbyOrderByWithRelationInput[] = [
+            { endedAt: "desc" },
+            { id: "desc" },
+        ];
+
+        const sort = options.sort ?? "endedAt_desc";
+        const orderBy: Prisma.GameLobbyOrderByWithRelationInput[] = (() => {
+            switch (sort) {
+                case "endedAt_asc":
+                    return [{ endedAt: "asc" }, { id: "asc" }];
+                case "endedAt_desc":
+                    return stableTies;
+                case "players_asc":
+                    return [{ report: { totalPlayers: "asc" } }, ...stableTies];
+                case "players_desc":
+                    return [{ report: { totalPlayers: "desc" } }, ...stableTies];
+                case "accuracy_asc":
+                    return [{ report: { avgAccuracy: "asc" } }, ...stableTies];
+                case "accuracy_desc":
+                    return [{ report: { avgAccuracy: "desc" } }, ...stableTies];
+                default:
+                    return stableTies;
+            }
+        })();
+
+        const totalItems = await this.prisma.gameLobby.count({ where });
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const lobbies = await this.prisma.gameLobby.findMany({
+            where,
+            include: {
+                quiz: { select: { id: true, title: true } },
+                report: true,
+            },
+            orderBy,
+            skip,
+            take: pageSize,
+        });
+
+        return {
+            items: lobbies.map((l) => ({
+                lobbyId: l.id,
+                quizId: l.quizId,
+                quizTitle: l.quiz?.title ?? "Untitled",
+                createdAt: l.createdAt,
+                endedAt: l.endedAt,
+                totalPlayers: l.report?.totalPlayers ?? 0,
+                avgAccuracy: l.report?.avgAccuracy ?? 0,
+            })),
+            page: safePage,
+            pageSize,
+            totalItems,
+            totalPages,
+        };
+    }
+
     async getSessionReport(lobbyId: number, hostId: number) {
         const lobby = await this.prisma.gameLobby.findFirst({
             where: { id: lobbyId, hostId },
