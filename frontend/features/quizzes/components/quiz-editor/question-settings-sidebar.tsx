@@ -4,13 +4,13 @@ import { useFormContext } from "react-hook-form";
 import {
 	Clock,
 	Star,
-	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
 	Copy,
 	Trash2,
 } from "lucide-react";
 import { QuizFullDetails } from "@/features/quizzes/types";
+import { Select } from "@/components/ui/select";
 
 interface QuestionSettingsSidebarProps {
 	questionIndex: number;
@@ -29,7 +29,10 @@ export default function QuestionSettingsSidebar({
 	onDuplicate,
 	canDelete,
 }: QuestionSettingsSidebarProps) {
-	const { register } = useFormContext<QuizFullDetails>();
+	const { setValue, watch } = useFormContext<QuizFullDetails>();
+
+	const timeLimit = watch(`questions.${questionIndex}.timeLimit`) ?? 30000;
+	const points = watch(`questions.${questionIndex}.points`) ?? 1000;
 
 	return (
 		<div
@@ -56,22 +59,27 @@ export default function QuestionSettingsSidebar({
 						<Clock className="w-4 h-4 mr-2" />
 						Time limit
 					</label>
-					<div className="relative">
-						<select
-							{...register(
+					<Select
+						value={String(timeLimit)}
+						onValueChange={(v) =>
+							setValue(
 								`questions.${questionIndex}.timeLimit`,
-								{ valueAsNumber: true }
-							)}
-							className="w-full appearance-none p-3 bg-gray-700 rounded-md text-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-							<option value={5000}>5 seconds</option>
-							<option value={10000}>10 seconds</option>
-							<option value={20000}>20 seconds</option>
-							<option value={30000}>30 seconds</option>
-							<option value={60000}>1 minute</option>
-							<option value={120000}>2 minutes</option>
-						</select>
-						<ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-					</div>
+								parseInt(v, 10),
+								{ shouldDirty: true, shouldTouch: true },
+							)
+						}
+						options={[
+							{ value: "5000", label: "5 seconds" },
+							{ value: "10000", label: "10 seconds" },
+							{ value: "20000", label: "20 seconds" },
+							{ value: "30000", label: "30 seconds" },
+							{ value: "60000", label: "1 minute" },
+							{ value: "120000", label: "2 minutes" },
+						]}
+						ariaLabel="Time limit"
+						buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
+						menuClassName="border-gray-600"
+					/>
 				</div>
 
 				{/* Points Select */}
@@ -80,18 +88,24 @@ export default function QuestionSettingsSidebar({
 						<Star className="w-4 h-4 mr-2" />
 						Points
 					</label>
-					<div className="relative">
-						<select
-							{...register(`questions.${questionIndex}.points`, {
-								valueAsNumber: true,
-							})}
-							className="w-full appearance-none p-3 bg-gray-700 rounded-md text-white outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-							<option value={0}>No points (0)</option>
-							<option value={1000}>Standard (1000)</option>
-							<option value={2000}>Double points (2000)</option>
-						</select>
-						<ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-					</div>
+					<Select
+						value={String(points)}
+						onValueChange={(v) =>
+							setValue(
+								`questions.${questionIndex}.points`,
+								parseInt(v, 10),
+								{ shouldDirty: true, shouldTouch: true },
+							)
+						}
+						options={[
+							{ value: "0", label: "No points (0)" },
+							{ value: "1000", label: "Standard (1000)" },
+							{ value: "2000", label: "Double points (2000)" },
+						]}
+						ariaLabel="Points"
+						buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
+						menuClassName="border-gray-600"
+					/>
 				</div>
 			</div>
 

@@ -11,6 +11,8 @@
 	--app-border: #374151;    /* gray-700 */
 	--app-accent: #4f46e5;    /* indigo-600 */
 	--app-accent-hover: #6366f1;
+	--app-accent-2: #10b981;  /* emerald-500 */
+	--app-accent-2-hover: #34d399;
 
 	scrollbar-width: thin;
 	scrollbar-color: #4a5565 transparent;

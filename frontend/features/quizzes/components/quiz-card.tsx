@@ -18,10 +18,10 @@ export function QuizCard({ quiz, onCardClick }: QuizCardProps) {
 	const imageAreaClass =
 		"block relative h-40 bg-gray-700 group-hover:opacity-90 transition-opacity";
 	const titleClass =
-		"block group-hover:text-indigo-400 transition-colors w-full text-left";
+		"block group-hover:text-emerald-200 transition-colors w-full text-left";
 
 	return (
-		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-indigo-600">
+		<div className="block bg-gray-800 rounded-lg shadow-md transition-shadow duration-200 border border-gray-700 group overflow-hidden hover:border-emerald-500/50">
 			{/* Image Area */}
 			{onCardClick ? (
 				<button
@@ -94,10 +94,10 @@ export function QuizCard({ quiz, onCardClick }: QuizCardProps) {
 
 					<button
 						disabled={isPending}
-						className={`flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-medium transition-colors shadow-md ${
+						className={`flex items-center space-x-1.5 px-3 py-1.5 bg-linear-to-r from-indigo-600 to-emerald-600 text-white rounded-full text-sm font-medium transition-colors shadow-md shadow-indigo-600/10 ${
 							isPending
 								? "opacity-50 cursor-not-allowed"
-								: "hover:bg-indigo-500"
+								: "hover:from-indigo-500 hover:to-emerald-500"
 						}`}
 						onClick={() => createLobby()}>
 						{isPending ? (

@@ -44,10 +44,10 @@ export function DashboardSidebar() {
 						<Link
 							key={href}
 							href={href}
-							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+							className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
 								isActive
-									? "bg-gray-700 text-white"
-									: "text-gray-400 hover:text-white hover:bg-gray-700/70"
+									? "bg-indigo-600/10 text-white border-indigo-500/30 shadow-[0_0_0_1px_rgba(79,70,229,0.15)]"
+									: "text-gray-400 border-transparent hover:text-white hover:bg-gray-700/70 hover:border-gray-700"
 							}`}
 						>
 							<Icon className="w-5 h-5 shrink-0" aria-hidden />
@@ -61,7 +61,7 @@ export function DashboardSidebar() {
 				<button
 					onClick={handleCreateQuiz}
 					disabled={isPending}
-					className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+					className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-linear-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors shadow-lg shadow-indigo-600/10"
 				>
 					{isPending ? (
 						<Loader2 className="w-4 h-4 animate-spin" aria-hidden />

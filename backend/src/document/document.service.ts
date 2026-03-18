@@ -1,9 +1,9 @@
 import { Injectable, ForbiddenException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { v2 as cloudinary } from "cloudinary";
+import { Prisma, DocumentStatus } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateDocumentDto } from "./dto/create-document.dto";
-import { DocumentStatus } from "../generated/prisma/client";
 
 @Injectable()
 export class DocumentService {
@@ -48,10 +48,47 @@ export class DocumentService {
         });
     }
 
-    async findAll(userId: number) {
+    async findAll(
+        userId: number,
+        options?: {
+            q?: string;
+            sort?: string;
+        },
+    ) {
+        const q = options?.q?.trim();
+        const sort = options?.sort?.trim();
+
+        const where: Prisma.DocumentWhereInput = {
+            userId,
+            ...(q
+                ? {
+                      fileName: { contains: q, mode: "insensitive" },
+                  }
+                : {}),
+        };
+
+        const orderBy: Prisma.DocumentOrderByWithRelationInput[] = (() => {
+            switch (sort) {
+                case "createdAt_asc":
+                    return [{ createdAt: "asc" }, { id: "asc" }];
+                case "createdAt_desc":
+                    return [{ createdAt: "desc" }, { id: "desc" }];
+                case "name_asc":
+                    return [{ fileName: "asc" }, { id: "desc" }];
+                case "name_desc":
+                    return [{ fileName: "desc" }, { id: "desc" }];
+                case "size_asc":
+                    return [{ fileSize: "asc" }, { id: "desc" }];
+                case "size_desc":
+                    return [{ fileSize: "desc" }, { id: "desc" }];
+                default:
+                    return [{ createdAt: "desc" }];
+            }
+        })();
+
         return this.prisma.document.findMany({
-            where: { userId },
-            orderBy: { createdAt: "desc" },
+            where,
+            orderBy,
         });
     }
 

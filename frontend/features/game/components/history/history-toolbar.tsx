@@ -2,6 +2,7 @@
 
 import type { HistorySort } from "@/features/game/api/server-actions";
 import { HistoryQuizFilter } from "./history-quiz-filter";
+import { Select } from "@/components/ui/select";
 
 const SORT_OPTIONS: Array<{ value: HistorySort; label: string }> = [
 	{ value: "endedAt_desc", label: "Newest" },
@@ -32,18 +33,15 @@ export function HistoryToolbar({
 
 			<div className="shrink-0 flex items-center gap-3">
 				<label className="text-xs text-gray-400 hidden sm:block">Sort</label>
-				<select
-					value={sort}
-					onChange={(e) => onChangeSort(e.target.value as HistorySort)}
-					className="rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-					aria-label="Sort sessions"
-				>
-					{SORT_OPTIONS.map((opt) => (
-						<option key={opt.value} value={opt.value}>
-							{opt.label}
-						</option>
-					))}
-				</select>
+				<div className="w-56">
+					<Select
+						value={sort}
+						onValueChange={(v) => onChangeSort(v as HistorySort)}
+						options={SORT_OPTIONS}
+						ariaLabel="Sort sessions"
+						buttonClassName="rounded-lg px-3 py-2"
+					/>
+				</div>
 			</div>
 		</div>
 	);

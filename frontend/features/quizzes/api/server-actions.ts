@@ -25,6 +25,7 @@ export type QuizPageResponse = {
 
 export async function searchQuizzes(options: {
 	q?: string;
+	sort?: string;
 	page: number;
 	pageSize: number;
 }): Promise<QuizPageResponse> {
@@ -33,6 +34,7 @@ export async function searchQuizzes(options: {
 	params.set("page", String(options.page));
 	params.set("pageSize", String(options.pageSize));
 	if (options.q?.trim()) params.set("q", options.q.trim());
+	if (options.sort?.trim()) params.set("sort", options.sort.trim());
 	const { data } = await api.get(`/quiz?${params.toString()}`);
 	return data;
 }
