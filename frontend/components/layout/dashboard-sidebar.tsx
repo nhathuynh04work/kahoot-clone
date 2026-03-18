@@ -61,7 +61,7 @@ export function DashboardSidebar() {
 				<button
 					onClick={handleCreateQuiz}
 					disabled={isPending}
-					className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-linear-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors shadow-lg shadow-indigo-600/10"
+					className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors shadow-lg shadow-indigo-600/10"
 				>
 					{isPending ? (
 						<Loader2 className="w-4 h-4 animate-spin" aria-hidden />

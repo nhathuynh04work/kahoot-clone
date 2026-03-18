@@ -91,39 +91,39 @@ export function FileManager() {
 						<FolderOpen className="w-5 h-5 text-gray-400" />
 						Documents
 					</h3>
+				</div>
 
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-						<div className="relative w-full sm:w-72">
-							<Search
-								className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
-								aria-hidden
-							/>
-							<input
-								value={q}
-								onChange={(e) => setQ(e.target.value)}
-								type="search"
-								placeholder="Search by name…"
-								className="w-full rounded-xl border border-gray-700 bg-gray-800/50 pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
-								aria-label="Search documents by name"
-							/>
-						</div>
+				<div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div className="relative w-full sm:max-w-md">
+						<Search
+							className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+							aria-hidden
+						/>
+						<input
+							value={q}
+							onChange={(e) => setQ(e.target.value)}
+							type="search"
+							placeholder="Search by name…"
+							className="w-full rounded-xl border border-gray-700 bg-gray-800/50 pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+							aria-label="Search documents by name"
+						/>
+					</div>
 
-						<div className="flex items-center gap-3">
-							<label className="text-xs text-gray-400 hidden sm:block">
-								Sort
-							</label>
-							<div className="w-44">
-								<Select
-									value={sort}
-									onValueChange={(v) => {
-										const next = v as DocumentDashboardSort;
-										setSort(next);
-										setParams({ sort: next });
-									}}
-									options={sortOptions}
-									ariaLabel="Sort documents"
-								/>
-							</div>
+					<div className="flex items-center gap-3">
+						<label className="text-xs text-gray-400 hidden sm:block">
+							Sort
+						</label>
+						<div className="w-44">
+							<Select
+								value={sort}
+								onValueChange={(v) => {
+									const next = v as DocumentDashboardSort;
+									setSort(next);
+									setParams({ sort: next });
+								}}
+								options={sortOptions}
+								ariaLabel="Sort documents"
+							/>
 						</div>
 					</div>
 				</div>

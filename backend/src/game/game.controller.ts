@@ -48,6 +48,7 @@ export class GameController {
         @Query("page") page?: string,
         @Query("pageSize") pageSize?: string,
         @Query("quizId") quizId?: string,
+        @Query("q") q?: string,
         @Query("sort")
         sort?:
             | "endedAt_desc"
@@ -61,6 +62,7 @@ export class GameController {
             page: page ? parseInt(page, 10) : 1,
             pageSize: pageSize ? parseInt(pageSize, 10) : 20,
             quizId: quizId ? parseInt(quizId, 10) : undefined,
+            q,
             sort,
         });
     }

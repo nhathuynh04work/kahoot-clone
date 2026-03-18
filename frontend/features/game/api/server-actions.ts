@@ -50,14 +50,14 @@ export async function getRecentSessions(options?: {
 export async function getHistoryPage(options: {
 	page: number;
 	pageSize: number;
-	quizId?: number;
+	q?: string;
 	sort?: HistorySort;
 }): Promise<HistoryPageResponse> {
 	const api = await apiServer();
 	const params = new URLSearchParams();
 	params.set("page", String(options.page));
 	params.set("pageSize", String(options.pageSize));
-	if (options.quizId) params.set("quizId", String(options.quizId));
+	if (options.q) params.set("q", options.q);
 	if (options.sort) params.set("sort", options.sort);
 	const { data } = await api.get(`/game/history/page?${params.toString()}`);
 	return data;

@@ -34,7 +34,7 @@ export function ParsingProgress({
 			</div>
 			<div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
 				<div
-					className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-300 ease-out"
+					className="h-full bg-indigo-500 rounded-full transition-all duration-300 ease-out"
 					style={{ width: `${Math.min(100, progress)}%` }}
 				/>
 			</div>

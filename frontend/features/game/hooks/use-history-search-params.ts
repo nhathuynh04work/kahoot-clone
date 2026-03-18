@@ -12,11 +12,11 @@ export function useHistorySearchParams() {
 		Math.max(1, parseInt(searchParams.get("pageSize") ?? "20", 10) || 20),
 	);
 	const sort = (searchParams.get("sort") as HistorySort | null) ?? "endedAt_desc";
-	const quizId = (() => {
-		const raw = searchParams.get("quizId");
+	const q = (() => {
+		const raw = searchParams.get("q");
 		if (!raw) return undefined;
-		const parsed = parseInt(raw, 10);
-		return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+		const trimmed = raw.trim();
+		return trimmed ? trimmed : undefined;
 	})();
 
 	const setParams = (patch: Record<string, string | undefined>) => {
@@ -28,6 +28,6 @@ export function useHistorySearchParams() {
 		router.replace(`${pathname}?${next.toString()}`);
 	};
 
-	return { page, pageSize, sort, quizId, setParams };
+	return { page, pageSize, sort, q, setParams };
 }
 

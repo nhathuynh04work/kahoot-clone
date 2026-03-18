@@ -60,7 +60,7 @@ export function DocumentCard({
 			onClick={() => selectable && onSelect?.(document)}
 			role={selectable ? "button" : undefined}
 		>
-			<div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-gray-700 to-gray-700/60 border border-gray-600/50 flex items-center justify-center">
+			<div className="shrink-0 w-10 h-10 rounded-lg bg-gray-700 border border-gray-600/50 flex items-center justify-center">
 				<Icon
 					className={cn(
 						"w-5 h-5",

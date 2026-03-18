@@ -290,6 +290,7 @@ export class LobbyService {
             page: number;
             pageSize: number;
             quizId?: number;
+            q?: string;
             sort?:
                 | "endedAt_desc"
                 | "endedAt_asc"
@@ -304,11 +305,22 @@ export class LobbyService {
             ? Math.min(100, Math.max(1, options.pageSize))
             : 20;
 
+        const q = options.q?.trim() ? options.q.trim() : undefined;
         const where: Prisma.GameLobbyWhereInput = {
             hostId,
             status: LobbyStatus.CLOSED,
             report: { isNot: null },
             ...(options.quizId ? { quizId: options.quizId } : {}),
+            ...(q
+                ? {
+                      quiz: {
+                          title: {
+                              contains: q,
+                              mode: "insensitive",
+                          },
+                      },
+                  }
+                : {}),
         };
 
         const stableTies: Prisma.GameLobbyOrderByWithRelationInput[] = [

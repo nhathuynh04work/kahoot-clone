@@ -20,17 +20,6 @@ export default async function DashboardPage({
 	return (
 		<div className="p-4 md:p-8">
 			<div className="max-w-6xl mx-auto">
-				<div className="mb-4 flex items-end justify-between gap-4">
-					<div>
-						<h2 className="text-2xl font-semibold text-white">
-							Your Quizzes
-						</h2>
-						<p className="mt-1 text-sm text-gray-400">
-							Search by title and sort your library.
-						</p>
-					</div>
-				</div>
-
 				<DashboardQuizToolbar />
 
 				{quizzes.length === 0 ? (

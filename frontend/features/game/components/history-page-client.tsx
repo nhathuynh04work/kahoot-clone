@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Clock3, Loader2 } from "lucide-react";
+import { useDebounce } from "use-debounce";
 import { getQuiz } from "@/features/quizzes/api/server-actions";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { QuizDetailsModal } from "@/features/quizzes/components/quiz-details-modal";
@@ -14,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { quizQueryKeys } from "@/features/quizzes/hooks/use-quiz-search-infinite";
 
 export function HistoryPageClient() {
-	const { page, pageSize, sort, quizId, setParams } = useHistorySearchParams();
+	const { page, pageSize, sort, q, setParams } = useHistorySearchParams();
 	const queryClient = useQueryClient();
 
 	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(
@@ -23,7 +24,8 @@ export function HistoryPageClient() {
 	const [quizLoadingId, setQuizLoadingId] = useState<number | null>(null);
 	const [quizError, setQuizError] = useState<string | null>(null);
 
-	const historyQuery = useHistoryPageQuery({ page, pageSize, quizId, sort });
+	const [debouncedQ] = useDebounce(q, 300);
+	const historyQuery = useHistoryPageQuery({ page, pageSize, q: debouncedQ, sort });
 
 	if (historyQuery.isLoading) {
 		return (
@@ -51,14 +53,9 @@ export function HistoryPageClient() {
 	const Toolbar = (
 		<HistoryToolbar
 			sort={sort}
-			quizId={quizId}
+			q={q}
 			onChangeSort={(next) => setParams({ sort: next, page: "1" })}
-			onChangeQuizId={(nextQuizId) =>
-				setParams({
-					quizId: nextQuizId ? String(nextQuizId) : undefined,
-					page: "1",
-				})
-			}
+			onChangeQ={(nextQ) => setParams({ q: nextQ, page: "1" })}
 		/>
 	);
 
@@ -74,8 +71,8 @@ export function HistoryPageClient() {
 						No sessions found
 					</h3>
 					<p className="text-gray-400 mt-2">
-						{quizId
-							? "Try clearing the quiz filter or changing sort."
+						{q?.trim()
+							? "Try clearing the search or changing sort."
 							: "Complete a quiz game to see your session snapshots and reports here."}
 					</p>
 				</div>

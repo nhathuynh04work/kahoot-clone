@@ -10,7 +10,7 @@ export const historyQueryKeys = {
 	page: (args: {
 		page: number;
 		pageSize: number;
-		quizId?: number;
+		q?: string;
 		sort?: HistorySort;
 	}) => [...historyQueryKeys.all, "page", args] as const,
 };
@@ -18,7 +18,7 @@ export const historyQueryKeys = {
 export function useHistoryPageQuery(args: {
 	page: number;
 	pageSize: number;
-	quizId?: number;
+	q?: string;
 	sort?: HistorySort;
 }) {
 	return useQuery<HistoryPageResponse>({

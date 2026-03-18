@@ -33,7 +33,7 @@ export default function TopBar({ user }: { user: User }) {
 				href="/dashboard"
 				className="text-xl font-extrabold shrink-0 tracking-tight"
 			>
-				<span className="text-white">Kahoot</span>
+				<span className="text-white">quiztopia</span>
 				<span className="text-emerald-400">!</span>
 			</Link>
 
@@ -61,7 +61,7 @@ export default function TopBar({ user }: { user: User }) {
 			<div className="ml-auto flex items-center gap-2 shrink-0">
 				<Link
 					href="/"
-					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/10"
+					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/10"
 					title="Join a game with a PIN"
 				>
 					<Gamepad2 className="w-4 h-4" aria-hidden />

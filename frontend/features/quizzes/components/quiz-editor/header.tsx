@@ -57,7 +57,7 @@ export default function Header({ isSaving }: HeaderProps) {
 				<Link
 					href="/dashboard"
 					className="text-xl font-semibold shrink-0">
-					Kahoot!
+					quiztopia!
 				</Link>
 
 				<div className="flex-1 min-w-0 flex justify-center">
