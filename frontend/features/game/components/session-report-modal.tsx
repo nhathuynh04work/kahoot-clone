@@ -73,11 +73,7 @@ export function SessionReportModal({ lobbyId, onClose }: SessionReportModalProps
 									{formatDate(report.session.createdAt)} –{" "}
 									{formatDate(report.session.endedAt)}
 								</p>
-								<p className="text-gray-500 text-xs mt-1">
-									{report.session.endReason === "COMPLETED"
-										? "Completed"
-										: "Ended early"}
-								</p>
+								<p className="text-gray-500 text-xs mt-1">Completed</p>
 							</div>
 
 							{/* Aggregates */}

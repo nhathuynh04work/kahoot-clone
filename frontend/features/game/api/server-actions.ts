@@ -10,7 +10,6 @@ export type SessionListItem = {
 	quizTitle: string;
 	createdAt: string;
 	endedAt: string | null;
-	endReason: string | null;
 	totalPlayers: number;
 	avgAccuracy: number;
 };
@@ -40,7 +39,6 @@ export type SessionReport = {
 		hostId: number;
 		createdAt: string;
 		endedAt: string | null;
-		endReason: string | null;
 	};
 	aggregates: {
 		totalPlayers: number;

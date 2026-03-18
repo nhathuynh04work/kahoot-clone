@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import {
-	AlertTriangle,
 	Calendar,
 	CheckCircle2,
 	Target,
@@ -91,10 +90,9 @@ export function HistorySessionCard({
 	const durationMs =
 		endedAt !== null && createdAt !== null ? endedAt - createdAt : null;
 
-	const isCompleted = item.endReason === "COMPLETED";
-	const StatusIcon = isCompleted ? CheckCircle2 : AlertTriangle;
-	const statusText = isCompleted ? "Completed" : "Ended early";
-	const statusTone = isCompleted ? "text-emerald-500" : "text-amber-400";
+	const StatusIcon = CheckCircle2;
+	const statusText = "Completed";
+	const statusTone = "text-emerald-500";
 
 	const accuracyPct = item.avgAccuracy * 100;
 	const displayTitle = item.quizTitle?.trim() ? item.quizTitle : "Untitled Quiz";

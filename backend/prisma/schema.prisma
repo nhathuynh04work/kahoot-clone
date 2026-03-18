@@ -141,7 +141,6 @@ model GameLobby {
   status    LobbyStatus  @default(CREATED)
   createdAt DateTime     @default(now())
   endedAt   DateTime?
-  endReason LobbyEndReason?
 
   players         GamePlayer[]
   host            User          @relation(fields: [hostId], references: [id])
@@ -149,11 +148,6 @@ model GameLobby {
   report          GameLobbyReport?
   questionReports GameLobbyQuestionReport[]
   playerReports   GameLobbyPlayerReport[]
-}
-
-enum LobbyEndReason {
-  COMPLETED
-  HOST_DISCONNECT
 }
 
 enum LobbyStatus {

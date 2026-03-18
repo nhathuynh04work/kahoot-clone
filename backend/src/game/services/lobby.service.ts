@@ -8,7 +8,6 @@ import {
 } from "@nestjs/common";
 import {
     GameLobby,
-    LobbyEndReason,
     LobbyStatus,
     Prisma,
 } from "../../generated/prisma/client";
@@ -89,10 +88,28 @@ export class LobbyService {
         return updated;
     }
 
-    async finalizeLobbyAndPersistReport(
-        lobbyId: number,
-        endReason: LobbyEndReason,
-    ) {
+    async closeLobbyWithoutReport(lobbyId: number) {
+        const lobby = await this.prisma.gameLobby.findUnique({
+            where: { id: lobbyId },
+        });
+
+        if (!lobby) {
+            throw new NotFoundException(`Lobby ${lobbyId} not found`);
+        }
+
+        await this.prisma.gameLobby.update({
+            where: { id: lobbyId },
+            data: {
+                status: LobbyStatus.CLOSED,
+                endedAt: new Date(),
+            },
+        });
+
+        await this.redis.del(lobbyPinKey(lobby.pin));
+        await this.redis.del(lobbyCurrentQuestionIndexKey(lobbyId));
+    }
+
+    async persistCompletedLobbyReport(lobbyId: number) {
         const existingReport = await this.prisma.gameLobbyReport.findUnique({
             where: { lobbyId },
         });
@@ -191,7 +208,6 @@ export class LobbyService {
                 data: {
                     status: LobbyStatus.CLOSED,
                     endedAt: new Date(),
-                    endReason,
                 },
             });
 
@@ -261,7 +277,6 @@ export class LobbyService {
                 quizTitle: l.quiz?.title ?? "Untitled",
                 createdAt: l.createdAt,
                 endedAt: l.endedAt,
-                endReason: l.endReason,
                 totalPlayers: l.report?.totalPlayers ?? 0,
                 avgAccuracy: l.report?.avgAccuracy ?? 0,
             })),
@@ -300,7 +315,6 @@ export class LobbyService {
                 hostId: lobby.hostId,
                 createdAt: lobby.createdAt,
                 endedAt: lobby.endedAt,
-                endReason: lobby.endReason,
             },
             aggregates: {
                 totalPlayers: lobby.report.totalPlayers,
@@ -349,7 +363,6 @@ export class LobbyService {
             quizId: l.quizId,
             createdAt: l.createdAt,
             endedAt: l.endedAt,
-            endReason: l.endReason,
             totalPlayers: l.report?.totalPlayers ?? 0,
             avgAccuracy: l.report?.avgAccuracy ?? 0,
         }));

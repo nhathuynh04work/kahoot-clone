@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-	AlertTriangle,
 	ArrowLeft,
 	Calendar,
 	CheckCircle2,
@@ -54,10 +53,9 @@ export function SessionReportDetails({
 	);
 	const [quizLoading, setQuizLoading] = useState(false);
 
-	const isCompleted = report.session.endReason === "COMPLETED";
-	const StatusIcon = isCompleted ? CheckCircle2 : AlertTriangle;
-	const statusText = isCompleted ? "Completed" : "Ended early";
-	const statusTone = isCompleted ? "text-emerald-500" : "text-amber-400";
+	const StatusIcon = CheckCircle2;
+	const statusText = "Completed";
+	const statusTone = "text-emerald-500";
 
 	const createdAt = report.session.createdAt
 		? new Date(report.session.createdAt).getTime()
