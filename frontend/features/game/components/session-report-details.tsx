@@ -13,7 +13,7 @@ import type { SessionReport } from "@/features/game/api/server-actions";
 import { cn } from "@/lib/utils";
 import { getQuiz } from "@/features/quizzes/api/server-actions";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
-import { QuizDetailsModal } from "@/features/quizzes/components/quiz-details-modal";
+import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
 import { useQueryClient } from "@tanstack/react-query";
 import { quizQueryKeys } from "@/features/quizzes/hooks/use-quiz-search-infinite";
 import {
@@ -157,7 +157,7 @@ export function SessionReportDetails({
 			<PerQuestionStatsList report={report} />
 
 			{selectedQuiz ? (
-				<QuizDetailsModal
+				<QuizDetailsDrawer
 					quiz={selectedQuiz}
 					onClose={() => setSelectedQuiz(null)}
 				/>

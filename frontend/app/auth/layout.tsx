@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppLogo } from "@/components/layout/app-logo";
 
 export default function AuthLayout({
 	children,
@@ -7,7 +8,7 @@ export default function AuthLayout({
 }) {
 	return (
 		<div className="min-h-screen bg-gray-950 text-white">
-			<div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 items-stretch gap-0 px-4 py-10 lg:grid-cols-2 lg:gap-0 lg:px-0 lg:divide-x lg:divide-gray-800/70">
+			<div className="grid min-h-screen grid-cols-1 items-stretch gap-0 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-gray-800/70">
 				{/* Left panel */}
 				<div className="relative hidden p-10 lg:flex lg:flex-col lg:bg-gray-800/30">
 					<div className="relative">
@@ -17,7 +18,7 @@ export default function AuthLayout({
 						</div>
 
 						<h1 className="mt-6 text-4xl font-black tracking-tight">
-							quiztopia!
+							<AppLogo />
 						</h1>
 						<p className="mt-3 max-w-md text-sm leading-relaxed text-gray-200/80">
 							Create quizzes, host live sessions, and track results with a fast,

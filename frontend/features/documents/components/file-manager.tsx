@@ -1,6 +1,5 @@
 "use client";
 
-import { FolderOpen } from "lucide-react";
 import { Search } from "lucide-react";
 import { PdfUploadZone } from "./pdf-upload-zone";
 import { DocumentCard } from "./document-card";
@@ -64,10 +63,10 @@ export function FileManager() {
 	const usagePercent = (totalSize / MAX_TOTAL_STORAGE_BYTES) * 100;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			{/* Storage usage bar */}
-			<div className="p-4 rounded-lg bg-gray-800 border border-gray-700">
-				<div className="flex justify-between text-sm mb-2">
+			<div className="p-3 rounded-lg bg-gray-800 border border-gray-700">
+				<div className="flex justify-between text-xs mb-1">
 					<span className="text-gray-400">Storage</span>
 					<span className="text-white font-medium">
 						{formatBytes(totalSize)} / {formatBytes(MAX_TOTAL_STORAGE_BYTES)}
@@ -86,13 +85,6 @@ export function FileManager() {
 
 			{/* Document list */}
 			<div>
-				<div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<h3 className="text-lg font-medium text-white flex items-center gap-2">
-						<FolderOpen className="w-5 h-5 text-gray-400" />
-						Documents
-					</h3>
-				</div>
-
 				<div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div className="relative w-full sm:max-w-md">
 						<Search

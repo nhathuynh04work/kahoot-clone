@@ -5,7 +5,7 @@ import { Clock3, Loader2 } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import { getQuiz } from "@/features/quizzes/api/server-actions";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
-import { QuizDetailsModal } from "@/features/quizzes/components/quiz-details-modal";
+import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
 import { HistoryToolbar } from "./history/history-toolbar";
 import { HistoryPagination } from "./history/history-pagination";
 import { HistorySessionList } from "./history/history-session-list";
@@ -122,7 +122,7 @@ export function HistoryPageClient() {
 			{Pagination}
 
 			{selectedQuiz ? (
-				<QuizDetailsModal
+				<QuizDetailsDrawer
 					quiz={selectedQuiz}
 					onClose={() => setSelectedQuiz(null)}
 				/>

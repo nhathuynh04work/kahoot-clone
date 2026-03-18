@@ -6,6 +6,7 @@ import { useRef, useEffect, useState } from "react";
 
 import { Search, LogOut, Gamepad2 } from "lucide-react";
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import { AppLogo } from "@/components/layout/app-logo";
 
 const getInitials = (email: string) => {
 	return email[0]?.toUpperCase() || "?";
@@ -28,13 +29,12 @@ export default function TopBar({ user }: { user: User }) {
 	}, [accountOpen]);
 
 	return (
-		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
+		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0 sticky top-0 z-50">
 			<Link
 				href="/dashboard"
 				className="text-xl font-extrabold shrink-0 tracking-tight"
 			>
-				<span className="text-white">quiztopia</span>
-				<span className="text-emerald-400">!</span>
+				<AppLogo />
 			</Link>
 
 			{/* Search — centered */}

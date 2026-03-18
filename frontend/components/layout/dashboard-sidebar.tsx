@@ -33,8 +33,8 @@ export function DashboardSidebar() {
 	};
 
 	return (
-		<aside className="w-56 shrink-0 border-r border-gray-700 bg-gray-800/50 flex flex-col">
-			<nav className="p-3 flex flex-col gap-1" aria-label="Main navigation">
+		<aside className="w-56 shrink-0 border-r border-gray-700 bg-gray-800/50 flex flex-col sticky top-[58px] z-40 self-stretch">
+			<nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1" aria-label="Main navigation">
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const isActive =
 						href === "/dashboard"

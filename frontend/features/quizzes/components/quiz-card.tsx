@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image"; // 1. Import Next.js Image
-import { Image as ImageIcon, Play } from "lucide-react"; // 2. Rename Lucide icon
+import { Play } from "lucide-react"; // 2. Rename Lucide icon
 import { QuizWithQuestions } from "../types";
 import { useCreateLobby } from "../hooks/use-create-lobby";
 
@@ -33,8 +33,10 @@ export function QuizCard({ quiz, onCardClick }: QuizCardProps) {
 						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 					/>
 				) : (
-					<div className="flex h-full items-center justify-center text-gray-500">
-						<ImageIcon className="w-12 h-12 opacity-50" />
+					<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-indigo-600/20 via-gray-900/10 to-emerald-500/20">
+						<span className="text-4xl md:text-5xl font-black tracking-tight text-emerald-300">
+							q!
+						</span>
 					</div>
 				)}
 
@@ -85,11 +87,11 @@ export function QuizCard({ quiz, onCardClick }: QuizCardProps) {
 					type="button"
 					onClick={onCardClick}
 					disabled={!onCardClick}
-					className="w-full text-left disabled:cursor-not-allowed disabled:opacity-100">
-					<h3 className="text-xl font-semibold text-white mb-2 truncate">
+					className="w-full text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-100">
+					<h3 className="text-lg font-semibold text-white mb-2 truncate">
 						{quiz.title || "Untitled Quiz"}
 					</h3>
-					<p className="text-gray-400">
+					<p className="text-sm text-gray-400">
 						{quiz.questions.length}{" "}
 						{quiz.questions.length === 1 ? "question" : "questions"}
 					</p>

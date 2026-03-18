@@ -87,7 +87,17 @@ export type SessionReport = {
 		incorrectCount: number;
 		correctRate: number;
 		optionCounts: Record<string, number>;
-		question?: { id: number; text: string | null; options: Array<{ id: number; text: string | null }> };
+		question?: {
+			id: number;
+			text: string | null;
+			imageUrl: string | null;
+			options: Array<{
+				id: number;
+				text: string | null;
+				isCorrect: boolean;
+				sortOrder: number;
+			}>;
+		};
 	}>;
 	players: Array<{
 		playerId: number;

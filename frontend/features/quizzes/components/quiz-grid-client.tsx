@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { QuizCard } from "./quiz-card";
-import { QuizDetailsModal } from "./quiz-details-modal";
+import { QuizDetailsDrawer } from "./quiz-details-drawer";
 import { QuizWithQuestions } from "../types";
 
 interface QuizGridClientProps {
@@ -27,7 +27,7 @@ export function QuizGridClient({ quizzes }: QuizGridClientProps) {
 			</div>
 
 			{selectedQuiz && (
-				<QuizDetailsModal
+				<QuizDetailsDrawer
 					quiz={selectedQuiz}
 					onClose={() => setSelectedQuiz(null)}
 				/>
