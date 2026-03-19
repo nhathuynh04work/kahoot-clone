@@ -1,8 +1,8 @@
 "use client";
 
 import { ChangeEvent, ReactNode, useRef, useState } from "react";
-import { useGetSignature } from "../hooks/useGetSignature";
-import { useUploadToCloudinary } from "../hooks/useUploadToCloudinary";
+import { useGetSignature } from "../hooks/use-get-signature";
+import { useUploadToCloudinary } from "../hooks/use-upload-to-cloudinary";
 
 interface UploaderProps {
 	children: (props: {

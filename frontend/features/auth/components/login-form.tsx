@@ -12,7 +12,7 @@ type LoginInput = {
 	password: string;
 };
 
-export default function LoginForm() {
+export function LoginForm() {
 	const {
 		register,
 		handleSubmit,
@@ -33,32 +33,30 @@ export default function LoginForm() {
 		}
 	}
 
-	// Dark theme styles
 	const inputClasses =
-		"w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200";
-	const labelClasses = "block text-sm font-medium text-gray-300 mb-2";
+		"w-full px-4 py-3 bg-gray-950/40 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-transparent transition-all duration-200";
+	const labelClasses = "block text-sm font-semibold text-gray-300 mb-2";
 	const errorClasses = "text-red-400 text-sm mt-1 font-medium";
 
 	return (
-		<div className="bg-gray-800 border border-gray-700 p-8 shadow-xl rounded-xl">
+		<>
 			<form
 				onSubmit={handleSubmit(onSubmit)}
 				className="flex flex-col gap-6">
-				{/* API Error Box */}
 				{apiError && (
-					<div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-center text-sm font-medium">
+					<div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-center text-sm font-medium text-red-300">
 						{apiError}
 					</div>
 				)}
 
-				{/* Email */}
 				<div>
 					<label htmlFor="email" className={labelClasses}>
-						Email Address
+						Email
 					</label>
 					<input
 						id="email"
 						type="email"
+						autoComplete="email"
 						{...register("email", {
 							required: "Email is required",
 						})}
@@ -70,7 +68,6 @@ export default function LoginForm() {
 					)}
 				</div>
 
-				{/* Password */}
 				<div>
 					<label htmlFor="password" className={labelClasses}>
 						Password
@@ -78,6 +75,7 @@ export default function LoginForm() {
 					<input
 						id="password"
 						type="password"
+						autoComplete="current-password"
 						{...register("password", {
 							required: "Password is required",
 						})}
@@ -91,33 +89,31 @@ export default function LoginForm() {
 					)}
 				</div>
 
-				{/* Submit button */}
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-4 rounded-lg font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2">
+					className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:bg-indigo-500 hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2">
 					{isSubmitting ? (
 						<>
 							<Loader2 className="animate-spin" size={20} />
-							Logging in...
+							Signing in…
 						</>
 					) : (
-						"Log In"
+						"Sign in"
 					)}
 				</button>
 			</form>
 
-			{/* Link to Register Page */}
-			<div className="text-center mt-8 pt-6 border-t border-gray-700">
+			<div className="mt-8 border-t border-gray-800 pt-6 text-center">
 				<p className="text-sm text-gray-400">
 					Don&apos;t have an account?{" "}
 					<Link
 						href="/auth/register"
-						className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
-						Sign up
+						className="font-semibold text-indigo-300 hover:text-indigo-200 transition-colors">
+						Create one
 					</Link>
 				</p>
 			</div>
-		</div>
+		</>
 	);
 }

@@ -29,11 +29,15 @@ export class QuizController {
     getQuizzes(
         @User() user: JwtUser,
         @Query("q") q?: string,
+        @Query("sort") sort?: string,
         @Query("page") page?: string,
         @Query("pageSize") pageSize?: string,
     ) {
         const hasQueryPaging =
-            (q && q.trim().length > 0) || page !== undefined || pageSize !== undefined;
+            (q && q.trim().length > 0) ||
+            (sort && sort.trim().length > 0) ||
+            page !== undefined ||
+            pageSize !== undefined;
 
         if (!hasQueryPaging) {
             return this.quizService.getQuizzes(user.id);
@@ -41,6 +45,7 @@ export class QuizController {
 
         return this.quizService.getQuizPage(user.id, {
             q: q?.trim() ? q.trim() : undefined,
+            sort: sort?.trim() ? sort.trim() : undefined,
             page: page ? parseInt(page, 10) : 1,
             pageSize: pageSize ? parseInt(pageSize, 10) : 20,
         });

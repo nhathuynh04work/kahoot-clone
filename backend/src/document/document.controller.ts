@@ -7,6 +7,7 @@ import {
     ParseIntPipe,
     Patch,
     Post,
+    Query,
     Sse,
     UseGuards,
 } from "@nestjs/common";
@@ -33,8 +34,15 @@ export class DocumentController {
     }
 
     @Get()
-    findAll(@User() user: JwtUser) {
-        return this.documentService.findAll(user.id);
+    findAll(
+        @User() user: JwtUser,
+        @Query("q") q?: string,
+        @Query("sort") sort?: string,
+    ) {
+        return this.documentService.findAll(user.id, {
+            q: q?.trim() ? q.trim() : undefined,
+            sort: sort?.trim() ? sort.trim() : undefined,
+        });
     }
 
     @Get("total-size")

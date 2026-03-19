@@ -4,6 +4,7 @@ export type Quiz = {
 	title: string;
 	description?: string;
 	coverUrl?: string;
+	authorName?: string | null;
 	createdAt: Date;
 };
 

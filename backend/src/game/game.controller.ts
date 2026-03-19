@@ -19,7 +19,7 @@ export class GameController {
 
     constructor(private lobbyService: LobbyService) {}
 
-    @Get("history/quiz/:quizId")
+    @Get("report/quiz/:quizId")
     @UseGuards(JwtHttpGuard)
     async getSessionsForQuiz(
         @User() user: JwtUser,
@@ -28,7 +28,7 @@ export class GameController {
         return this.lobbyService.getSessionsForQuiz(quizId, user.id);
     }
 
-    @Get("history")
+    @Get("report")
     @UseGuards(JwtHttpGuard)
     async getRecentSessions(
         @User() user: JwtUser,
@@ -41,13 +41,14 @@ export class GameController {
         });
     }
 
-    @Get("history/page")
+    @Get("report/page")
     @UseGuards(JwtHttpGuard)
-    async getHistoryPage(
+    async getReportPage(
         @User() user: JwtUser,
         @Query("page") page?: string,
         @Query("pageSize") pageSize?: string,
         @Query("quizId") quizId?: string,
+        @Query("q") q?: string,
         @Query("sort")
         sort?:
             | "endedAt_desc"
@@ -57,15 +58,16 @@ export class GameController {
             | "accuracy_desc"
             | "accuracy_asc",
     ) {
-        return this.lobbyService.getHistoryPageForHost(user.id, {
+        return this.lobbyService.getReportPageForHost(user.id, {
             page: page ? parseInt(page, 10) : 1,
             pageSize: pageSize ? parseInt(pageSize, 10) : 20,
             quizId: quizId ? parseInt(quizId, 10) : undefined,
+            q,
             sort,
         });
     }
 
-    @Get("history/:lobbyId")
+    @Get("report/:lobbyId")
     @UseGuards(JwtHttpGuard)
     async getSessionReport(
         @User() user: JwtUser,

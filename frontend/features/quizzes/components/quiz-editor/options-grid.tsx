@@ -8,7 +8,7 @@ interface OptionsGridProps {
 	questionIndex: number;
 }
 
-export default function OptionsGrid({ questionIndex }: OptionsGridProps) {
+export function OptionsGrid({ questionIndex }: OptionsGridProps) {
 	const { control, getValues, setValue } = useFormContext<QuizFullDetails>();
 
 	const { fields, append, remove } = useFieldArray({

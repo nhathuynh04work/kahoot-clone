@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { useCallback, useRef } from "react";
 import { CheckCircle, Circle, Plus } from "lucide-react";
 import { QuizFullDetails } from "@/features/quizzes/types";
-import { optionColors } from "./option-colors";
+import { optionColors } from "@/lib/option-colors";
 
 interface RealOptionCardProps {
 	questionIndex: number;

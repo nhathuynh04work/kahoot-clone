@@ -27,6 +27,7 @@ export class QuizService {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },
             include: {
+                user: { select: { name: true, email: true } },
                 questions: {
                     include: { options: true },
                     orderBy: { sortOrder: "asc" },
@@ -41,31 +42,61 @@ export class QuizService {
                 "Not allowed to see this quiz details",
             );
 
-        return quiz;
+        const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
+        // Keep API payload small: return `authorName` instead of the full user object.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { user: _user, ...rest } = quiz;
+        return { ...rest, authorName };
     }
 
     async getQuizzes(userId: number): Promise<QuizWithQuestions[]> {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");
 
-        return this.prisma.quiz.findMany({
+        const quizzes = await this.prisma.quiz.findMany({
             where: { userId },
-            include: { questions: true },
+            include: {
+                questions: true,
+                user: { select: { name: true, email: true } },
+            },
+        });
+
+        return quizzes.map((quiz) => {
+            const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { user: _user, ...rest } = quiz;
+            return { ...rest, authorName };
         });
     }
 
     async getQuizPage(
         userId: number,
-        options: { q?: string; page: number; pageSize: number },
+        options: { q?: string; page: number; pageSize: number; sort?: string },
     ) {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");
 
         const page = Number.isFinite(options.page) ? Math.max(1, options.page) : 1;
         const pageSize = Number.isFinite(options.pageSize)
-            ? Math.min(50, Math.max(1, options.pageSize))
+            ? Math.min(200, Math.max(1, options.pageSize))
             : 20;
         const q = options.q?.trim();
+        const sort = options.sort?.trim();
+
+        const orderBy: Prisma.QuizOrderByWithRelationInput[] = (() => {
+            switch (sort) {
+                case "createdAt_asc":
+                    return [{ createdAt: "asc" }, { id: "asc" }];
+                case "createdAt_desc":
+                    return [{ createdAt: "desc" }, { id: "desc" }];
+                case "title_asc":
+                    return [{ title: "asc" }, { id: "desc" }];
+                case "title_desc":
+                    return [{ title: "desc" }, { id: "desc" }];
+                default:
+                    return [{ id: "desc" }];
+            }
+        })();
 
         const where: Prisma.QuizWhereInput = {
             userId,
@@ -89,14 +120,24 @@ export class QuizService {
 
         const items = await this.prisma.quiz.findMany({
             where,
-            include: { questions: true },
-            orderBy: [{ id: "desc" }],
+            include: {
+                questions: true,
+                user: { select: { name: true, email: true } },
+            },
+            orderBy,
             skip,
             take: pageSize,
         });
 
+        const quizzes = items.map((quiz) => {
+            const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { user: _user, ...rest } = quiz;
+            return { ...rest, authorName };
+        });
+
         return {
-            items,
+            items: quizzes,
             page: safePage,
             pageSize,
             totalItems,

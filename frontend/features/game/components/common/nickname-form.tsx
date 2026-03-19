@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Loader2, User } from "lucide-react";
-import { registerPlayer } from "../../api/server-actions";
+import { registerPlayer } from "@/features/game/api/server-actions";
 import { toast } from "sonner";
 
 interface NicknameFormProps {

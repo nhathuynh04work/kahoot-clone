@@ -6,6 +6,7 @@ import { useRef, useEffect, useState } from "react";
 
 import { Search, LogOut, Gamepad2 } from "lucide-react";
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import { AppLogo } from "@/components/layout/app-logo";
 
 const getInitials = (email: string) => {
 	return email[0]?.toUpperCase() || "?";
@@ -28,9 +29,12 @@ export default function TopBar({ user }: { user: User }) {
 	}, [accountOpen]);
 
 	return (
-		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
-			<Link href="/dashboard" className="text-xl font-semibold shrink-0">
-				Kahoot!
+		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0 sticky top-0 z-50">
+			<Link
+				href="/dashboard"
+				className="text-xl font-extrabold shrink-0 tracking-tight"
+			>
+				<AppLogo />
 			</Link>
 
 			{/* Search — centered */}
@@ -47,7 +51,7 @@ export default function TopBar({ user }: { user: User }) {
 						id="topbar-search"
 						type="search"
 						placeholder="Search quizzes, files…"
-						className="w-full pl-9 pr-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+						className="w-full pl-9 pr-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-transparent"
 						aria-label="Search"
 					/>
 				</div>
@@ -57,7 +61,7 @@ export default function TopBar({ user }: { user: User }) {
 			<div className="ml-auto flex items-center gap-2 shrink-0">
 				<Link
 					href="/"
-					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors"
+					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/10"
 					title="Join a game with a PIN"
 				>
 					<Gamepad2 className="w-4 h-4" aria-hidden />

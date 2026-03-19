@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-	getDocuments,
+	searchDocuments,
 	getDocumentsTotalSize,
 	deleteDocument,
 	updateDocumentStatus,
@@ -17,10 +17,10 @@ import type { Document } from "../types";
 
 export const documentsQueryKey = ["documents"] as const;
 
-export function useDocuments() {
+export function useDocuments(options?: { q?: string; sort?: string }) {
 	return useQuery({
-		queryKey: documentsQueryKey,
-		queryFn: getDocuments,
+		queryKey: [...documentsQueryKey, options?.q ?? "", options?.sort ?? ""],
+		queryFn: () => searchDocuments({ q: options?.q, sort: options?.sort }),
 	});
 }
 

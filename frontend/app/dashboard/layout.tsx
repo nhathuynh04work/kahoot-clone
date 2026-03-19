@@ -12,11 +12,14 @@ export default async function Layout({ children }: { children: ReactNode }) {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-900 flex flex-col">
+		<div
+			className="h-dvh overflow-hidden bg-gray-900 flex flex-col"
+			style={{ ["--app-header-height" as string]: "58px" }}
+		>
 			<TopBar user={user} />
 			<div className="flex flex-1 min-h-0">
 				<DashboardSidebar />
-				<main className="flex-1 min-w-0 overflow-auto">{children}</main>
+				<main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
 			</div>
 		</div>
 	);

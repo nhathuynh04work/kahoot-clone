@@ -11,7 +11,7 @@ import Image from "next/image";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import { Uploader } from "@/features/img-upload/components/uploader";
 
-export default function ImageUploader({
+export function ImageUploader({
 	questionIndex,
 }: {
 	questionIndex: number;

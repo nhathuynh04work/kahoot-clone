@@ -80,7 +80,7 @@ export default function JoinScreen() {
 	return (
 		<div className="bg-gray-900">
 			<div className="flex flex-col items-center justify-center min-h-screen text-white">
-				<h1 className="text-5xl font-bold mb-10">Kahoot!</h1>
+				<h1 className="text-5xl font-bold mb-10">quiztopia!</h1>
 
 				{/* --- Pin form / Nickname form / Rejoin --- */}
 				{state === "pin" && <PinForm onSuccess={handlePinValid} />}

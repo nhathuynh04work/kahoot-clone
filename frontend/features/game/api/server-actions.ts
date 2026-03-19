@@ -19,7 +19,7 @@ export type RecentSessionsResponse = {
 	nextCursor: number | null;
 };
 
-export type HistorySort =
+export type ReportSort =
 	| "endedAt_desc"
 	| "endedAt_asc"
 	| "players_desc"
@@ -27,7 +27,7 @@ export type HistorySort =
 	| "accuracy_desc"
 	| "accuracy_asc";
 
-export type HistoryPageResponse = {
+export type ReportPageResponse = {
 	items: SessionListItem[];
 	page: number;
 	pageSize: number;
@@ -43,23 +43,23 @@ export async function getRecentSessions(options?: {
 	const params = new URLSearchParams();
 	if (options?.limit) params.set("limit", String(options.limit));
 	if (options?.cursor) params.set("cursor", String(options.cursor));
-	const { data } = await api.get(`/game/history?${params.toString()}`);
+	const { data } = await api.get(`/game/report?${params.toString()}`);
 	return data;
 }
 
-export async function getHistoryPage(options: {
+export async function getReportPage(options: {
 	page: number;
 	pageSize: number;
-	quizId?: number;
-	sort?: HistorySort;
-}): Promise<HistoryPageResponse> {
+	q?: string;
+	sort?: ReportSort;
+}): Promise<ReportPageResponse> {
 	const api = await apiServer();
 	const params = new URLSearchParams();
 	params.set("page", String(options.page));
 	params.set("pageSize", String(options.pageSize));
-	if (options.quizId) params.set("quizId", String(options.quizId));
+	if (options.q) params.set("q", options.q);
 	if (options.sort) params.set("sort", options.sort);
-	const { data } = await api.get(`/game/history/page?${params.toString()}`);
+	const { data } = await api.get(`/game/report/page?${params.toString()}`);
 	return data;
 }
 
@@ -87,7 +87,17 @@ export type SessionReport = {
 		incorrectCount: number;
 		correctRate: number;
 		optionCounts: Record<string, number>;
-		question?: { id: number; text: string | null; options: Array<{ id: number; text: string | null }> };
+		question?: {
+			id: number;
+			text: string | null;
+			imageUrl: string | null;
+			options: Array<{
+				id: number;
+				text: string | null;
+				isCorrect: boolean;
+				sortOrder: number;
+			}>;
+		};
 	}>;
 	players: Array<{
 		playerId: number;
@@ -102,7 +112,7 @@ export type SessionReport = {
 
 export async function getSessionReport(lobbyId: number): Promise<SessionReport> {
 	const api = await apiServer();
-	const { data } = await api.get(`/game/history/${lobbyId}`);
+	const { data } = await api.get(`/game/report/${lobbyId}`);
 	return data;
 }
 
@@ -110,7 +120,7 @@ export async function getSessionsForQuiz(
 	quizId: number
 ): Promise<SessionListItem[]> {
 	const api = await apiServer();
-	const { data } = await api.get(`/game/history/quiz/${quizId}`);
+	const { data } = await api.get(`/game/report/quiz/${quizId}`);
 	return data;
 }
 

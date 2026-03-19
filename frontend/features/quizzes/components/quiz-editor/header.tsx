@@ -6,14 +6,15 @@ import { useState, useCallback } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import type { GeneratedQuestion } from "@/features/ai-quiz-chat/api/client-actions";
-import SettingsModal from "./settings-modal";
+import { SettingsModal } from "./settings-modal";
 import { AiChatbotPanel } from "@/features/ai-quiz-chat";
+import { AppLogo } from "@/components/layout/app-logo";
 
 interface HeaderProps {
 	isSaving: boolean;
 }
 
-export default function Header({ isSaving }: HeaderProps) {
+export function Header({ isSaving }: HeaderProps) {
 	const { watch, control } = useFormContext<QuizFullDetails>();
 	const title = watch("title");
 	const questions = watch("questions") ?? [];
@@ -56,8 +57,8 @@ export default function Header({ isSaving }: HeaderProps) {
 			<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
 				<Link
 					href="/dashboard"
-					className="text-xl font-semibold shrink-0">
-					Kahoot!
+					className="text-xl font-extrabold shrink-0 tracking-tight">
+					<AppLogo />
 				</Link>
 
 				<div className="flex-1 min-w-0 flex justify-center">

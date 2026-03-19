@@ -110,16 +110,16 @@ export function PdfUploadZone({
 					onDragOver={handleDragOver}
 					onClick={() => !isPending && inputRef.current?.click()}
 					className={`
-						flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed
+						flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed
 						transition-colors cursor-pointer
 						${isPending ? "border-indigo-500/50 bg-indigo-500/5 cursor-wait" : "border-gray-600 hover:border-indigo-500/50 hover:bg-gray-800/50"}
 					`}
 				>
 					{isPending ? (
-						<Loader2 className="w-12 h-12 text-indigo-400 animate-spin" />
+						<Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
 					) : (
-						<div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-							<Upload className="w-6 h-6 text-gray-400" />
+						<div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+							<Upload className="w-5 h-5 text-gray-400" />
 						</div>
 					)}
 				<div className="text-center">
@@ -128,9 +128,6 @@ export function PdfUploadZone({
 					</p>
 					<p className="text-sm text-gray-400 mt-1">
 						{formatBytes(MAX_FILE_SIZE_BYTES)} max • {formatBytes(remainingBytes)} free
-					</p>
-					<p className="text-xs text-gray-500 mt-1">
-						Very long documents may be rejected — keep files concise for best results
 					</p>
 				</div>
 				</div>
