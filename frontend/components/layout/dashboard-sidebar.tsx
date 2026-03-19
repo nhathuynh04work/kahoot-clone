@@ -10,7 +10,7 @@ import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 const navItems = [
 	{ href: "/dashboard", label: "Quizzes", icon: LayoutGrid },
 	{ href: "/dashboard/files", label: "Files", icon: FileText },
-	{ href: "/dashboard/history", label: "History", icon: History },
+	{ href: "/dashboard/report", label: "Reports", icon: History },
 ] as const;
 
 export function DashboardSidebar() {

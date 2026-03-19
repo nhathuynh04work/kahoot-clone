@@ -36,7 +36,7 @@ export default function AuthLayout({
 							</li>
 							<li className="flex items-start gap-3">
 								<span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-indigo-300" />
-								<span>Review history and performance at a glance.</span>
+								<span>Review reports and performance at a glance.</span>
 							</li>
 						</ul>
 					</div>

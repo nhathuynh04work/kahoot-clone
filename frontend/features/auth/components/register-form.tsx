@@ -13,7 +13,7 @@ type RegisterInput = {
 	name?: string;
 };
 
-export default function RegisterForm() {
+export function RegisterForm() {
 	const {
 		register,
 		handleSubmit,

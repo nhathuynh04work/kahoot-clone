@@ -22,7 +22,7 @@ type SettingsFormValues = Pick<
 	"title" | "description" | "coverUrl"
 >;
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
+export function SettingsModal({ onClose }: SettingsModalProps) {
 	const [isUploading, setIsUploading] = useState(false);
 	const { getValues, setValue: setParentValue } =
 		useFormContext<QuizFullDetails>();

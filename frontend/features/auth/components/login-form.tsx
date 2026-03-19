@@ -12,7 +12,7 @@ type LoginInput = {
 	password: string;
 };
 
-export default function LoginForm() {
+export function LoginForm() {
 	const {
 		register,
 		handleSubmit,

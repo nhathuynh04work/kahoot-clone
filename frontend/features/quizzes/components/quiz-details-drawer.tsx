@@ -3,10 +3,10 @@
 import { useCallback, useState } from "react";
 import { X, Loader2, Play } from "lucide-react";
 import Link from "next/link";
-import type { QuizWithQuestions } from "../types";
-import { useCreateLobby } from "../hooks/use-create-lobby";
-import { useFullQuiz } from "../hooks/use-full-quiz";
-import { useQuizSessions } from "../hooks/use-quiz-sessions";
+import type { QuizWithQuestions } from "@/features/quizzes/types";
+import { useCreateLobby } from "@/features/quizzes/hooks/use-create-lobby";
+import { useFullQuiz } from "@/features/quizzes/hooks/use-full-quiz";
+import { useQuizSessions } from "@/features/quizzes/hooks/use-quiz-sessions";
 import { QuestionsPane } from "./quiz-details-modal-questions-pane";
 import { StatsPane } from "./quiz-details-modal-stats-pane";
 

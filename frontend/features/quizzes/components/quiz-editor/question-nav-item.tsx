@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Image as LucideImage } from "lucide-react";
 import Image from "next/image";
-import { QuestionWithOptions } from "../../types";
+import { QuestionWithOptions } from "@/features/quizzes/types";
 
 interface QuestionNavItemProps {
 	question: QuestionWithOptions;
@@ -10,7 +10,7 @@ interface QuestionNavItemProps {
 	isActive: boolean;
 }
 
-export default function QuestionNavItem({
+export function QuestionNavItem({
 	question,
 	index,
 	isActive,

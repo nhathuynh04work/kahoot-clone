@@ -6,16 +6,16 @@ import { useDebounce } from "use-debounce";
 import { getQuiz } from "@/features/quizzes/api/server-actions";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
-import { HistoryToolbar } from "./history/history-toolbar";
-import { HistoryPagination } from "./history/history-pagination";
-import { HistorySessionList } from "./history/history-session-list";
-import { useHistorySearchParams } from "../hooks/use-history-search-params";
-import { useHistoryPageQuery } from "../hooks/use-history-queries";
+import { ReportToolbar } from "./report-toolbar";
+import { ReportPagination } from "./report-pagination";
+import { ReportSessionList } from "./report-session-list";
+import { useReportSearchParams } from "@/features/game/hooks/use-report-search-params";
+import { useReportPageQuery } from "@/features/game/hooks/use-report-queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { quizQueryKeys } from "@/features/quizzes/hooks/use-quiz-search-infinite";
 
-export function HistoryPageClient() {
-	const { page, pageSize, sort, q, setParams } = useHistorySearchParams();
+export function ReportPageClient() {
+	const { page, pageSize, sort, q, setParams } = useReportSearchParams();
 	const queryClient = useQueryClient();
 
 	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(
@@ -25,9 +25,9 @@ export function HistoryPageClient() {
 	const [quizError, setQuizError] = useState<string | null>(null);
 
 	const [debouncedQ] = useDebounce(q, 300);
-	const historyQuery = useHistoryPageQuery({ page, pageSize, q: debouncedQ, sort });
+	const reportQuery = useReportPageQuery({ page, pageSize, q: debouncedQ, sort });
 
-	if (historyQuery.isLoading) {
+	if (reportQuery.isLoading) {
 		return (
 			<div className="flex items-center justify-center py-16">
 				<Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
@@ -35,11 +35,11 @@ export function HistoryPageClient() {
 		);
 	}
 
-	const data = historyQuery.data;
+	const data = reportQuery.data;
 	const items = data?.items ?? [];
 
 	const Pagination = data ? (
-		<HistoryPagination
+		<ReportPagination
 			page={data.page}
 			totalPages={data.totalPages}
 			totalItems={data.totalItems}
@@ -51,7 +51,7 @@ export function HistoryPageClient() {
 	) : null;
 
 	const Toolbar = (
-		<HistoryToolbar
+		<ReportToolbar
 			sort={sort}
 			q={q}
 			onChangeSort={(next) => setParams({ sort: next, page: "1" })}
@@ -85,9 +85,9 @@ export function HistoryPageClient() {
 			{Toolbar}
 
 			<div className="space-y-4">
-				{historyQuery.isError ? (
+				{reportQuery.isError ? (
 					<div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-						Failed to load history.
+						Failed to load reports.
 					</div>
 				) : null}
 				{quizError ? (
@@ -95,10 +95,10 @@ export function HistoryPageClient() {
 						{quizError}
 					</div>
 				) : null}
-				<HistorySessionList
+				<ReportSessionList
 					items={items}
 					quizTitleLoadingId={quizLoadingId}
-					hrefForLobbyId={(lobbyId) => `/dashboard/history/${lobbyId}`}
+					hrefForLobbyId={(lobbyId) => `/dashboard/report/${lobbyId}`}
 					onOpenQuizDetails={(nextQuizId) => {
 						if (quizLoadingId !== null) return;
 						setQuizError(null);

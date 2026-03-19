@@ -1,8 +1,8 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
-import type { Option, Question } from "../types";
-import { optionColors } from "./quiz-editor/option-colors";
+import type { Option, Question } from "@/features/quizzes/types";
+import { optionColors } from "@/lib/option-colors";
 
 export function QuestionPreview({
 	question,

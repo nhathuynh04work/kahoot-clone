@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
-import { getValidLobby } from "../../api/server-actions";
+import { getValidLobby } from "@/features/game/api/server-actions";
 import { toast } from "sonner";
 
 interface PinFormProps {

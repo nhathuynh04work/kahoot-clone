@@ -1,4 +1,4 @@
-import RegisterForm from "@/features/auth/components/register-form";
+import { RegisterForm } from "@/features/auth/components/register-form";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { redirect } from "next/navigation";
 

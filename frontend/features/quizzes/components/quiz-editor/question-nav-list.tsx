@@ -15,8 +15,8 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { QuestionWithOptions } from "@/features/quizzes/types";
-import QuestionNavItem from "./question-nav-item";
-import SortableQuestionNavItem from "./sortable-question-nav-item";
+import { QuestionNavItem } from "./question-nav-item";
+import { SortableQuestionNavItem } from "./sortable-question-nav-item";
 import { Plus } from "lucide-react";
 
 interface QuestionNavListProps {
@@ -27,7 +27,7 @@ interface QuestionNavListProps {
 	onMoveQuestion?: (fromIndex: number, toIndex: number) => void;
 }
 
-export default function QuestionNavList({
+export function QuestionNavList({
 	questions,
 	activeQuestionId,
 	onQuestionSelect,

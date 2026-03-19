@@ -5,7 +5,7 @@ import { useDebounce } from "use-debounce";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { useQuizSearchInfiniteQuery } from "@/features/quizzes/hooks/use-quiz-search-infinite";
 
-export function HistoryQuizFilter({
+export function ReportQuizFilter({
 	quizId,
 	onChangeQuizId,
 }: {
@@ -152,4 +152,3 @@ export function HistoryQuizFilter({
 		</div>
 	);
 }
-

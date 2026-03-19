@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image"; // 1. Import Next.js Image
 import { Play } from "lucide-react"; // 2. Rename Lucide icon
-import { QuizWithQuestions } from "../types";
-import { useCreateLobby } from "../hooks/use-create-lobby";
+import { QuizWithQuestions } from "@/features/quizzes/types";
+import { useCreateLobby } from "@/features/quizzes/hooks/use-create-lobby";
 
 interface QuizCardProps {
 	quiz: QuizWithQuestions;

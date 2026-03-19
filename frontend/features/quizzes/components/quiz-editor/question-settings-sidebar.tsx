@@ -21,7 +21,7 @@ interface QuestionSettingsSidebarProps {
 	canDelete: boolean;
 }
 
-export default function QuestionSettingsSidebar({
+export function QuestionSettingsSidebar({
 	questionIndex,
 	isOpen,
 	onToggle,

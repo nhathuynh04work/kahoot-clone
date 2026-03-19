@@ -7,13 +7,15 @@ import {
 	ResponsiveContainer,
 } from "recharts";
 
-export function HistoryMiniAccuracyChart({
-	value,
-	label,
-}: {
+export interface ReportMiniAccuracyChartProps {
 	value: number; // 0..1
 	label?: string;
-}) {
+}
+
+export function ReportMiniAccuracyChart({
+	value,
+	label,
+}: ReportMiniAccuracyChartProps) {
 	const safe = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 	const percent = safe * 100;
 	const data = [{ name: label, value: percent }];
@@ -32,8 +34,8 @@ export function HistoryMiniAccuracyChart({
 					<RadialBar
 						dataKey="value"
 						cornerRadius={999}
-						background={{ fill: "rgba(55, 65, 81, 0.8)" }} // gray-700-ish
-						fill="#6366f1" // indigo-500
+						background={{ fill: "rgba(55, 65, 81, 0.8)" }}
+						fill="#6366f1"
 					/>
 				</RadialBarChart>
 			</ResponsiveContainer>
@@ -50,4 +52,3 @@ export function HistoryMiniAccuracyChart({
 		</div>
 	);
 }
-

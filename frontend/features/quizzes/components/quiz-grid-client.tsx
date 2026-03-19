@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { QuizCard } from "./quiz-card";
 import { QuizDetailsDrawer } from "./quiz-details-drawer";
-import { QuizWithQuestions } from "../types";
+import { QuizWithQuestions } from "@/features/quizzes/types";
 
 interface QuizGridClientProps {
 	quizzes: QuizWithQuestions[];

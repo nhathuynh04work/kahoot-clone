@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { QuestionWithOptions } from "@/features/quizzes/types";
-import QuestionNavItem from "./question-nav-item";
+import { QuestionNavItem } from "./question-nav-item";
 
 interface SortableQuestionNavItemProps {
 	id: number;
@@ -13,7 +13,7 @@ interface SortableQuestionNavItemProps {
 	onSelect: () => void;
 }
 
-export default function SortableQuestionNavItem({
+export function SortableQuestionNavItem({
 	id,
 	question,
 	index,

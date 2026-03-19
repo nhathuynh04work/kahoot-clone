@@ -11,27 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import type { SessionListItem } from "@/features/game/api/server-actions";
 import { cn } from "@/lib/utils";
-import { HistoryMiniAccuracyChart } from "./history-mini-accuracy-chart";
-
-function formatDate(iso: string | null) {
-	if (!iso) return "—";
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-}
-
-function formatDurationMs(ms: number | null) {
-	if (ms === null || !Number.isFinite(ms) || ms <= 0) return "—";
-	const totalSeconds = Math.round(ms / 1000);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
-	if (minutes <= 0) return `${seconds}s`;
-	return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
-}
+import { formatDate, formatDurationMs } from "@/lib/format";
+import { ReportMiniAccuracyChart } from "./mini-accuracy-chart";
 
 function MetricChip({
 	icon: Icon,
@@ -63,19 +44,21 @@ function MetricChip({
 	);
 }
 
-export function HistorySessionCard({
-	item,
-	href,
-	onClick,
-	onQuizTitleClick,
-	quizTitleLoading = false,
-}: {
+export interface ReportSessionCardProps {
 	item: SessionListItem;
 	href?: string;
 	onClick?: () => void;
 	onQuizTitleClick?: () => void;
 	quizTitleLoading?: boolean;
-}) {
+}
+
+export function ReportSessionCard({
+	item,
+	href,
+	onClick,
+	onQuizTitleClick,
+	quizTitleLoading = false,
+}: ReportSessionCardProps) {
 	const router = useRouter();
 	const endedIso = item.endedAt ?? null;
 	const createdIso = item.createdAt ?? null;
@@ -171,7 +154,7 @@ export function HistorySessionCard({
 							</div>
 
 							<div className="shrink-0 hidden sm:block">
-								<HistoryMiniAccuracyChart value={item.avgAccuracy} />
+								<ReportMiniAccuracyChart value={item.avgAccuracy} />
 							</div>
 						</div>
 
@@ -194,7 +177,7 @@ export function HistorySessionCard({
 						</div>
 
 						<div className="mt-3 sm:hidden">
-							<HistoryMiniAccuracyChart value={item.avgAccuracy} />
+							<ReportMiniAccuracyChart value={item.avgAccuracy} />
 						</div>
 					</div>
 				</div>
@@ -215,4 +198,3 @@ export function HistorySessionCard({
 		</div>
 	);
 }
-

@@ -1,7 +1,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { HistorySort } from "@/features/game/api/server-actions";
+import type { ReportSort } from "@/features/game/api/server-actions";
 
-export function useHistorySearchParams() {
+export function useReportSearchParams() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -11,7 +11,7 @@ export function useHistorySearchParams() {
 		50,
 		Math.max(1, parseInt(searchParams.get("pageSize") ?? "20", 10) || 20),
 	);
-	const sort = (searchParams.get("sort") as HistorySort | null) ?? "endedAt_desc";
+	const sort = (searchParams.get("sort") as ReportSort | null) ?? "endedAt_desc";
 	const q = (() => {
 		const raw = searchParams.get("q");
 		if (!raw) return undefined;
@@ -30,4 +30,3 @@ export function useHistorySearchParams() {
 
 	return { page, pageSize, sort, q, setParams };
 }
-

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import type { QuizFullDetails, QuizWithQuestions, QuestionWithOptions } from "../types";
+import type { QuizFullDetails, QuizWithQuestions, QuestionWithOptions } from "@/features/quizzes/types";
 import { QuestionPreview } from "./question-preview";
 
 export type QuestionsPaneProps = {

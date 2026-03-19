@@ -9,17 +9,17 @@ import {
 	useWatch,
 } from "react-hook-form";
 import { useDebounce } from "use-debounce";
-import QuestionNavList from "./question-nav-list";
-import QuestionEditor from "./question-editor";
-import QuestionSettingsSidebar from "./question-settings-sidebar";
-import Header from "./header";
+import { QuestionNavList } from "./question-nav-list";
+import { QuestionEditor } from "./question-editor";
+import { QuestionSettingsSidebar } from "./question-settings-sidebar";
+import { Header } from "./header";
 import { useUpdateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 
 interface QuizEditorProps {
 	quiz: QuizFullDetails;
 }
 
-export default function QuizEditor({ quiz }: QuizEditorProps) {
+export function QuizEditor({ quiz }: QuizEditorProps) {
 	const methods = useForm<QuizFullDetails>({
 		defaultValues: {
 			...quiz,

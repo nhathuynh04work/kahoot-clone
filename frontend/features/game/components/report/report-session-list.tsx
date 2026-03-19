@@ -1,9 +1,9 @@
 "use client";
 
-import { HistorySessionCard } from "../history-session-card";
+import { ReportSessionCard } from "./session-card";
 import type { SessionListItem } from "@/features/game/api/server-actions";
 
-export function HistorySessionList({
+export function ReportSessionList({
 	items,
 	onOpenQuizDetails,
 	quizTitleLoadingId,
@@ -17,7 +17,7 @@ export function HistorySessionList({
 	return (
 		<div className="space-y-4">
 			{items.map((item) => (
-				<HistorySessionCard
+				<ReportSessionCard
 					key={item.lobbyId}
 					item={item}
 					href={hrefForLobbyId(item.lobbyId)}
@@ -28,4 +28,3 @@ export function HistorySessionList({
 		</div>
 	);
 }
-

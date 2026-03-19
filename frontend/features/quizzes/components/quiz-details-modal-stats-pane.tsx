@@ -5,24 +5,14 @@ import type {
 	SessionListItem,
 	SessionReport,
 } from "@/features/game/api/server-actions";
-import { HistorySessionCard } from "@/features/game/components/history-session-card";
+import { ReportSessionCard } from "@/features/game/components/report";
 import {
 	LeaderboardList,
 	PerQuestionAccuracyChart,
 	PerQuestionStatsList,
 	SessionStatTiles,
-} from "@/features/game/components/session-report-blocks";
-
-function formatDate(iso: string | null) {
-	if (!iso) return "—";
-	return new Date(iso).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-}
+} from "@/features/game/components/session-report";
+import { formatDate } from "@/lib/format";
 
 type StatsPaneProps = {
 	sessions: SessionListItem[] | null;
@@ -74,7 +64,7 @@ export function StatsPane({
 					</p>
 					{sessions.map((s) => (
 						<div key={s.lobbyId}>
-							<HistorySessionCard
+							<ReportSessionCard
 								item={{
 									...s,
 									quizTitle: `${formatDate(s.endedAt ?? s.createdAt)}`,

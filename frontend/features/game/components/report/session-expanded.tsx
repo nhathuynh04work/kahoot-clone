@@ -3,40 +3,14 @@
 import { useMemo } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { StatTile } from "@/components/ui/stat-tile";
 import { useSessionReportQuery } from "@/features/game/hooks/use-session-report-query";
 
-function StatTile({
-	label,
-	value,
-	tone = "default",
-}: {
-	label: string;
-	value: React.ReactNode;
-	tone?: "default" | "accent";
-}) {
-	return (
-		<div
-			className={cn(
-				"rounded-lg border p-3",
-				"bg-gray-900/40 border-gray-700",
-				tone === "accent" && "border-indigo-500/40",
-			)}
-		>
-			<p className="text-gray-400 text-xs">{label}</p>
-			<p
-				className={cn(
-					"mt-1 font-semibold text-white tabular-nums",
-					tone === "accent" && "text-indigo-300",
-				)}
-			>
-				{value}
-			</p>
-		</div>
-	);
+export interface ReportSessionExpandedProps {
+	lobbyId: number;
 }
 
-export function HistorySessionExpanded({ lobbyId }: { lobbyId: number }) {
+export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 	const reportQuery = useSessionReportQuery(lobbyId);
 	const report = reportQuery.data;
 
@@ -131,11 +105,10 @@ export function HistorySessionExpanded({ lobbyId }: { lobbyId: number }) {
 					</ResponsiveContainer>
 				</div>
 				<p className="mt-2 text-xs text-gray-500">
-					Tip: open “View report” for full details (leaderboard, per-question
+					Tip: open "View report" for full details (leaderboard, per-question
 					breakdown).
 				</p>
 			</div>
 		</div>
 	);
 }
-

@@ -6,7 +6,7 @@ import { useState, useCallback } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import type { GeneratedQuestion } from "@/features/ai-quiz-chat/api/client-actions";
-import SettingsModal from "./settings-modal";
+import { SettingsModal } from "./settings-modal";
 import { AiChatbotPanel } from "@/features/ai-quiz-chat";
 import { AppLogo } from "@/components/layout/app-logo";
 
@@ -14,7 +14,7 @@ interface HeaderProps {
 	isSaving: boolean;
 }
 
-export default function Header({ isSaving }: HeaderProps) {
+export function Header({ isSaving }: HeaderProps) {
 	const { watch, control } = useFormContext<QuizFullDetails>();
 	const title = watch("title");
 	const questions = watch("questions") ?? [];

@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { useCallback, useRef } from "react";
 
-export default function QuestionTextInput({
+export function QuestionTextInput({
 	questionIndex,
 }: {
 	questionIndex: number;

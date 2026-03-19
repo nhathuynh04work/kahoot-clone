@@ -1,5 +1,5 @@
 import { getSessionReport } from "@/features/game/api/server-actions";
-import { SessionReportDetails } from "@/features/game/components/session-report-details";
+import { SessionReportDetails } from "@/features/game/components/session-report";
 
 export default async function SessionDetailPage({
 	params,
@@ -39,4 +39,3 @@ export default async function SessionDetailPage({
 		);
 	}
 }
-

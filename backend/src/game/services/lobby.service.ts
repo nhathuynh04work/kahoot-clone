@@ -284,7 +284,7 @@ export class LobbyService {
         };
     }
 
-    async getHistoryPageForHost(
+    async getReportPageForHost(
         hostId: number,
         options: {
             page: number;

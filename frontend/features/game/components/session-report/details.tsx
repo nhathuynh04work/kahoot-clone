@@ -16,36 +16,23 @@ import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
 import { useQueryClient } from "@tanstack/react-query";
 import { quizQueryKeys } from "@/features/quizzes/hooks/use-quiz-search-infinite";
-import {
-	LeaderboardList,
-	PerQuestionAccuracyChart,
-	PerQuestionStatsList,
-	SessionStatTiles,
-} from "./session-report-blocks";
+import { LeaderboardList } from "./leaderboard-list";
+import { PerQuestionAccuracyChart } from "./per-question-accuracy-chart";
+import { PerQuestionStatsList } from "./per-question-stats-list";
+import { SessionStatTiles } from "./stat-tiles";
+import { formatDateTime, formatDurationMs } from "@/lib/format";
 
-function formatDateTime(iso: string | null) {
-	if (!iso) return "—";
-	return new Date(iso).toLocaleString();
-}
-
-function formatDurationMs(ms: number | null) {
-	if (ms === null || !Number.isFinite(ms) || ms <= 0) return "—";
-	const totalSeconds = Math.round(ms / 1000);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
-	if (minutes <= 0) return `${seconds}s`;
-	return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+export interface SessionReportDetailsProps {
+	report: SessionReport;
+	backHref?: string;
+	showBack?: boolean;
 }
 
 export function SessionReportDetails({
 	report,
-	backHref = "/dashboard/history",
+	backHref = "/dashboard/report",
 	showBack = true,
-}: {
-	report: SessionReport;
-	backHref?: string;
-	showBack?: boolean;
-}) {
+}: SessionReportDetailsProps) {
 	const queryClient = useQueryClient();
 	const displayTitle = report.session.quizTitle?.trim()
 		? report.session.quizTitle
@@ -77,7 +64,7 @@ export function SessionReportDetails({
 					className="inline-flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
 				>
 					<ArrowLeft className="w-4 h-4" />
-					Back to history
+					Back to reports
 				</Link>
 			)}
 
@@ -165,4 +152,3 @@ export function SessionReportDetails({
 		</div>
 	);
 }
-

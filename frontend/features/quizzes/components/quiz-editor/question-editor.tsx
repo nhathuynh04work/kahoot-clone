@@ -1,16 +1,16 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import QuestionTextInput from "./question-text-input";
-import ImageUploader from "./image-uploader";
-import OptionsGrid from "./options-grid";
+import { QuestionTextInput } from "./question-text-input";
+import { ImageUploader } from "./image-uploader";
+import { OptionsGrid } from "./options-grid";
 import { QuizFullDetails } from "@/features/quizzes/types";
 
 interface QuestionEditorProps {
 	questionIndex: number;
 }
 
-export default function QuestionEditor({ questionIndex }: QuestionEditorProps) {
+export function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 	const { watch } = useFormContext<QuizFullDetails>();
 	const question = watch(`questions.${questionIndex}`);
 

@@ -1,6 +1,6 @@
 "use client";
 
-export function HistoryPagination({
+export function ReportPagination({
 	page,
 	totalPages,
 	totalItems,
@@ -42,4 +42,3 @@ export function HistoryPagination({
 		</div>
 	);
 }
-

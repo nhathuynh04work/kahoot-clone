@@ -1,10 +1,10 @@
 "use client";
 
-import type { HistorySort } from "@/features/game/api/server-actions";
+import type { ReportSort } from "@/features/game/api/server-actions";
 import { Search, X } from "lucide-react";
 import { Select } from "@/components/ui/select";
 
-const SORT_OPTIONS: Array<{ value: HistorySort; label: string }> = [
+const SORT_OPTIONS: Array<{ value: ReportSort; label: string }> = [
 	{ value: "endedAt_desc", label: "Newest" },
 	{ value: "endedAt_asc", label: "Oldest" },
 	{ value: "players_desc", label: "Players (high → low)" },
@@ -13,14 +13,14 @@ const SORT_OPTIONS: Array<{ value: HistorySort; label: string }> = [
 	{ value: "accuracy_asc", label: "Accuracy (low → high)" },
 ];
 
-export function HistoryToolbar({
+export function ReportToolbar({
 	sort,
 	onChangeSort,
 	q,
 	onChangeQ,
 }: {
-	sort: HistorySort;
-	onChangeSort: (sort: HistorySort) => void;
+	sort: ReportSort;
+	onChangeSort: (sort: ReportSort) => void;
 	q?: string;
 	onChangeQ: (q: string | undefined) => void;
 }) {
@@ -36,7 +36,7 @@ export function HistoryToolbar({
 					onChange={(e) => onChangeQ(e.target.value)}
 					placeholder="Search quiz titles…"
 					className="w-full rounded-xl border border-gray-700 bg-gray-800/50 pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-gray-500 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
-					aria-label="Search history by quiz title"
+					aria-label="Search reports by quiz title"
 				/>
 				{q?.trim() ? (
 					<button
@@ -55,7 +55,7 @@ export function HistoryToolbar({
 				<div className="w-44">
 					<Select
 						value={sort}
-						onValueChange={(v) => onChangeSort(v as HistorySort)}
+						onValueChange={(v) => onChangeSort(v as ReportSort)}
 						options={SORT_OPTIONS}
 						ariaLabel="Sort sessions"
 						buttonClassName="rounded-lg px-3 py-2"
@@ -65,4 +65,3 @@ export function HistoryToolbar({
 		</div>
 	);
 }
-
