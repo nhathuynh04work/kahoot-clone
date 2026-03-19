@@ -5,11 +5,11 @@ import { QuizCard } from "./quiz-card";
 import { QuizDetailsDrawer } from "./quiz-details-drawer";
 import { QuizWithQuestions } from "@/features/quizzes/types";
 
-interface QuizGridClientProps {
+interface QuizGridProps {
 	quizzes: QuizWithQuestions[];
 }
 
-export function QuizGridClient({ quizzes }: QuizGridClientProps) {
+export function QuizGrid({ quizzes }: QuizGridProps) {
 	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(
 		null
 	);

@@ -1,6 +1,6 @@
 import { searchQuizzes } from "@/features/quizzes/api/server-actions";
 import { DashboardQuizToolbar } from "@/features/quizzes/components/dashboard-quiz-toolbar";
-import { QuizGridClient } from "@/features/quizzes/components/quiz-grid-client";
+import { QuizGrid } from "@/features/quizzes/components/quiz-grid";
 
 export default async function DashboardPage({
 	searchParams,
@@ -33,7 +33,7 @@ export default async function DashboardPage({
 						</p>
 					</div>
 				) : (
-					<QuizGridClient quizzes={quizzes} />
+					<QuizGrid quizzes={quizzes} />
 				)}
 			</div>
 		</div>
