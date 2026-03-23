@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ChatMessage, MockGeneratedQuestion } from "../types";
 import type { GeneratedQuestion } from "../api/client-actions";
 import type { AttachDocument } from "../components/document-attach-menu";
 import { MAX_CHAT_MESSAGES } from "../constants";
 import { generateQuestions, getQuizChat } from "../api/client-actions";
-import { useDocuments, useUploadDocument, useDocumentParser } from "@/features/documents/hooks/use-documents";
+import {
+	documentsQueryKey,
+	useDocuments,
+	useUploadDocument,
+	useDocumentParser,
+} from "@/features/documents/hooks/use-documents";
 import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
 
 const INITIAL_MESSAGE: ChatMessage = {
@@ -27,6 +33,9 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 	const [input, setInput] = useState("");
 	const [docPopupOpen, setDocPopupOpen] = useState(false);
 	const [selectedDoc, setSelectedDoc] = useState<AttachDocument | null>(null);
+	const [activeParsingDocId, setActiveParsingDocId] = useState<number | null>(null);
+	const parsingStartedAtRef = useRef<number | null>(null);
+	const didStallResetRef = useRef(false);
 	const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 	const [generatedQuestionsByMessageId, setGeneratedQuestionsByMessageId] = useState<
 		Record<string, MockGeneratedQuestion[]>
@@ -38,10 +47,11 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 	const [isGenerating, setIsGenerating] = useState(false);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const attachButtonRef = useRef<HTMLButtonElement>(null);
+	const queryClient = useQueryClient();
 
 	const { data: documents = [] } = useDocuments();
 	const uploadMutation = useUploadDocument();
-	const { parse, isParsing, stage: parsingStage, progress } = useDocumentParser();
+	const { parse, reset, isParsing, stage: parsingStage, progress } = useDocumentParser();
 
 	const docsForMenu: AttachDocument[] = documents.map((d) => ({
 		id: d.id,
@@ -51,6 +61,9 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 	}));
 
 	const usedBytes = documents.reduce((a, d) => a + d.fileSize, 0);
+	const remainingBytes = Math.max(0, MAX_TOTAL_STORAGE_BYTES - usedBytes);
+	const activeParsingDocStatus =
+		activeParsingDocId != null ? documents.find((d) => d.id === activeParsingDocId)?.status : null;
 
 	useEffect(() => {
 		let cancelled = false;
@@ -119,14 +132,67 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 		async (file: File) => {
 			try {
 				const doc = await uploadMutation.mutateAsync(file);
+				setActiveParsingDocId(doc.id);
+				parsingStartedAtRef.current = Date.now();
+				didStallResetRef.current = false;
 				await parse(doc.id);
+				setActiveParsingDocId(null);
+				parsingStartedAtRef.current = null;
 			} catch (err) {
 				console.error("Upload/parse failed:", err);
+				setActiveParsingDocId(null);
+				parsingStartedAtRef.current = null;
+				didStallResetRef.current = false;
+				reset();
 				throw err;
 			}
 		},
-		[uploadMutation, parse],
+		[uploadMutation, parse, reset],
 	);
+
+	// Poll document status while parsing so we can clear the UI even if the SSE stream stalls.
+	useEffect(() => {
+		if (activeParsingDocId == null) return;
+
+		queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+		const intervalId = window.setInterval(() => {
+			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+		}, 4000);
+
+		return () => window.clearInterval(intervalId);
+	}, [activeParsingDocId, queryClient]);
+
+	// Stop showing parsing UI when the backend reports READY/ERROR.
+	useEffect(() => {
+		if (activeParsingDocId == null) return;
+		if (activeParsingDocStatus !== "READY" && activeParsingDocStatus !== "ERROR") return;
+
+		reset();
+		setActiveParsingDocId(null);
+		parsingStartedAtRef.current = null;
+		didStallResetRef.current = false;
+	}, [activeParsingDocId, activeParsingDocStatus, reset]);
+
+	// If SSE stalls (no READY/ERROR yet), hide the progress UI after a short timeout.
+	useEffect(() => {
+		if (activeParsingDocId == null) return;
+		if (didStallResetRef.current) return;
+		if (!parsingStartedAtRef.current) return;
+		if (activeParsingDocStatus === "READY" || activeParsingDocStatus === "ERROR") return;
+
+		const timeoutId = window.setTimeout(() => {
+			// Re-check status at the moment the timeout fires.
+			if (
+				activeParsingDocStatus !== "READY" &&
+				activeParsingDocStatus !== "ERROR"
+			) {
+				reset();
+				didStallResetRef.current = true;
+			}
+		}, 120_000);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [activeParsingDocId, activeParsingDocStatus, reset]);
 
 	const handleAddToQuiz = useCallback(
 		(question: MockGeneratedQuestion) => {
@@ -274,8 +340,11 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 		documents: docsForMenu,
 		selectedDoc,
 		uploadPending: uploadMutation.isPending,
-		parsingStage: isParsing ? `${parsingStage} ${Math.round(progress)}%` : undefined,
+		activeParsingDocId,
+		parsingStageText: isParsing ? parsingStage : undefined,
+		parsingProgress: isParsing ? progress : undefined,
 		usedBytes,
+		remainingBytes,
 		limitBytes: MAX_TOTAL_STORAGE_BYTES,
 		generatedQuestionsByMessageId,
 		openCanvasMessageId,

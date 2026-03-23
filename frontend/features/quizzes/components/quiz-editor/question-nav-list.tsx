@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
 	DndContext,
 	closestCenter,
@@ -34,6 +35,14 @@ export function QuestionNavList({
 	onAddQuestion,
 	onMoveQuestion,
 }: QuestionNavListProps) {
+	const [isMounted, setIsMounted] = useState(false);
+	useEffect(() => {
+		const t = window.setTimeout(() => setIsMounted(true), 0);
+		return () => window.clearTimeout(t);
+	}, []);
+
+	const canDrag = Boolean(onMoveQuestion) && isMounted;
+
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
 		useSensor(KeyboardSensor, {
@@ -54,7 +63,7 @@ export function QuestionNavList({
 
 	const listContent = (
 		<div className="grow overflow-y-auto py-2 space-y-1">
-			{onMoveQuestion ? (
+			{canDrag ? (
 				<DndContext
 					sensors={sensors}
 					collisionDetection={closestCenter}

@@ -105,10 +105,14 @@ async function openParseStream(id: number): Promise<ReadableStreamDefaultReader<
 
 /** Extracts and parses a single "data: {...}" line from an SSE block. */
 function parseSSEBlock(block: string): ParseProgressEvent | null {
-	const match = block.match(/^data:\s*(.+)$/m);
-	if (!match) return null;
+	// NestJS SSE may emit either:
+	// - single-line JSON payload: `data: {...}`
+	// - or multiple `data:` lines (SSE spec) for a single event.
+	const dataLines = Array.from(block.matchAll(/^data:\s*(.*)$/gm)).map((m) => m[1]);
+	if (dataLines.length === 0) return null;
 	try {
-		return JSON.parse(match[1].trim()) as ParseProgressEvent;
+		const jsonText = dataLines.join("\n").trim();
+		return JSON.parse(jsonText) as ParseProgressEvent;
 	} catch (e) {
 		if (e instanceof SyntaxError) return null;
 		throw e;
@@ -119,7 +123,9 @@ function parseSSEBlock(block: string): ParseProgressEvent | null {
 function processSSEBuffer(
 	buffer: string,
 ): { events: ParseProgressEvent[]; remaining: string } {
-	const blocks = buffer.split("\n\n");
+	// Normalize line endings so we can safely split on SSE "blank line" delimiters.
+	const normalized = buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+	const blocks = normalized.split("\n\n");
 	const remaining = blocks.pop() ?? "";
 	const events = blocks
 		.map(parseSSEBlock)
