@@ -10,6 +10,11 @@ export class UserService {
         return this.prisma.user.findUnique({ where: input });
     }
 
+    getUserWithRole(input: Prisma.UserWhereUniqueInput) {
+        // Role is now stored directly on `User` as an enum field.
+        return this.prisma.user.findUnique({ where: input });
+    }
+
     create(data: Prisma.UserCreateInput): Promise<User> {
         return this.prisma.user.create({ data });
     }

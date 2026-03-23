@@ -6,6 +6,7 @@ import { UserModule } from "./user/user.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { QuizModule } from "./quiz/quiz.module";
 import { GameModule } from "./game/game.module";
+import { AdminModule } from "./admin/admin.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { RedisModule } from "./redis/redis.module";
@@ -24,6 +25,7 @@ import { ScheduleModule } from "@nestjs/schedule";
         PrismaModule,
         QuizModule,
         GameModule,
+        AdminModule,
         RedisModule,
         UploadModule,
         DocumentModule,

@@ -1,6 +1,3 @@
-/**
- * Shared option/channel colors for quiz options and session reports.
- */
 export const optionColors = [
 	"bg-red-800",
 	"bg-blue-800",

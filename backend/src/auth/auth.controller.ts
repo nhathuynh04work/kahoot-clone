@@ -29,6 +29,18 @@ export class AuthController {
         return { success: true };
     }
 
+    @Post("admin/login")
+    async adminLogin(
+        @Body() data: LoginUserDto,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const jwt = await this.authService.loginAdmin(data);
+
+        res.cookie("access_token", jwt, cookieConfig);
+
+        return { success: true };
+    }
+
     @UseGuards(JwtHttpGuard)
     @Get("me")
     getProfile(@User() user: JwtUser) {

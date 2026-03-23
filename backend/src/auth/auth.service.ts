@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
 import { UserService } from "../user/user.service.js";
 import { UserResponseDto } from "./dto/user-response.dto.js";
@@ -30,8 +30,15 @@ export class AuthService {
             password: hash,
         });
 
-        const { password, ...result } = newUser;
-        return result;
+        const userWithRole = await this.userService.getUserWithRole({ id: newUser.id });
+        if (!userWithRole) throw new BadRequestException("User not found after creation");
+
+        return {
+            id: userWithRole.id,
+            email: userWithRole.email,
+            name: userWithRole.name,
+            role: userWithRole.role ?? "USER",
+        };
     }
 
     async login(payload: LoginUserDto): Promise<string> {
@@ -41,6 +48,10 @@ export class AuthService {
 
         if (!user) {
             throw new BadRequestException("Invalid email or password");
+        }
+
+        if ((user as any).isBlocked) {
+            throw new UnauthorizedException("Account blocked");
         }
 
         const isValid = await bcrypt.compare(payload.password, user.password);
@@ -57,14 +68,48 @@ export class AuthService {
         return this.jwtService.signAsync(jwtPayload);
     }
 
+    async loginAdmin(payload: LoginUserDto): Promise<string> {
+        const user = await this.userService.getUserWithRole({
+            email: payload.email,
+        });
+
+        if (!user) {
+            throw new BadRequestException("Invalid email or password");
+        }
+
+        if ((user as any).isBlocked) {
+            throw new UnauthorizedException("Account blocked");
+        }
+
+        const isValid = await bcrypt.compare(payload.password, user.password);
+        if (!isValid) {
+            throw new BadRequestException("Invalid email or password");
+        }
+
+        if (user.role !== "ADMIN") {
+            throw new BadRequestException("Admin access required");
+        }
+
+        const jwtPayload: JwtPayloadDto = {
+            sub: user.id,
+            email: user.email,
+        };
+
+        return this.jwtService.signAsync(jwtPayload);
+    }
+
     async getProfile(id: number) {
-        const user = await this.userService.getUser({ id });
+        const user = await this.userService.getUserWithRole({ id });
 
         if (!user) {
             throw new BadRequestException("User not found");
         }
 
-        const { password, ...result } = user;
-        return result;
+        return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role ?? "USER",
+        };
     }
 }
