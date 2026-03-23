@@ -44,7 +44,7 @@ export class QuizService {
 
         const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
         // Keep API payload small: return `authorName` instead of the full user object.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         
         const { user: _user, ...rest } = quiz;
         return { ...rest, authorName };
     }
@@ -63,7 +63,7 @@ export class QuizService {
 
         return quizzes.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+             
             const { user: _user, ...rest } = quiz;
             return { ...rest, authorName };
         });
@@ -131,7 +131,7 @@ export class QuizService {
 
         const quizzes = items.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+             
             const { user: _user, ...rest } = quiz;
             return { ...rest, authorName };
         });

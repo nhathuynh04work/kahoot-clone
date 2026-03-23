@@ -29,10 +29,16 @@ apiClient.interceptors.response.use(
 		if (error.response && error.response.status === 401) {
 			if (
 				typeof window !== "undefined" &&
-				window.location.pathname !== "/auth/login"
+				!(
+					window.location.pathname === "/auth/login" ||
+					window.location.pathname === "/auth/admin-login"
+				)
 			) {
-				// Redirect to the login page
-				window.location.href = "/auth/login";
+				const isAdminRoute =
+					window.location.pathname.startsWith("/admin/") ||
+					window.location.pathname.startsWith("/admin");
+
+				window.location.href = isAdminRoute ? "/auth/admin-login" : "/auth/login";
 			}
 		}
 

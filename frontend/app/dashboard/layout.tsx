@@ -11,6 +11,10 @@ export default async function Layout({ children }: { children: ReactNode }) {
 		redirect("/auth/login");
 	}
 
+	if (user.role === "ADMIN") {
+		redirect("/admin/dashboard");
+	}
+
 	return (
 		<div
 			className="h-dvh overflow-hidden bg-gray-900 flex flex-col"
