@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import { AlertCircle, CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MAX_FILE_SIZE_BYTES } from "@/features/documents/lib/constants";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import {
 	autoUpdate,
 	flip,
@@ -31,7 +32,8 @@ interface DocumentAttachMenuProps {
 	open: boolean;
 	onClose: () => void;
 	anchorRef: React.RefObject<HTMLElement | null>;
-	documents: AttachDocument[];
+	ownedDocuments: AttachDocument[];
+	savedDocuments: AttachDocument[];
 	selectedId: number | null;
 	onSelect: (doc: AttachDocument | null) => void;
 	/** Called when user selects a file. Triggers upload + parse. */
@@ -49,7 +51,8 @@ export function DocumentAttachMenu({
 	open,
 	onClose,
 	anchorRef,
-	documents,
+	ownedDocuments,
+	savedDocuments,
 	selectedId,
 	onSelect,
 	onUpload,
@@ -63,6 +66,7 @@ export function DocumentAttachMenu({
 }: DocumentAttachMenuProps) {
 	const menuRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [tab, setTab] = useState<"owned" | "saved">("owned");
 	const { refs: floatingRefs, x, y, strategy } = useFloating({
 		placement: "bottom-end",
 		strategy: "fixed",
@@ -117,6 +121,8 @@ export function DocumentAttachMenu({
 
 	if (!open) return null;
 
+	const documents = tab === "owned" ? ownedDocuments : savedDocuments;
+
 	const parsingStageDisplay =
 		parsingStageText &&
 		(parsingProgress != null
@@ -157,7 +163,7 @@ export function DocumentAttachMenu({
 				menuRef.current = node;
 				floatingRefs.setFloating(node);
 			}}
-			className="min-w-[220px] max-w-[280px] rounded-xl border border-gray-700 bg-gray-900 shadow-xl py-1.5"
+			className="w-[440px] h-[520px] rounded-xl border border-gray-700 bg-gray-900 shadow-xl flex flex-col overflow-hidden"
 			role="menu"
 			style={{
 				position: strategy,
@@ -173,61 +179,55 @@ export function DocumentAttachMenu({
 				className="hidden"
 				onChange={handleFileChange}
 			/>
-			{onUpload && (
-				<button
-					type="button"
-					onClick={handleUploadClick}
-					disabled={isBusy}
-					role="menuitem"
-					className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-700/80 transition-colors disabled:opacity-60 disabled:pointer-events-none"
-				>
-					<Upload className="w-4 h-4 text-gray-400 shrink-0" />
-					<span>
-						{uploadPending
-							? "Uploading..."
-							: parsingStageDisplay
-								? parsingStageDisplay
-								: "Upload files"}
-					</span>
-				</button>
-			)}
 
-			{(uploadPending || parsingStageText) && (
-				<>
-					<div className="my-1 border-t border-gray-700" />
-					<div className="px-3 py-2.5">
-						<div className="flex items-center justify-between gap-3 text-xs">
-							<span className="text-gray-300">
-								{uploadPending ? "Uploading..." : parsingStageText ?? "Processing..."}
-							</span>
-							{parsingProgress != null && (
-								<span className="text-indigo-300 font-medium">
-									{Math.round(parsingProgress)}%
+			<div className="px-3 pt-3 pb-2 shrink-0">
+				<SegmentedTabs
+					tabs={[
+						{ id: "owned", label: "My docs" },
+						{ id: "saved", label: "Saved" },
+					]}
+					activeId={tab}
+					onChange={setTab}
+				/>
+			</div>
+
+			<div className="flex-1 min-h-0 overflow-y-auto">
+				{(uploadPending || parsingStageText) && (
+					<div className="px-3 pb-2">
+						<div className="rounded-lg border border-gray-700 bg-gray-800/40 px-3 py-2.5">
+							<div className="flex items-center justify-between gap-3 text-xs">
+								<span className="text-gray-300">
+									{uploadPending
+										? "Uploading..."
+										: parsingStageText ?? "Processing..."}
 								</span>
-							)}
-						</div>
-						<div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mt-2">
-							<div
-								className="h-full bg-indigo-500 rounded-full transition-all duration-300 ease-out"
-								style={{
-									width: `${Math.min(100, Math.max(0, Math.round(parsingProgress ?? 0)))}%`,
-								}}
-							/>
+								{parsingProgress != null && (
+									<span className="text-indigo-300 font-medium">
+										{Math.round(parsingProgress)}%
+									</span>
+								)}
+							</div>
+							<div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mt-2">
+								<div
+									className="h-full bg-indigo-500 rounded-full transition-all duration-300 ease-out"
+									style={{
+										width: `${Math.min(100, Math.max(0, Math.round(parsingProgress ?? 0)))}%`,
+									}}
+								/>
+							</div>
 						</div>
 					</div>
-				</>
-			)}
+				)}
 
-			{documents.length > 0 ? (
-				<>
-					<div className="my-1 border-t border-gray-700" />
-					<div className="max-h-[240px] overflow-y-auto">
+				{documents.length > 0 ? (
+					<div className="px-1">
 						{documents.map((doc) => {
 							const meta = statusMeta[doc.status];
 							const selectable = doc.status === "READY";
 							const Icon = meta.icon;
 							const isSelected = selectable && selectedId === doc.id;
-							const isActive = activeParsingDocId != null && activeParsingDocId === doc.id;
+							const isActive =
+								activeParsingDocId != null && activeParsingDocId === doc.id;
 							const iconClass =
 								doc.status === "PARSING"
 									? "w-5 h-5 text-emerald-300 animate-spin"
@@ -247,14 +247,14 @@ export function DocumentAttachMenu({
 									}}
 									role="menuitem"
 									className={cn(
-										"w-full flex items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors disabled:pointer-events-none disabled:opacity-60",
+										"w-full flex items-start gap-3 px-3 py-2.5 text-left text-sm transition-colors rounded-lg disabled:pointer-events-none disabled:opacity-60",
 										isSelected
 											? "bg-indigo-500/20 text-indigo-300"
 											: isActive
 												? "ring-1 ring-indigo-500/30 bg-indigo-500/10 text-indigo-200"
-											: selectable
-												? "text-gray-200 hover:bg-gray-700/80"
-												: "text-gray-400",
+												: selectable
+													? "text-gray-200 hover:bg-gray-700/80"
+													: "text-gray-400",
 									)}
 								>
 									<div className="shrink-0 w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center border border-gray-700/80">
@@ -262,7 +262,9 @@ export function DocumentAttachMenu({
 									</div>
 									<div className="flex-1 min-w-0">
 										<p className="font-medium text-white truncate">{doc.fileName}</p>
-										<p className="text-xs text-gray-400">{formatBytes(doc.fileSize)}</p>
+										<p className="text-xs text-gray-400">
+											{formatBytes(doc.fileSize)}
+										</p>
 									</div>
 									<span
 										className={cn(
@@ -276,29 +278,49 @@ export function DocumentAttachMenu({
 							);
 						})}
 					</div>
-				</>
-			) : (
-				<div className="px-3 py-2.5 text-xs text-gray-500">
-					No documents yet. Upload a PDF above.
-				</div>
-			)}
-
-			{limitBytes != null && (
-				<>
-					<div className="my-1 border-t border-gray-700" />
-					<div className="px-3 py-2 space-y-2">
-						<div className="text-xs text-gray-500 flex items-center justify-between gap-3">
-							<span>
-								{formatBytes(usedBytes)} / {formatBytes(limitBytes)} used
-							</span>
-							<span className="text-gray-400">{formatBytes(remaining)} free</span>
-						</div>
-						<div className="text-[11px] text-gray-600">
-							Max {formatBytes(MAX_FILE_SIZE_BYTES)} per file • PDF only
-						</div>
+				) : (
+					<div className="h-full flex items-center justify-center px-6 text-center text-sm text-gray-500">
+						{tab === "owned"
+							? "No documents yet. Upload a PDF below."
+							: "No saved documents yet."}
 					</div>
-				</>
-			)}
+				)}
+			</div>
+
+			<div className="shrink-0 border-t border-gray-700 bg-gray-900/60 px-3 py-3 space-y-2">
+				{limitBytes != null && (
+					<div className="flex items-center justify-between gap-3 text-xs text-gray-400">
+						<span>
+							{formatBytes(usedBytes)} / {formatBytes(limitBytes)} used
+						</span>
+						<span>{formatBytes(remaining)} free</span>
+					</div>
+				)}
+
+				<div className="flex items-center justify-between gap-3">
+					<p className="text-[11px] text-gray-500">
+						{formatBytes(MAX_FILE_SIZE_BYTES)} max • PDF only
+					</p>
+					<button
+						type="button"
+						onClick={handleUploadClick}
+						disabled={!onUpload || tab !== "owned" || isBusy}
+						role="menuitem"
+						className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm font-medium text-white disabled:opacity-60 disabled:pointer-events-none transition-colors"
+						aria-label="Upload PDF"
+						title={tab !== "owned" ? "Switch to My docs to upload" : "Upload PDF"}
+					>
+						<Upload className="w-4 h-4 text-gray-300 shrink-0" />
+						<span>
+							{uploadPending
+								? "Uploading..."
+								: parsingStageDisplay
+									? "Processing…"
+									: "Upload"}
+						</span>
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }

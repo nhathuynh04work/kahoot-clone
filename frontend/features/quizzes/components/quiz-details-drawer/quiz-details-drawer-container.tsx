@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { useCreateLobby } from "@/features/quizzes/hooks/use-create-lobby";
 import { useDrawerVisibility } from "@/features/quizzes/hooks/use-drawer-visibility";
@@ -8,33 +9,32 @@ import { useFullQuiz } from "@/features/quizzes/hooks/use-full-quiz";
 import { useQuizReports } from "@/features/quizzes/hooks/use-quiz-reports";
 import { QuizDetailsDrawerShell } from "./quiz-details-drawer-shell";
 import { QuizDetailsQuestionsPane } from "./quiz-details-questions-pane";
-import { QuizDetailsReportsPane } from "./quiz-details-reports-pane";
+import { getMySavedQuizIds } from "@/features/quizzes/api/client-actions";
 
 const DRAWER_TRANSITION_MS = 250;
 
 export interface QuizDetailsDrawerProps {
 	quiz: QuizWithQuestions;
 	onClose: () => void;
+	viewerId?: number;
 }
 
 export function QuizDetailsDrawerContainer({
 	quiz,
 	onClose,
+	viewerId,
 }: QuizDetailsDrawerProps) {
 	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
-	const [activeTab, setActiveTab] = useState<"questions" | "reports">(
-		"questions",
-	);
 	const { fullQuiz, questionsLoading } = useFullQuiz(quiz.id);
 	const {
 		sessions,
 		sessionsLoading,
-		selectedReport,
-		reportLoading,
-		viewSession,
-		clearReport,
 		ensureSessionsLoaded,
 	} = useQuizReports(quiz.id);
+
+	useEffect(() => {
+		ensureSessionsLoaded();
+	}, [ensureSessionsLoaded]);
 
 	const { close, backdropStyle, panelStyle, onBackdropClick } =
 		useDrawerVisibility({
@@ -42,17 +42,12 @@ export function QuizDetailsDrawerContainer({
 			transitionMs: DRAWER_TRANSITION_MS,
 		});
 
-	const handleTabChange = useCallback(
-		(id: string) => {
-			if (id === "reports") {
-				setActiveTab("reports");
-				ensureSessionsLoaded();
-			} else {
-				setActiveTab("questions");
-			}
-		},
-		[ensureSessionsLoaded],
-	);
+	const { data: mySavedQuizIds = [] } = useQuery({
+		queryKey: ["mySavedQuizzes"],
+		queryFn: getMySavedQuizIds,
+	});
+	const isSaved = mySavedQuizIds.includes(quiz.id);
+	const isOwner = typeof viewerId === "number" && viewerId === quiz.userId;
 
 	const authorName = useMemo(
 		() => fullQuiz?.authorName ?? quiz.authorName ?? "Unknown author",
@@ -64,25 +59,6 @@ export function QuizDetailsDrawerContainer({
 		() => sessions?.reduce((sum, s) => sum + s.totalPlayers, 0) ?? 0,
 		[sessions],
 	);
-
-	const tabContent =
-		activeTab === "questions" ? (
-			<QuizDetailsQuestionsPane
-				key={quiz.id}
-				quiz={quiz}
-				fullQuiz={fullQuiz}
-				questionsLoading={questionsLoading}
-			/>
-		) : (
-			<QuizDetailsReportsPane
-				sessions={sessions}
-				sessionsLoading={sessionsLoading}
-				selectedReport={selectedReport}
-				reportLoading={reportLoading}
-				onViewSession={viewSession}
-				onBackToSessions={clearReport}
-			/>
-		);
 
 	return (
 		<QuizDetailsDrawerShell
@@ -97,12 +73,22 @@ export function QuizDetailsDrawerContainer({
 			quizId={quiz.id}
 			isHostPending={isPending}
 			onHostLive={() => createLobby()}
-			activeTabId={activeTab}
-			onTabChange={handleTabChange}
+			showSaveButton={!isOwner}
+			initialIsSaved={isSaved}
+			isOwner={isOwner}
+			initialVisibility={(fullQuiz?.visibility ?? quiz.visibility) as any}
+			sharePath={`/quiz/${quiz.id}`}
 			backdropStyle={backdropStyle}
 			panelStyle={panelStyle}
 			onBackdropClick={onBackdropClick}
-			tabContent={tabContent}
+			content={
+				<QuizDetailsQuestionsPane
+					key={quiz.id}
+					quiz={quiz}
+					fullQuiz={fullQuiz}
+					questionsLoading={questionsLoading}
+				/>
+			}
 		/>
 	);
 }

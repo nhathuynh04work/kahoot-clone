@@ -105,7 +105,7 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 					</ResponsiveContainer>
 				</div>
 				<p className="mt-2 text-xs text-gray-500">
-					Tip: open "View report" for full details (leaderboard, per-question
+					Tip: open &quot;View report&quot; for full details (leaderboard, per-question
 					breakdown).
 				</p>
 			</div>

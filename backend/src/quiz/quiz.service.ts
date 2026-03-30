@@ -4,7 +4,7 @@ import {
     Injectable,
     NotFoundException,
 } from "@nestjs/common";
-import { Prisma, Question, Quiz } from "../generated/prisma/client.js";
+import { LobbyStatus, Prisma, Question, Quiz } from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 
@@ -61,11 +61,22 @@ export class QuizService {
             },
         });
 
+        const quizIds = quizzes.map((q) => q.id);
+        const [saveCounts, playCounts] = await Promise.all([
+            this.getQuizSaveCounts(quizIds),
+            this.getQuizPlayCounts(quizIds),
+        ]);
+
         return quizzes.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
              
             const { user: _user, ...rest } = quiz;
-            return { ...rest, authorName };
+            return {
+                ...rest,
+                authorName,
+                saveCount: saveCounts.get(quiz.id) ?? 0,
+                playCount: playCounts.get(quiz.id) ?? 0,
+            };
         });
     }
 
@@ -129,11 +140,22 @@ export class QuizService {
             take: pageSize,
         });
 
+        const quizIds = items.map((q) => q.id);
+        const [saveCounts, playCounts] = await Promise.all([
+            this.getQuizSaveCounts(quizIds),
+            this.getQuizPlayCounts(quizIds),
+        ]);
+
         const quizzes = items.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
              
             const { user: _user, ...rest } = quiz;
-            return { ...rest, authorName };
+            return {
+                ...rest,
+                authorName,
+                saveCount: saveCounts.get(quiz.id) ?? 0,
+                playCount: playCounts.get(quiz.id) ?? 0,
+            };
         });
 
         return {
@@ -320,5 +342,33 @@ export class QuizService {
             throw new ForbiddenException("Not allowed to access this quiz");
 
         return { quiz, questionCount: quiz._count.questions };
+    }
+
+    private async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {
+        if (quizIds.length === 0) return new Map();
+
+        const rows = await this.prisma.quizSave.groupBy({
+            by: ["quizId"],
+            where: { quizId: { in: quizIds } },
+            _count: { _all: true },
+        });
+
+        return new Map(rows.map((r) => [r.quizId, r._count._all]));
+    }
+
+    private async getQuizPlayCounts(quizIds: number[]): Promise<Map<number, number>> {
+        if (quizIds.length === 0) return new Map();
+
+        const rows = await this.prisma.gameLobby.groupBy({
+            by: ["quizId"],
+            where: {
+                quizId: { in: quizIds },
+                status: LobbyStatus.CLOSED,
+                report: { isNot: null },
+            },
+            _count: { _all: true },
+        });
+
+        return new Map(rows.map((r) => [r.quizId, r._count._all]));
     }
 }

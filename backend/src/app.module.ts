@@ -14,6 +14,8 @@ import { UploadModule } from "./upload/upload.module";
 import { DocumentModule } from "./document/document.module";
 import { AiModule } from "./ai/ai.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { SavesModule } from "./saves/saves.module";
+import { PublicModule } from "./public/public.module";
 
 @Module({
     imports: [
@@ -30,6 +32,8 @@ import { ScheduleModule } from "@nestjs/schedule";
         UploadModule,
         DocumentModule,
         AiModule,
+        SavesModule,
+        PublicModule,
     ],
     controllers: [AppController],
     providers: [AppService],

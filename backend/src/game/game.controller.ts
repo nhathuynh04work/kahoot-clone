@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { LobbyService } from "./services/lobby.service";
 import { JwtHttpGuard } from "../auth/guard/jwt-http.guard";
+import { OptionalJwtHttpGuard } from "../auth/guard/optional-jwt-http.guard";
 import { User, type JwtUser } from "../auth/user.decorator";
 
 @Controller("game")
@@ -20,12 +21,12 @@ export class GameController {
     constructor(private lobbyService: LobbyService) {}
 
     @Get("report/quiz/:quizId")
-    @UseGuards(JwtHttpGuard)
+    @UseGuards(OptionalJwtHttpGuard)
     async getSessionsForQuiz(
-        @User() user: JwtUser,
+        @User() user: JwtUser | null,
         @Param("quizId", ParseIntPipe) quizId: number,
     ) {
-        return this.lobbyService.getSessionsForQuiz(quizId, user.id);
+        return this.lobbyService.getSessionsForQuiz(quizId, user?.id);
     }
 
     @Get("report")
@@ -68,12 +69,12 @@ export class GameController {
     }
 
     @Get("report/:lobbyId")
-    @UseGuards(JwtHttpGuard)
+    @UseGuards(OptionalJwtHttpGuard)
     async getSessionReport(
-        @User() user: JwtUser,
+        @User() user: JwtUser | null,
         @Param("lobbyId", ParseIntPipe) lobbyId: number,
     ) {
-        return this.lobbyService.getSessionReport(lobbyId, user.id);
+        return this.lobbyService.getSessionReport(lobbyId, user?.id);
     }
 
     @Get("lobby")

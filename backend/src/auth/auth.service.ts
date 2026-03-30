@@ -5,7 +5,8 @@ import { UserResponseDto } from "./dto/user-response.dto.js";
 import { RegisterUserDto } from "./dto/register-user.dto.js";
 import { LoginUserDto } from "./dto/login-user.dto.js";
 import { JwtService } from "@nestjs/jwt";
-import { JwtPayloadDto } from "./dto/jwt-payload.dto.js";
+import { JwtPayloadDto } from "./dto/jwt-payload.dto";
+import { UpdateMeDto } from "./dto/update-me.dto";
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
             id: userWithRole.id,
             email: userWithRole.email,
             name: userWithRole.name,
+            avatarUrl: (userWithRole as any).avatarUrl ?? null,
             role: userWithRole.role ?? "USER",
         };
     }
@@ -109,7 +111,33 @@ export class AuthService {
             id: user.id,
             email: user.email,
             name: user.name,
+            avatarUrl: (user as any).avatarUrl ?? null,
             role: user.role ?? "USER",
+        };
+    }
+
+    async updateProfile(id: number, dto: UpdateMeDto) {
+        const user = await this.userService.getUserWithRole({ id });
+        if (!user) {
+            throw new BadRequestException("User not found");
+        }
+        if ((user as any).isBlocked) {
+            throw new UnauthorizedException("Account blocked");
+        }
+
+        if (dto.name === undefined && dto.avatarUrl === undefined) return this.getProfile(id);
+
+        const updated = await this.userService.update(id, {
+            ...(dto.name !== undefined ? { name: dto.name } : {}),
+            ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+        });
+
+        return {
+            id: updated.id,
+            email: updated.email,
+            name: updated.name,
+            avatarUrl: (updated as any).avatarUrl ?? null,
+            role: updated.role ?? "USER",
         };
     }
 }

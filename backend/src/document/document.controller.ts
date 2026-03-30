@@ -19,6 +19,7 @@ import { User } from "../auth/user.decorator";
 import { JwtHttpGuard } from "../auth/guard/jwt-http.guard";
 import { CreateDocumentDto } from "./dto/create-document.dto";
 import { DocumentStatus } from "../generated/prisma/client";
+import { UpdateDocumentVisibilityDto } from "./dto/update-document-visibility.dto";
 
 @Controller("documents")
 @UseGuards(JwtHttpGuard)
@@ -87,6 +88,15 @@ export class DocumentController {
         @User() user: JwtUser,
     ) {
         return this.documentService.updateStatus(id, user.id, body.status);
+    }
+
+    @Patch(":id/visibility")
+    updateVisibility(
+        @Param("id", ParseIntPipe) id: number,
+        @Body() body: UpdateDocumentVisibilityDto,
+        @User() user: JwtUser,
+    ) {
+        return this.documentService.updateVisibility(id, user.id, body.visibility);
     }
 
     @Post(":id/parse")

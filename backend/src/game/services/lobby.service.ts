@@ -3,6 +3,7 @@ import {
     ConflictException,
     Inject,
     Injectable,
+    ForbiddenException,
     Logger,
     NotFoundException,
 } from "@nestjs/common";
@@ -381,9 +382,9 @@ export class LobbyService {
         };
     }
 
-    async getSessionReport(lobbyId: number, hostId: number) {
+    async getSessionReport(lobbyId: number, viewerId?: number) {
         const lobby = await this.prisma.gameLobby.findFirst({
-            where: { id: lobbyId, hostId },
+            where: { id: lobbyId },
             include: {
                 quiz: { include: { questions: { include: { options: true } } } },
                 report: {
@@ -397,6 +398,13 @@ export class LobbyService {
 
         if (!lobby || !lobby.report) {
             throw new NotFoundException(`Session report not found`);
+        }
+
+        // Private quizzes: only the quiz owner can access session report details.
+        if (lobby.quiz.visibility === "PRIVATE" && viewerId !== lobby.quiz.userId) {
+            throw new ForbiddenException(
+                "Not allowed to see this session report",
+            );
         }
 
         const leaderboard = lobby.report.leaderboardJson as {
@@ -442,11 +450,25 @@ export class LobbyService {
         };
     }
 
-    async getSessionsForQuiz(quizId: number, hostId: number) {
+    async getSessionsForQuiz(quizId: number, viewerId?: number) {
+        const quiz = await this.prisma.quiz.findUnique({
+            where: { id: quizId },
+            select: { id: true, userId: true, visibility: true },
+        });
+
+        if (!quiz) {
+            throw new NotFoundException("Quiz not found");
+        }
+
+        if (quiz.visibility === "PRIVATE" && viewerId !== quiz.userId) {
+            throw new ForbiddenException(
+                "Not allowed to see sessions for this quiz",
+            );
+        }
+
         const lobbies = await this.prisma.gameLobby.findMany({
             where: {
                 quizId,
-                hostId,
                 status: LobbyStatus.CLOSED,
                 report: { isNot: null },
             },
@@ -493,6 +515,11 @@ export class LobbyService {
 
         if (!quiz || quiz?._count.questions < 1) {
             throw new BadRequestException("Quiz not valid to start new game.");
+        }
+
+        // Prevent hosting private quizzes unless the requester is the owner.
+        if (quiz.visibility === "PRIVATE" && quiz.userId !== hostId) {
+            throw new ForbiddenException("Cannot start a private quiz.");
         }
 
         const pin = await this.getUniquePin();

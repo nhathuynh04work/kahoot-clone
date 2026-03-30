@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChatMessage, MockGeneratedQuestion } from "../types";
 import type { GeneratedQuestion } from "../api/client-actions";
 import type { AttachDocument } from "../components/document-attach-menu";
@@ -14,6 +14,7 @@ import {
 	useDocumentParser,
 } from "@/features/documents/hooks/use-documents";
 import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
+import { getMySavedPublicDocuments } from "@/features/documents/api/client-actions";
 
 const INITIAL_MESSAGE: ChatMessage = {
 	id: "welcome",
@@ -50,10 +51,22 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 	const queryClient = useQueryClient();
 
 	const { data: documents = [] } = useDocuments();
+	const { data: savedDocuments = [] } = useQuery({
+		queryKey: ["mySavedPublicDocuments"],
+		queryFn: getMySavedPublicDocuments,
+		enabled: docPopupOpen,
+	});
 	const uploadMutation = useUploadDocument();
 	const { parse, reset, isParsing, stage: parsingStage, progress } = useDocumentParser();
 
-	const docsForMenu: AttachDocument[] = documents.map((d) => ({
+	const ownedDocumentsForMenu: AttachDocument[] = documents.map((d) => ({
+		id: d.id,
+		fileName: d.fileName,
+		fileSize: d.fileSize,
+		status: d.status,
+	}));
+
+	const savedDocumentsForMenu: AttachDocument[] = savedDocuments.map((d) => ({
 		id: d.id,
 		fileName: d.fileName,
 		fileSize: d.fileSize,
@@ -183,8 +196,9 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 		const timeoutId = window.setTimeout(() => {
 			// Re-check status at the moment the timeout fires.
 			if (
-				activeParsingDocStatus !== "READY" &&
-				activeParsingDocStatus !== "ERROR"
+				activeParsingDocStatus === "PARSING" ||
+				activeParsingDocStatus === "UPLOADED" ||
+				activeParsingDocStatus == null
 			) {
 				reset();
 				didStallResetRef.current = true;
@@ -337,7 +351,8 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 		isHistoryLoading,
 		docPopupOpen,
 		setDocPopupOpen,
-		documents: docsForMenu,
+		ownedDocumentsForMenu,
+		savedDocumentsForMenu,
 		selectedDoc,
 		uploadPending: uploadMutation.isPending,
 		activeParsingDocId,

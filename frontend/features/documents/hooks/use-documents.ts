@@ -7,6 +7,7 @@ import {
 	getDocumentsTotalSize,
 	deleteDocument,
 	updateDocumentStatus,
+	updateDocumentVisibility,
 	createDocument,
 	getDocumentSignature,
 	uploadPdfToCloudinary,
@@ -17,10 +18,10 @@ import type { Document } from "../types";
 
 export const documentsQueryKey = ["documents"] as const;
 
-export function useDocuments(options?: { q?: string; sort?: string }) {
+export function useDocuments(options?: { q?: string }) {
 	return useQuery({
-		queryKey: [...documentsQueryKey, options?.q ?? "", options?.sort ?? ""],
-		queryFn: () => searchDocuments({ q: options?.q, sort: options?.sort }),
+		queryKey: [...documentsQueryKey, options?.q ?? ""],
+		queryFn: () => searchDocuments({ q: options?.q }),
 	});
 }
 
@@ -62,6 +63,22 @@ export function useUpdateDocumentStatus() {
 	return useMutation({
 		mutationFn: ({ id, status }: { id: number; status: Document["status"] }) =>
 			updateDocumentStatus(id, status),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+		},
+	});
+}
+
+export function useUpdateDocumentVisibility() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			visibility,
+		}: {
+			id: number;
+			visibility: "PUBLIC" | "PRIVATE";
+		}) => updateDocumentVisibility(id, visibility),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
 		},

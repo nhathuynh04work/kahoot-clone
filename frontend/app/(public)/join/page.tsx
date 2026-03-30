@@ -19,7 +19,6 @@ export default function JoinScreen() {
 	const [state, setState] = useState<"pin" | "nickname" | "rejoin">("pin");
 
 	const [pin, setPin] = useState("");
-	const [nickname, setNickname] = useState("");
 
 	const handlePinValid = (pin: string) => {
 		setPin(pin);
@@ -37,7 +36,6 @@ export default function JoinScreen() {
 			return;
 		}
 
-		setNickname(parsed.nickname);
 		setState("rejoin");
 	};
 
@@ -48,10 +46,10 @@ export default function JoinScreen() {
 				pin: pin,
 				nickname: nickname,
 				rejoin: false,
-			})
+			}),
 		);
 
-		router.push("/game");
+		router.push("/play");
 	};
 
 	const handleStartFresh = () => {
@@ -74,15 +72,14 @@ export default function JoinScreen() {
 		};
 
 		localStorage.setItem("recovery", JSON.stringify(newSession));
-		router.push("/game");
+		router.push("/play");
 	};
 
 	return (
-		<div className="bg-gray-900">
-			<div className="flex flex-col items-center justify-center min-h-screen text-white">
+		<div className="px-4">
+			<div className="flex flex-col items-center justify-center min-h-[calc(100vh-58px)] text-white">
 				<h1 className="text-5xl font-bold mb-10">quiztopia!</h1>
 
-				{/* --- Pin form / Nickname form / Rejoin --- */}
 				{state === "pin" && <PinForm onSuccess={handlePinValid} />}
 
 				{state === "nickname" && (
@@ -99,9 +96,7 @@ export default function JoinScreen() {
 				{state === "pin" && (
 					<div className="mt-4">
 						Wanting to host instead?{" "}
-						<Link
-							href={"/auth/login"}
-							className="text-indigo-500 underline">
+						<Link href={"/auth/login"} className="text-indigo-500 underline">
 							Login
 						</Link>
 					</div>
@@ -110,3 +105,4 @@ export default function JoinScreen() {
 		</div>
 	);
 }
+

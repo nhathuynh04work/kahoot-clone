@@ -12,6 +12,7 @@ import Image from "next/image";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import { Uploader } from "@/features/img-upload/components/uploader";
 import { useState } from "react";
+import { Select } from "@/components/ui/select";
 
 interface SettingsModalProps {
 	onClose: () => void;
@@ -19,7 +20,7 @@ interface SettingsModalProps {
 
 type SettingsFormValues = Pick<
 	QuizFullDetails,
-	"title" | "description" | "coverUrl"
+	"title" | "description" | "coverUrl" | "visibility"
 >;
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
@@ -37,15 +38,18 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 			title: getValues("title"),
 			description: getValues("description"),
 			coverUrl: getValues("coverUrl"),
+			visibility: getValues("visibility") ?? "PRIVATE",
 		},
 	});
 
 	const coverUrl = watch("coverUrl");
+	const visibility = watch("visibility") ?? "PRIVATE";
 
 	const onSave = (data: SettingsFormValues) => {
 		setParentValue("title", data.title, { shouldDirty: true });
 		setParentValue("description", data.description, { shouldDirty: true });
 		setParentValue("coverUrl", data.coverUrl, { shouldDirty: true });
+		setParentValue("visibility", data.visibility, { shouldDirty: true });
 		onClose();
 	};
 
@@ -55,7 +59,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 			onClick={onClose}>
 			<form
 				onSubmit={handleSubmit(onSave)}
-				className="relative w-full max-w-lg rounded-lg bg-gray-800 border border-gray-700 shadow-2xl"
+				className="relative w-full max-w-lg max-h-[80vh] rounded-lg bg-gray-800 border border-gray-700 shadow-2xl flex flex-col"
 				onClick={(e) => e.stopPropagation()}>
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -70,7 +74,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 					</button>
 				</div>
 
-				<div className="p-6 space-y-5">
+				<div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-5">
 					{/* Title Input */}
 					<div>
 						<label className="block text-sm font-medium text-gray-300 mb-2">
@@ -215,6 +219,27 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 								</div>
 							)}
 						</Uploader>
+					</div>
+
+					{/* Visibility */}
+					<div>
+						<label className="block text-sm font-medium text-gray-300 mb-2">
+							Visibility
+						</label>
+						<Select
+							value={visibility}
+							onValueChange={(v) => {
+								setLocalValue("visibility", v as "PUBLIC" | "PRIVATE", {
+									shouldDirty: true,
+								});
+							}}
+							options={[
+								{ value: "PRIVATE", label: "Private" },
+								{ value: "PUBLIC", label: "Public" },
+							]}
+							ariaLabel="Quiz visibility"
+							placeholder="Select visibility"
+						/>
 					</div>
 				</div>
 

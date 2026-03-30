@@ -19,7 +19,8 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 		docPopupOpen,
 		setDocPopupOpen,
 		attachButtonRef,
-		documents,
+		ownedDocumentsForMenu,
+		savedDocumentsForMenu,
 		selectedDoc,
 		messages,
 		input,
@@ -100,7 +101,8 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 				open={docPopupOpen}
 				onClose={() => setDocPopupOpen(false)}
 				anchorRef={attachButtonRef}
-				documents={documents}
+				ownedDocuments={ownedDocumentsForMenu}
+				savedDocuments={savedDocumentsForMenu}
 				selectedId={selectedDoc?.id ?? null}
 				onSelect={handleSelectDocument}
 				onUpload={handleUpload}

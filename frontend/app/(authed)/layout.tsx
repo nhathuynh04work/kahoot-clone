@@ -1,19 +1,18 @@
-import TopBar from "@/components/layout/top-bar";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import TopBar from "@/components/layout/top-bar";
 
-export default async function Layout({ children }: { children: ReactNode }) {
+export default async function AuthedLayout({
+	children,
+}: {
+	children: ReactNode;
+}) {
 	const user = await getCurrentUser();
 
-	if (!user) {
-		redirect("/auth/login");
-	}
-
-	if (user.role === "ADMIN") {
-		redirect("/admin/dashboard");
-	}
+	if (!user) redirect("/auth/login");
+	if (user.role === "ADMIN") redirect("/admin/dashboard");
 
 	return (
 		<div
@@ -28,3 +27,4 @@ export default async function Layout({ children }: { children: ReactNode }) {
 		</div>
 	);
 }
+

@@ -43,10 +43,9 @@ export const getDocuments = async () => {
 	return data;
 };
 
-export const searchDocuments = async (options: { q?: string; sort?: string }) => {
+export const searchDocuments = async (options: { q?: string }) => {
 	const params = new URLSearchParams();
 	if (options.q?.trim()) params.set("q", options.q.trim());
-	if (options.sort?.trim()) params.set("sort", options.sort.trim());
 	const qs = params.toString();
 	const { data } = await apiClient.get<Document[]>(
 		qs ? `/documents?${qs}` : "/documents",
@@ -70,6 +69,36 @@ export const updateDocumentStatus = async (
 	const { data } = await apiClient.patch<Document>(`/documents/${id}/status`, {
 		status,
 	});
+	return data;
+};
+
+export const updateDocumentVisibility = async (
+	id: number,
+	visibility: "PUBLIC" | "PRIVATE",
+) => {
+	const { data } = await apiClient.patch<Document>(
+		`/documents/${id}/visibility`,
+		{ visibility },
+	);
+	return data;
+};
+
+export const toggleDocumentSave = async (documentId: number) => {
+	const { data } = await apiClient.post(
+		`/saves/documents/${documentId}`,
+	);
+	return data as { saved: boolean; documentId: number };
+};
+
+export const getMySavedDocumentIds = async (): Promise<number[]> => {
+	const { data } = await apiClient.get<{ documentIds: number[] }>(
+		"/saves/documents",
+	);
+	return data.documentIds;
+};
+
+export const getMySavedPublicDocuments = async (): Promise<Document[]> => {
+	const { data } = await apiClient.get<Document[]>("/saves/documents/public");
 	return data;
 };
 

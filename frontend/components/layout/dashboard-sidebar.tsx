@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, FileText, History, Plus, Loader2 } from "lucide-react";
+import { LayoutGrid, FileText, History, Plus, Loader2, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 
 const navItems = [
-	{ href: "/dashboard", label: "Quizzes", icon: LayoutGrid },
-	{ href: "/dashboard/files", label: "Files", icon: FileText },
-	{ href: "/dashboard/report", label: "Reports", icon: History },
+	{ href: "/library/quizzes", label: "Quizzes", icon: LayoutGrid },
+	{ href: "/library/files", label: "Files", icon: FileText },
+	{ href: "/discover", label: "Discover", icon: Compass },
+	{ href: "/reports", label: "Reports", icon: History },
 ] as const;
 
 export function DashboardSidebar() {
@@ -37,8 +38,8 @@ export function DashboardSidebar() {
 			<nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-1" aria-label="Main navigation">
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const isActive =
-						href === "/dashboard"
-							? pathname === "/dashboard"
+						href === "/library/quizzes"
+							? pathname === "/library/quizzes" || pathname.startsWith("/library/quizzes/")
 							: pathname.startsWith(href);
 					return (
 						<Link

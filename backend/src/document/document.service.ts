@@ -86,9 +86,16 @@ export class DocumentService {
             }
         })();
 
-        return this.prisma.document.findMany({
+        const docs = await this.prisma.document.findMany({
             where,
             orderBy,
+            include: { user: { select: { name: true, email: true } } },
+        });
+
+        return docs.map((doc) => {
+            const authorName = doc.user?.name ?? doc.user?.email ?? null;
+            const { user: _user, ...rest } = doc;
+            return { ...rest, authorName };
         });
     }
 
@@ -149,6 +156,24 @@ export class DocumentService {
         return this.prisma.document.update({
             where: { id },
             data: { status },
+        });
+    }
+
+    async updateVisibility(
+        id: number,
+        userId: number,
+        visibility: "PUBLIC" | "PRIVATE",
+    ) {
+        const doc = await this.prisma.document.findUnique({
+            where: { id },
+        });
+        if (!doc || doc.userId !== userId) {
+            throw new ForbiddenException("Document not found");
+        }
+
+        return this.prisma.document.update({
+            where: { id },
+            data: { visibility },
         });
     }
 

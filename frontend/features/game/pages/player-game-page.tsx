@@ -7,7 +7,7 @@ import { PlayerSubmittedScreen } from "@/features/game/components/player/player-
 import { PlayerWaitingScreen } from "@/features/game/components/player/player-waiting-screen";
 import { usePlayerGame } from "@/features/game/hooks/use-player-game";
 
-export default function PlayerGameScreen() {
+export default function PlayerGamePage() {
 	const { state, handlers } = usePlayerGame();
 
 	switch (state.status) {
@@ -29,8 +29,7 @@ export default function PlayerGameScreen() {
 			return (
 				<PlayerResultScreen
 					isCorrect={
-						state.currentQuestionCorrectOptionId ===
-						state.selectedOptionId
+						state.currentQuestionCorrectOptionId === state.selectedOptionId
 					}
 					points={state.points}
 				/>
@@ -48,3 +47,4 @@ export default function PlayerGameScreen() {
 
 	return <div>implementing...</div>;
 }
+

@@ -34,6 +34,15 @@ export function AdminTopBar({ user }: { user: User }) {
 			document.removeEventListener("mousedown", handleClickOutside);
 	}, [accountOpen]);
 
+	useEffect(() => {
+		if (!accountOpen) return;
+		const handleEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setAccountOpen(false);
+		};
+		document.addEventListener("keydown", handleEscape);
+		return () => document.removeEventListener("keydown", handleEscape);
+	}, [accountOpen]);
+
 	return (
 		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-800 bg-gray-950 text-white shrink-0 sticky top-0 z-50">
 			<Link
@@ -72,8 +81,9 @@ export function AdminTopBar({ user }: { user: User }) {
 						type="button"
 						onClick={() => setAccountOpen((o) => !o)}
 						className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-bold text-white hover:ring-2 hover:ring-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
-						title="Account"
+						title="Account menu"
 						aria-label="Account menu"
+						aria-haspopup="menu"
 						aria-expanded={accountOpen}
 					>
 						{getInitials(user.email)}
@@ -84,7 +94,11 @@ export function AdminTopBar({ user }: { user: User }) {
 							className="absolute right-0 top-full mt-2 w-64 rounded-lg border border-gray-700 bg-gray-950 py-2 shadow-xl z-50"
 							role="menu"
 						>
-							<div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
+							<Link
+								href={`/profile/${user.id}`}
+								onClick={() => setAccountOpen(false)}
+								className="flex items-center gap-3 px-4 py-3 border-b border-gray-800 hover:bg-gray-900/60 transition-colors"
+							>
 								<div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-bold text-sm">
 									{getInitials(user.email)}
 								</div>
@@ -99,7 +113,7 @@ export function AdminTopBar({ user }: { user: User }) {
 										{user.email}
 									</p>
 								</div>
-							</div>
+							</Link>
 
 							<div className="pt-1">
 								<LogoutButton

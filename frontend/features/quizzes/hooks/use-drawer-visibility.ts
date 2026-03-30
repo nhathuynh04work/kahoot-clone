@@ -11,9 +11,11 @@ import {
 export function useDrawerVisibility({
 	onClose,
 	transitionMs = 250,
+	topGap = "var(--app-header-height, 0px)",
 }: {
 	onClose: () => void;
 	transitionMs?: number;
+	topGap?: string;
 }) {
 	const [isVisible, setIsVisible] = useState(false);
 	const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,8 +54,8 @@ export function useDrawerVisibility({
 	};
 
 	const panelStyle: CSSProperties = {
-		height: "calc(100dvh - var(--app-header-height, 0px))",
-		maxHeight: "calc(100dvh - var(--app-header-height, 0px))",
+		height: `calc(100dvh - var(--app-header-height, 0px) - ${topGap})`,
+		maxHeight: `calc(100dvh - var(--app-header-height, 0px) - ${topGap})`,
 		transform: isVisible ? "translateY(0)" : "translateY(100%)",
 		transitionDuration: `${transitionMs}ms`,
 	};

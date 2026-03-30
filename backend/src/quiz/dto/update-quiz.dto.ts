@@ -4,6 +4,7 @@ import {
     IsBoolean,
     IsNumber,
     IsOptional,
+    IsIn,
     IsString,
     IsUrl,
     ValidateNested,
@@ -71,6 +72,10 @@ export class UpdateQuizDto {
     @IsOptional()
     @IsUrl()
     coverUrl?: string;
+
+    @IsOptional()
+    @IsIn(["PUBLIC", "PRIVATE"])
+    visibility?: "PUBLIC" | "PRIVATE";
 
     @IsOptional()
     @IsArray()
