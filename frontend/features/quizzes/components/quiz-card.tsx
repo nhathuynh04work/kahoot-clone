@@ -63,7 +63,7 @@ export function QuizCard({
 				}}
 			>
 				<Link
-					href={`/profile/${quiz.userId}`}
+					href={`/users/${quiz.userId}`}
 					onClick={(e) => e.stopPropagation()}
 					className="shrink-0"
 					aria-label={`View profile for ${quiz.authorName ?? "owner"}`}
@@ -71,7 +71,7 @@ export function QuizCard({
 					<UserAvatar name={quiz.authorName ?? undefined} size={26} />
 				</Link>
 				<Link
-					href={`/profile/${quiz.userId}`}
+					href={`/users/${quiz.userId}`}
 					onClick={(e) => e.stopPropagation()}
 					className="truncate font-medium hover:text-white transition-colors"
 					aria-label={`View profile for ${quiz.authorName ?? "owner"}`}

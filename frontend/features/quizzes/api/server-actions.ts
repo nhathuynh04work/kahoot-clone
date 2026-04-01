@@ -9,16 +9,16 @@ export async function getQuiz(id: string) {
 	return data as QuizFullDetails;
 }
 
+export async function getPublicQuiz(id: string) {
+	const api = await apiServer();
+	const { data } = await api.get(`/public/quizzes/${id}`);
+	return data as QuizFullDetails;
+}
+
 export async function getQuizzes() {
 	const api = await apiServer();
 	const { data } = await api.get("/quiz");
 	return data as QuizWithQuestions[];
-}
-
-export async function getPublicQuiz(id: string) {
-	const api = await apiServer();
-	const { data } = await api.get(`/public/quizzes/${id}`);
-	return data;
 }
 
 export type QuizPageResponse = {

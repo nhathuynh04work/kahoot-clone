@@ -6,7 +6,7 @@ export default async function LoginPage() {
 	const user = await getCurrentUser();
 
 	if (user) {
-		redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+		redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
 	}
 
 	return (

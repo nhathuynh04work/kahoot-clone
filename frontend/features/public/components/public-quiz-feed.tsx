@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { QuizCard } from "@/features/quizzes/components/quiz-card";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
-import { useRouter } from "next/navigation";
+import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
 
 type PublicQuiz = QuizWithQuestions & { saveCount?: number; playCount?: number };
 
@@ -20,7 +20,6 @@ export function PublicQuizFeed({
 }: {
 	initial: PublicQuizPage;
 }) {
-	const router = useRouter();
 	const apiBase = useMemo(
 		() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
 		[],
@@ -29,8 +28,14 @@ export function PublicQuizFeed({
 	const [page, setPage] = useState(initial.page ?? 1);
 	const [totalPages, setTotalPages] = useState(initial.totalPages ?? 1);
 	const [isLoading, setIsLoading] = useState(false);
+	const [selectedQuizId, setSelectedQuizId] = useState<number | null>(null);
 
 	const canLoadMore = page < totalPages;
+
+	const selectedQuiz = useMemo(() => {
+		if (selectedQuizId === null) return null;
+		return items.find((q) => q.id === selectedQuizId) ?? null;
+	}, [items, selectedQuizId]);
 
 	const loadMore = async () => {
 		if (isLoading || !canLoadMore) return;
@@ -64,7 +69,7 @@ export function PublicQuizFeed({
 							key={quiz.id}
 							quiz={quiz}
 							canEdit={false}
-							onCardClick={() => router.push(`/quiz/${quiz.id}`)}
+							onCardClick={() => setSelectedQuizId(quiz.id)}
 						/>
 					))}
 				</div>
@@ -80,6 +85,14 @@ export function PublicQuizFeed({
 					{isLoading ? "Loading…" : canLoadMore ? "Show more" : "No more"}
 				</button>
 			</div>
+
+			{selectedQuiz && (
+				<QuizDetailsDrawer
+					quiz={selectedQuiz}
+					variant="public"
+					onClose={() => setSelectedQuizId(null)}
+				/>
+			)}
 		</div>
 	);
 }

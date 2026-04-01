@@ -13,7 +13,7 @@ export const useHostJoin = (lobbyId: number, onJoin: (pin: string) => void) => {
 	useEffect(() => {
 		socket.emit("hostJoin", { lobbyId }, (response: any) => {
 			if (!response.success) {
-				router.push("/dashboard");
+				router.push("/");
 				return;
 			}
 

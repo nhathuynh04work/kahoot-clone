@@ -2,6 +2,8 @@ import Link from "next/link";
 import { apiServer } from "@/lib/apiServer";
 import { Footer } from "@/components/layout/footer";
 import { PublicQuizFeed } from "@/features/public/components/public-quiz-feed";
+import { getCurrentUser } from "@/features/auth/api/server-actions";
+import { redirect } from "next/navigation";
 
 async function fetchPublicQuizzes() {
 	const api = await apiServer();
@@ -16,6 +18,11 @@ async function fetchPublicQuizzes() {
 }
 
 export default async function LandingPage() {
+	const user = await getCurrentUser();
+	if (user) {
+		redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
+	}
+
 	const initial = await fetchPublicQuizzes();
 
 	return (

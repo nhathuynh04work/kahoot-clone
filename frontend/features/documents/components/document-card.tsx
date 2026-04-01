@@ -116,7 +116,7 @@ export function DocumentCard({
 				</p>
 				<div className="mt-2 flex items-center gap-2 min-w-0">
 					<Link
-						href={`/profile/${document.userId}`}
+						href={`/users/${document.userId}`}
 						className="flex items-center gap-2 min-w-0 text-xs text-gray-400 hover:text-gray-200 transition-colors"
 						onClick={(e) => e.stopPropagation()}
 					>

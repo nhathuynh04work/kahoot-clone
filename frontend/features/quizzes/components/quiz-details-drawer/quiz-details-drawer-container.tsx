@@ -17,15 +17,18 @@ export interface QuizDetailsDrawerProps {
 	quiz: QuizWithQuestions;
 	onClose: () => void;
 	viewerId?: number;
+	variant?: "default" | "public";
 }
 
 export function QuizDetailsDrawerContainer({
 	quiz,
 	onClose,
 	viewerId,
+	variant = "default",
 }: QuizDetailsDrawerProps) {
 	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
-	const { fullQuiz, questionsLoading } = useFullQuiz(quiz.id);
+	const isPublic = variant === "public";
+	const { fullQuiz, questionsLoading } = useFullQuiz(quiz.id, { variant });
 	const {
 		sessions,
 		sessionsLoading,
@@ -40,13 +43,15 @@ export function QuizDetailsDrawerContainer({
 		useDrawerVisibility({
 			onClose,
 			transitionMs: DRAWER_TRANSITION_MS,
+			topGap: isPublic ? "58px" : undefined,
 		});
 
 	const { data: mySavedQuizIds = [] } = useQuery({
 		queryKey: ["mySavedQuizzes"],
 		queryFn: getMySavedQuizIds,
+		enabled: !isPublic,
 	});
-	const isSaved = mySavedQuizIds.includes(quiz.id);
+	const isSaved = !isPublic && mySavedQuizIds.includes(quiz.id);
 	const isOwner = typeof viewerId === "number" && viewerId === quiz.userId;
 
 	const authorName = useMemo(
@@ -71,16 +76,19 @@ export function QuizDetailsDrawerContainer({
 				sessionsLoading ? "…" : `${participantCount} participants`
 			}
 			quizId={quiz.id}
-			isHostPending={isPending}
-			onHostLive={() => createLobby()}
-			showSaveButton={!isOwner}
-			initialIsSaved={isSaved}
-			isOwner={isOwner}
-			initialVisibility={(fullQuiz?.visibility ?? quiz.visibility) as any}
-			sharePath={`/quiz/${quiz.id}`}
+			isHostPending={isPublic ? undefined : isPending}
+			onHostLive={isPublic ? undefined : () => createLobby()}
+			showSaveButton={!isPublic && !isOwner}
+			initialIsSaved={!isPublic ? isSaved : undefined}
+			isOwner={!isPublic ? isOwner : false}
+			initialVisibility={
+				!isPublic ? ((fullQuiz?.visibility ?? quiz.visibility) as any) : undefined
+			}
 			backdropStyle={backdropStyle}
 			panelStyle={panelStyle}
 			onBackdropClick={onBackdropClick}
+			hideSidebar={isPublic}
+			portal={isPublic}
 			content={
 				<QuizDetailsQuestionsPane
 					key={quiz.id}

@@ -16,6 +16,7 @@ import { AiModule } from "./ai/ai.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SavesModule } from "./saves/saves.module";
 import { PublicModule } from "./public/public.module";
+import { SearchModule } from "./search/search.module";
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { PublicModule } from "./public/public.module";
         AiModule,
         SavesModule,
         PublicModule,
+        SearchModule,
     ],
     controllers: [AppController],
     providers: [AppService],

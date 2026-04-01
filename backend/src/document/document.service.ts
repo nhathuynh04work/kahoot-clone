@@ -99,6 +99,70 @@ export class DocumentService {
         });
     }
 
+    async findPage(
+        userId: number,
+        options: {
+            q?: string;
+            sort?: string;
+            page: number;
+            pageSize: number;
+        },
+    ) {
+        const q = options.q?.trim();
+        const sort = options.sort?.trim();
+        const page = Math.max(1, options.page);
+        const pageSize = Math.min(200, Math.max(1, options.pageSize));
+
+        const where: Prisma.DocumentWhereInput = {
+            userId,
+            ...(q
+                ? {
+                      fileName: { contains: q, mode: "insensitive" },
+                  }
+                : {}),
+        };
+
+        const orderBy: Prisma.DocumentOrderByWithRelationInput[] = (() => {
+            switch (sort) {
+                case "createdAt_asc":
+                    return [{ createdAt: "asc" }, { id: "asc" }];
+                case "createdAt_desc":
+                    return [{ createdAt: "desc" }, { id: "desc" }];
+                case "name_asc":
+                    return [{ fileName: "asc" }, { id: "desc" }];
+                case "name_desc":
+                    return [{ fileName: "desc" }, { id: "desc" }];
+                case "size_asc":
+                    return [{ fileSize: "asc" }, { id: "desc" }];
+                case "size_desc":
+                    return [{ fileSize: "desc" }, { id: "desc" }];
+                default:
+                    return [{ createdAt: "desc" }, { id: "desc" }];
+            }
+        })();
+
+        const totalItems = await this.prisma.document.count({ where });
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * pageSize;
+
+        const docs = await this.prisma.document.findMany({
+            where,
+            orderBy,
+            skip,
+            take: pageSize,
+            include: { user: { select: { name: true, email: true } } },
+        });
+
+        const items = docs.map((doc) => {
+            const authorName = doc.user?.name ?? doc.user?.email ?? null;
+            const { user: _user, ...rest } = doc;
+            return { ...rest, authorName };
+        });
+
+        return { items, page: safePage, pageSize, totalItems, totalPages };
+    }
+
     async findOne(id: number, userId: number) {
         const doc = await this.prisma.document.findUnique({
             where: { id },

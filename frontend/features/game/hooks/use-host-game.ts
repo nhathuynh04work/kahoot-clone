@@ -158,7 +158,7 @@ export const useHostGame = (lobbyId: number) => {
 		socket.emit("startGame", { pin: state.pin }, (response: any) => {
 			//[TO-DO]: May need some logic here
 			if (!response.success) {
-				window.location.href = "/dashboard";
+				window.location.href = "/";
 			}
 		});
 	};

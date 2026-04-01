@@ -39,7 +39,19 @@ export class DocumentController {
         @User() user: JwtUser,
         @Query("q") q?: string,
         @Query("sort") sort?: string,
+        @Query("page") page?: string,
+        @Query("pageSize") pageSize?: string,
     ) {
+        const hasPaging = page !== undefined || pageSize !== undefined;
+        if (hasPaging) {
+            return this.documentService.findPage(user.id, {
+                q: q?.trim() ? q.trim() : undefined,
+                sort: sort?.trim() ? sort.trim() : undefined,
+                page: Math.max(1, Number(page) || 1),
+                pageSize: Math.min(200, Math.max(1, Number(pageSize) || 24)),
+            });
+        }
+
         return this.documentService.findAll(user.id, {
             q: q?.trim() ? q.trim() : undefined,
             sort: sort?.trim() ? sort.trim() : undefined,

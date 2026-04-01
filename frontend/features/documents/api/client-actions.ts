@@ -53,6 +53,31 @@ export const searchDocuments = async (options: { q?: string }) => {
 	return data;
 };
 
+export type DocumentPageResponse = {
+	items: Document[];
+	page: number;
+	pageSize: number;
+	totalItems: number;
+	totalPages: number;
+};
+
+export const searchDocumentsPage = async (options: {
+	q?: string;
+	page: number;
+	pageSize: number;
+	sort?: string;
+}) => {
+	const params = new URLSearchParams();
+	params.set("page", String(options.page));
+	params.set("pageSize", String(options.pageSize));
+	if (options.q?.trim()) params.set("q", options.q.trim());
+	if (options.sort?.trim()) params.set("sort", options.sort.trim());
+	const { data } = await apiClient.get<DocumentPageResponse>(
+		`/documents?${params.toString()}`,
+	);
+	return data;
+};
+
 export const getDocumentsTotalSize = async (): Promise<number> => {
 	const { data } = await apiClient.get<number>("/documents/total-size");
 	return typeof data === "number" ? data : 0;

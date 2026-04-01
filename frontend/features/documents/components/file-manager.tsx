@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { PdfUploadZone } from "./pdf-upload-zone";
 import { DocumentCard } from "./document-card";
-import { useDocuments, useDocumentsTotalSize } from "../hooks/use-documents";
+import { useDocumentsPage, useDocumentsTotalSize } from "../hooks/use-documents";
 import { getMySavedDocumentIds, getMySavedPublicDocuments } from "../api/client-actions";
 import {
 	MAX_TOTAL_STORAGE_BYTES,
@@ -22,6 +22,12 @@ function normalizeTab(tab: string | null): DocumentDashboardTab {
 	return "my";
 }
 
+function normalizePage(value: string | null) {
+	const n = Number(value);
+	if (!Number.isFinite(n)) return 1;
+	return Math.max(1, Math.floor(n));
+}
+
 export function FileManager({ viewerId }: { viewerId?: number }) {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -29,6 +35,7 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 
 	const urlQ = searchParams.get("q") ?? "";
 	const urlTab = normalizeTab(searchParams.get("tab"));
+	const urlPage = normalizePage(searchParams.get("page"));
 
 	const [q, setQ] = useState(urlQ);
 	const [tab, setTab] = useState<DocumentDashboardTab>(urlTab);
@@ -47,18 +54,24 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 
 	useEffect(() => {
 		const t = setTimeout(() => {
-			setParams({ q: q.trim() ? q.trim() : undefined });
+			setParams({ q: q.trim() ? q.trim() : undefined, page: "1" });
 		}, 250);
 		return () => clearTimeout(t);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [q]);
 
 	useEffect(() => {
-		setParams({ tab });
+		setParams({ tab, page: "1" });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tab]);
 
-	const { data: documents = [], isLoading, error } = useDocuments({ q });
+	const pageSize = 24;
+	const { data: docsPage, isLoading, error } = useDocumentsPage({
+		q,
+		page: urlPage,
+		pageSize,
+	});
+	const documents = docsPage?.items ?? [];
 	const { data: totalSize = 0 } = useDocumentsTotalSize();
 	const { data: mySavedDocumentIds = [] } = useQuery({
 		queryKey: ["mySavedDocuments"],
@@ -78,6 +91,23 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 		);
 	}, [favoriteDocuments, q]);
 	const usagePercent = (totalSize / MAX_TOTAL_STORAGE_BYTES) * 100;
+
+	const favoritesPage = useMemo(() => {
+		const totalItems = filteredFavorites.length;
+		const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+		const safePage = Math.min(urlPage, totalPages);
+		const start = (safePage - 1) * pageSize;
+		return {
+			items: filteredFavorites.slice(start, start + pageSize),
+			page: safePage,
+			totalPages,
+		};
+	}, [filteredFavorites, pageSize, urlPage]);
+
+	const pageInfo =
+		tab === "favorites"
+			? favoritesPage
+			: { page: docsPage?.page ?? urlPage, totalPages: docsPage?.totalPages ?? 1 };
 
 	return (
 		<div className="space-y-4">
@@ -106,6 +136,12 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 						aria-label="Search documents by name"
 					/>
 				</div>
+			</div>
+
+			<div className="flex items-center justify-between gap-3">
+				<p className="text-xs text-gray-400">
+					Page {pageInfo.page} / {pageInfo.totalPages}
+				</p>
 			</div>
 
 			{/* Storage usage bar */}
@@ -152,7 +188,7 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 				</div>
 			) : tab === "favorites" ? (
 				<div className="space-y-3">
-					{filteredFavorites.map((doc) => (
+					{favoritesPage.items.map((doc) => (
 						<DocumentCard
 							key={doc.id}
 							document={doc}
@@ -179,6 +215,39 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 					))}
 				</div>
 			)}
+
+			<div className="flex items-center justify-between pt-2">
+				<button
+					type="button"
+					disabled={pageInfo.page <= 1}
+					className={[
+						"px-3 py-2 rounded-lg text-sm border transition-colors",
+						pageInfo.page <= 1
+							? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+							: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+					].join(" ")}
+					onClick={() => setParams({ page: String(Math.max(1, pageInfo.page - 1)) })}
+				>
+					Previous
+				</button>
+				<button
+					type="button"
+					disabled={pageInfo.page >= pageInfo.totalPages}
+					className={[
+						"px-3 py-2 rounded-lg text-sm border transition-colors",
+						pageInfo.page >= pageInfo.totalPages
+							? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+							: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+					].join(" ")}
+					onClick={() =>
+						setParams({
+							page: String(Math.min(pageInfo.totalPages, pageInfo.page + 1)),
+						})
+					}
+				>
+					Next
+				</button>
+			</div>
 		</div>
 	);
 }

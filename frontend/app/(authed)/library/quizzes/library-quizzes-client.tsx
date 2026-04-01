@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
-import { QuizCard } from "@/features/quizzes/components/quiz-card";
+import { QuizGrid } from "@/features/quizzes/components/quiz-grid";
 import { QuizDetailsDrawer } from "@/features/quizzes/components/quiz-details-drawer";
 
-export function ExploreQuizGrid({
+export function LibraryQuizzesClient({
 	quizzes,
 	viewerId,
 }: {
-	quizzes: Array<QuizWithQuestions & { saveCount?: number; playCount?: number }>;
+	quizzes: QuizWithQuestions[];
 	viewerId?: number;
 }) {
 	const [selectedQuizId, setSelectedQuizId] = useState<number | null>(null);
@@ -21,23 +21,16 @@ export function ExploreQuizGrid({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-				{quizzes.map((quiz) => (
-					<QuizCard
-						key={quiz.id}
-						quiz={quiz}
-						canEdit={false}
-						viewerId={viewerId}
-						onCardClick={() => setSelectedQuizId(quiz.id)}
-					/>
-				))}
-			</div>
+			<QuizGrid
+				quizzes={quizzes}
+				viewerId={viewerId}
+				onSelectQuiz={(id) => setSelectedQuizId(id)}
+			/>
 
 			{selectedQuiz && (
 				<QuizDetailsDrawer
 					quiz={selectedQuiz}
 					viewerId={viewerId}
-					variant="public"
 					onClose={() => setSelectedQuizId(null)}
 				/>
 			)}

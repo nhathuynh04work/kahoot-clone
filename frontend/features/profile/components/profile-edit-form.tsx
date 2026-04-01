@@ -36,7 +36,7 @@ export function ProfileEditForm({
 			toast.success("Profile updated");
 			onDone?.();
 			router.refresh();
-			router.push(`/profile/${userId}`);
+			router.push(`/users/${userId}`);
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : "Failed to update profile");
 		} finally {
@@ -124,7 +124,7 @@ export function ProfileEditForm({
 			<div className="flex items-center justify-end gap-3">
 				<button
 					type="button"
-					onClick={() => router.push(`/profile/${userId}`)}
+					onClick={() => router.push(`/users/${userId}`)}
 					className="font-semibold text-gray-300 py-2 px-6 rounded-md hover:bg-gray-800 hover:text-white transition-colors"
 					disabled={isSaving}
 				>

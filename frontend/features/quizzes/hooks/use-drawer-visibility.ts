@@ -54,8 +54,8 @@ export function useDrawerVisibility({
 	};
 
 	const panelStyle: CSSProperties = {
-		height: `calc(100dvh - var(--app-header-height, 0px) - ${topGap})`,
-		maxHeight: `calc(100dvh - var(--app-header-height, 0px) - ${topGap})`,
+		height: `calc(100dvh - ${topGap})`,
+		maxHeight: `calc(100dvh - ${topGap})`,
 		transform: isVisible ? "translateY(0)" : "translateY(100%)",
 		transitionDuration: `${transitionMs}ms`,
 	};

@@ -27,7 +27,7 @@ export function useConfirmLeave() {
 			}
 
 			window.removeEventListener("beforeunload", handleBeforeUnload);
-			window.location.href = "/dashboard";
+			window.location.href = "/";
 		};
 
 		window.history.pushState(null, "", window.location.href);

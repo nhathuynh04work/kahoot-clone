@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 
-const TABS = ["my", "favorites"] as const;
-type QuizDashboardTab = (typeof TABS)[number];
+type QuizDashboardTab = "my" | "favorites";
 
 function normalizeTab(tab: string | null): QuizDashboardTab {
 	if (tab === "favorites") return "favorites";
@@ -39,14 +38,14 @@ export function DashboardQuizToolbar() {
 	// Debounce search so server navigation isn't overly chatty.
 	useEffect(() => {
 		const t = setTimeout(() => {
-			setParams({ q: q.trim() ? q.trim() : undefined });
+			setParams({ q: q.trim() ? q.trim() : undefined, page: "1" });
 		}, 250);
 		return () => clearTimeout(t);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [q]);
 
 	useEffect(() => {
-		setParams({ tab });
+		setParams({ tab, page: "1" });
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tab]);
 
