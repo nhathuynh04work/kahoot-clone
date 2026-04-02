@@ -2,41 +2,33 @@
 
 import type { User } from "@/features/auth/types";
 import Link from "next/link";
-import { useRef, useEffect, useState } from "react";
+import { useState } from "react";
 
-import { LogOut, Gamepad2, LogIn, User as UserIcon } from "lucide-react";
-import { LogoutButton } from "@/features/auth/components/logout-button";
+import { LogIn, Plus, Loader2 } from "lucide-react";
 import { AppLogo } from "@/components/layout/app-logo";
 import { GlobalSearch } from "@/features/search/components/global-search";
-
-const getInitials = (email: string) => {
-	return email[0]?.toUpperCase() || "?";
-};
+import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function TopBar({ user }: { user?: User | null }) {
-	const [accountOpen, setAccountOpen] = useState(false);
-	const accountRef = useRef<HTMLDivElement>(null);
+	const router = useRouter();
+	const { mutateAsync: createQuiz, isPending } = useCreateQuiz();
+	const [creating, setCreating] = useState(false);
 
-	useEffect(() => {
-		function handleClickOutside(e: MouseEvent) {
-			if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
-				setAccountOpen(false);
-			}
+	const handleCreateQuiz = async () => {
+		if (creating || isPending) return;
+		setCreating(true);
+		try {
+			const quiz = await createQuiz();
+			toast.success("Quiz created successfully.");
+			router.push(`/quiz/${quiz.id}/edit`);
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Something went wrong.");
+		} finally {
+			setCreating(false);
 		}
-		if (accountOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, [accountOpen]);
-
-	useEffect(() => {
-		if (!accountOpen) return;
-		const handleEscape = (e: KeyboardEvent) => {
-			if (e.key === "Escape") setAccountOpen(false);
-		};
-		document.addEventListener("keydown", handleEscape);
-		return () => document.removeEventListener("keydown", handleEscape);
-	}, [accountOpen]);
+	};
 
 	return (
 		<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0 sticky top-0 z-50">
@@ -54,70 +46,20 @@ export default function TopBar({ user }: { user?: User | null }) {
 
 			{/* Right: CTA + account */}
 			<div className="ml-auto flex items-center gap-2 shrink-0">
-				<Link
-					href="/join"
-					className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/10"
-					title="Join a game with a PIN"
-				>
-					<Gamepad2 className="w-4 h-4" aria-hidden />
-					Join game
-				</Link>
-
 				{user ? (
-					<div className="relative" ref={accountRef}>
-						<button
-							type="button"
-							onClick={() => setAccountOpen((o) => !o)}
-							className="w-9 h-9 rounded-full bg-gray-600 flex items-center justify-center font-bold text-white hover:ring-2 hover:ring-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
-							title="Account menu"
-							aria-label="Account menu"
-							aria-haspopup="menu"
-							aria-expanded={accountOpen}
-						>
-							{getInitials(user.email)}
-						</button>
-
-						{accountOpen && (
-							<div
-								className="absolute right-0 top-full mt-2 w-64 rounded-lg border border-gray-600 bg-gray-800 py-2 shadow-xl z-50"
-								role="menu"
-							>
-								<Link
-									href={`/users/${user.id}`}
-									onClick={() => setAccountOpen(false)}
-									className="flex items-center gap-3 px-4 py-3 border-b border-gray-700 hover:bg-gray-700/60 transition-colors"
-								>
-									<div className="w-9 h-9 rounded-full bg-gray-600 flex items-center justify-center font-bold text-sm">
-										{getInitials(user.email)}
-									</div>
-									<div className="min-w-0 flex-1">
-										<p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-											Account
-										</p>
-										<p className="text-sm text-white truncate" title={user.email}>
-											{user.email}
-										</p>
-									</div>
-								</Link>
-								<div className="pt-1">
-									<Link
-										href={`/users/${user.id}`}
-										onClick={() => setAccountOpen(false)}
-										role="menuitem"
-										className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-									>
-										<UserIcon className="w-4 h-4 shrink-0" />
-										Profile
-									</Link>
-
-									<LogoutButton className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors cursor-pointer">
-										<LogOut className="w-4 h-4 shrink-0" />
-										Log out
-									</LogoutButton>
-								</div>
-							</div>
+					<button
+						type="button"
+						onClick={handleCreateQuiz}
+						disabled={creating || isPending}
+						className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/10"
+					>
+						{creating || isPending ? (
+							<Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+						) : (
+							<Plus className="w-4 h-4" aria-hidden />
 						)}
-					</div>
+						{creating || isPending ? "Creating…" : "Create"}
+					</button>
 				) : (
 					<Link
 						href="/auth/login"

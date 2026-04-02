@@ -19,9 +19,9 @@ import {
 	useUpdateDocumentVisibility,
 } from "../hooks/use-documents";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useRouter } from "next/navigation";
 
 interface DocumentCardProps {
 	document: Document;
@@ -75,6 +75,7 @@ export function DocumentCard({
 	const Icon = config.icon;
 	const visibility = document.visibility ?? "PRIVATE";
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const isOwner = typeof viewerId === "number" && viewerId === document.userId;
 
 	const {
@@ -82,8 +83,10 @@ export function DocumentCard({
 		isPending: isSaving,
 	} = useMutation({
 		mutationFn: () => toggleDocumentSave(document.id),
-		onSuccess: (res) => {
+		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["mySavedDocuments"] });
+			void queryClient.invalidateQueries({ queryKey: ["mySavedPublicDocuments"] });
+			router.refresh();
 		},
 	});
 

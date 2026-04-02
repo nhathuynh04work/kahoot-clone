@@ -2,6 +2,7 @@
 
 import HostGamePage from "@/features/game/pages/host-game-page";
 
-export default function HostPage() {
+export default function GameHostPage() {
 	return <HostGamePage />;
 }
+

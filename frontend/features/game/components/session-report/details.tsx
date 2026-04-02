@@ -30,7 +30,7 @@ export interface SessionReportDetailsProps {
 
 export function SessionReportDetails({
 	report,
-	backHref = "/dashboard/report",
+	backHref = "/reports",
 	showBack = true,
 }: SessionReportDetailsProps) {
 	const queryClient = useQueryClient();

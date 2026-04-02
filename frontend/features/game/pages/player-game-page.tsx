@@ -12,7 +12,7 @@ export default function PlayerGamePage() {
 
 	switch (state.status) {
 		case "WAITING":
-			return <PlayerWaitingScreen nickname={state.nickname} />;
+			return <PlayerWaitingScreen nickname={state.nickname} pin={state.pin} />;
 
 		case "QUESTION":
 			return (

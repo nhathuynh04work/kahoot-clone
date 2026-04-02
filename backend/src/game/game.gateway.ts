@@ -220,19 +220,16 @@ export class GameGateway
         }
 
         // Update status
-        await this.lobbyService.updateLobbyStatus(
-            lobby.id,
-            LobbyStatus.IN_PROGRESS,
-        );
+        await this.lobbyService.updateLobbyStatus(lobby.id, LobbyStatus.IN_PROGRESS);
 
         // Get the question
-        const questions = await this.lobbyService.getQuestionList(
-            lobby.quizId,
-            { includeAnswer: false },
-        );
+        const questions = await this.lobbyService.getQuestionList(lobby.quizId, {
+            includeAnswer: false,
+        });
 
-        const currentQuestionIndex =
-            await this.lobbyService.getCurrentQuestionIndex(lobby.id);
+        const currentQuestionIndex = await this.lobbyService.getCurrentQuestionIndex(
+            lobby.id,
+        );
 
         await this.lobbyService.initializeAnswerStatsForQuestion(
             lobby.id,

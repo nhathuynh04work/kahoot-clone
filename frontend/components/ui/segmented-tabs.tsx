@@ -23,8 +23,7 @@ export function SegmentedTabs<T extends string>({
 	return (
 		<div
 			className={cn(
-				"inline-flex rounded-xl border bg-gray-900/40 overflow-hidden",
-				"border-gray-700",
+				"inline-flex rounded-xl border border-gray-700 bg-gray-900/40",
 				stretch && "flex w-full",
 				className,
 			)}
@@ -33,6 +32,8 @@ export function SegmentedTabs<T extends string>({
 		>
 			{tabs.map((tab, idx) => {
 				const isActive = tab.id === activeId;
+				const isFirst = idx === 0;
+				const isLast = idx === tabs.length - 1;
 				return (
 					<button
 						key={tab.id}
@@ -41,13 +42,15 @@ export function SegmentedTabs<T extends string>({
 						aria-selected={isActive}
 						onClick={() => onChange(tab.id)}
 						className={cn(
-							"min-w-[88px] px-3 py-2 text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap",
-							idx !== 0 && "border-l",
-							"border-gray-700",
+							"relative min-w-[88px] px-3 py-2 text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap",
+							idx !== 0 && "border-l border-gray-700",
+							isFirst && "rounded-l-xl",
+							isLast && "rounded-r-xl",
 							stretch && "flex-1 min-w-0",
 							isActive
-								? "bg-indigo-600/20 text-indigo-200 ring-1 ring-inset ring-indigo-500/60"
+								? "bg-indigo-600/20 text-indigo-200 ring-1 ring-inset ring-indigo-500/70 z-10"
 								: "text-gray-300 hover:bg-gray-800/60 hover:text-white",
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
 						)}
 					>
 						{tab.label}

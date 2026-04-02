@@ -40,7 +40,7 @@ export default async function LandingPage() {
 						</p>
 						<div className="flex flex-wrap gap-3">
 							<Link
-								href="/join"
+								href="/game/join"
 								className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition-colors"
 							>
 								Join a game

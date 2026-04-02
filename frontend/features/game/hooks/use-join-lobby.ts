@@ -11,6 +11,8 @@ export const useHostJoin = (lobbyId: number, onJoin: (pin: string) => void) => {
 	});
 
 	useEffect(() => {
+		if (!Number.isFinite(lobbyId) || lobbyId <= 0) return;
+
 		socket.emit("hostJoin", { lobbyId }, (response: any) => {
 			if (!response.success) {
 				router.push("/");

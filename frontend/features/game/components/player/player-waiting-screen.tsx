@@ -1,16 +1,27 @@
 "use client";
 
 import { Loader2, User } from "lucide-react";
+import { AppLogo } from "@/components/layout/app-logo";
 
 interface PlayerWaitingScreenProps {
 	nickname: string;
+	pin: string;
 }
 
-export const PlayerWaitingScreen = ({ nickname }: PlayerWaitingScreenProps) => {
+export const PlayerWaitingScreen = ({
+	nickname,
+	pin,
+}: PlayerWaitingScreenProps) => {
 	return (
-		<div className="min-h-screen bg-gray-900 p-4 flex items-center justify-center">
-			<div className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl p-8 shadow-lg text-center">
-				<div className="w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6">
+		<div className="min-h-screen bg-gray-900 p-4 flex items-center justify-center relative overflow-hidden">
+			<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-indigo-600/15 via-gray-950/0 to-indigo-500/10" />
+
+			<div className="w-full max-w-md rounded-3xl border-2 border-gray-700 bg-gray-800 p-8 shadow-xl text-center relative z-10">
+				<div className="mb-6 select-none">
+					<AppLogo className="text-3xl font-extrabold tracking-tight" />
+				</div>
+
+				<div className="w-16 h-16 bg-blue-500/20 text-blue-200 rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-blue-500/30">
 					<User size={32} />
 				</div>
 
@@ -21,15 +32,19 @@ export const PlayerWaitingScreen = ({ nickname }: PlayerWaitingScreenProps) => {
 					See your name on the host screen?
 				</p>
 
-				<div className="bg-gray-900 rounded-lg p-4 border border-gray-700 flex items-center justify-center gap-3">
-					<span className="text-lg font-mono font-semibold text-white">
+				<div className="bg-gray-900 rounded-2xl p-4 border-2 border-gray-700 flex items-center justify-center gap-3 shadow-sm">
+					<span className="text-xl font-black text-white">
 						{nickname}
 					</span>
 				</div>
 
-				<div className="mt-8 flex items-center justify-center gap-2 text-indigo-400 text-sm animate-pulse">
+				<div className="mt-4 text-sm text-gray-300 font-semibold">
+					Game PIN: <span className="font-mono font-black tracking-widest">{pin}</span>
+				</div>
+
+				<div className="mt-6 flex items-center justify-center gap-2 text-indigo-200 text-sm font-semibold">
 					<Loader2 size={16} className="animate-spin" />
-					<span>Waiting for game to start...</span>
+					<span>Waiting for host…</span>
 				</div>
 			</div>
 		</div>

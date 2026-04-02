@@ -212,7 +212,18 @@ export class AiService {
         userPrompt: string,
     ): Promise<GenerateQuestionsResult> {
         const doc = await this.prisma.document.findFirst({
-            where: { id: documentId, userId },
+            where: {
+                id: documentId,
+                OR: [
+                    // Owned document
+                    { userId },
+                    // Saved public document
+                    {
+                        visibility: "PUBLIC",
+                        saves: { some: { userId } },
+                    },
+                ],
+            },
         });
         if (!doc) {
             this.logger.warn(

@@ -3,9 +3,10 @@
 import { NicknameForm } from "@/features/game/components/common/nickname-form";
 import { PinForm } from "@/features/game/components/common/pin-form";
 import { RejoinDialog } from "@/features/game/components/common/rejoin-dialog";
+import { AppLogo } from "@/components/layout/app-logo";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 
 interface SessionData {
 	nickname: string;
@@ -13,14 +14,16 @@ interface SessionData {
 	rejoin: boolean;
 }
 
-export default function JoinScreen() {
+export function GameJoinClient() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	const initialPin = useMemo(() => searchParams.get("pin") ?? "", [searchParams]);
 
 	const [state, setState] = useState<"pin" | "nickname" | "rejoin">("pin");
-
 	const [pin, setPin] = useState("");
 
-	const handlePinValid = (pin: string) => {
+	const handlePinValid = useCallback((pin: string) => {
 		setPin(pin);
 		const session: string | null = localStorage.getItem("recovery");
 
@@ -37,19 +40,38 @@ export default function JoinScreen() {
 		}
 
 		setState("rejoin");
-	};
+	}, []);
+
+	const urlFlow = useMemo(() => {
+		if (!initialPin) return null;
+
+		let nextState: "nickname" | "rejoin" = "nickname";
+		try {
+			const session: string | null = localStorage.getItem("recovery");
+			if (session) {
+				const parsed = JSON.parse(session) as SessionData;
+				if (parsed.pin === initialPin) nextState = "rejoin";
+			}
+		} catch {
+			// If storage is unavailable or session is corrupted, just start fresh.
+		}
+
+		return { pin: initialPin, state: nextState };
+	}, [initialPin]);
 
 	const handleJoinSuccess = (nickname: string) => {
+		const effectivePin = state === "pin" && urlFlow ? urlFlow.pin : pin;
+
 		localStorage.setItem(
 			"recovery",
 			JSON.stringify({
-				pin: pin,
+				pin: effectivePin,
 				nickname: nickname,
 				rejoin: false,
 			}),
 		);
 
-		router.push("/play");
+		router.push("/game/play");
 	};
 
 	const handleStartFresh = () => {
@@ -72,28 +94,33 @@ export default function JoinScreen() {
 		};
 
 		localStorage.setItem("recovery", JSON.stringify(newSession));
-		router.push("/play");
+		router.push("/game/play");
 	};
 
 	return (
 		<div className="px-4">
-			<div className="flex flex-col items-center justify-center min-h-[calc(100vh-58px)] text-white">
-				<h1 className="text-5xl font-bold mb-10">quiztopia!</h1>
+			<div className="flex flex-col items-center justify-center min-h-dvh text-white">
+				<div className="mb-10 select-none">
+					<AppLogo className="text-5xl font-extrabold tracking-tight" />
+				</div>
 
-				{state === "pin" && <PinForm onSuccess={handlePinValid} />}
+				{state === "pin" && !urlFlow && <PinForm onSuccess={handlePinValid} />}
 
-				{state === "nickname" && (
-					<NicknameForm pin={pin} onSuccess={handleJoinSuccess} />
+				{(state === "nickname" || (state === "pin" && urlFlow?.state === "nickname")) && (
+					<NicknameForm
+						pin={state === "pin" ? urlFlow!.pin : pin}
+						onSuccess={handleJoinSuccess}
+					/>
 				)}
 
-				{state === "rejoin" && (
+				{(state === "rejoin" || (state === "pin" && urlFlow?.state === "rejoin")) && (
 					<RejoinDialog
 						onContinue={handleResume}
 						onStartFresh={handleStartFresh}
 					/>
 				)}
 
-				{state === "pin" && (
+				{state === "pin" && !urlFlow && (
 					<div className="mt-4">
 						Wanting to host instead?{" "}
 						<Link href={"/auth/login"} className="text-indigo-500 underline">

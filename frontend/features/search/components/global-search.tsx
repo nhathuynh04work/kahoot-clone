@@ -65,14 +65,16 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 		authorName: string | null;
 	}) => {
 		setOpen(false);
-		setSelectedQuiz({
-			id: quiz.id,
-			title: quiz.title,
-			coverUrl: quiz.coverUrl,
-			userId: quiz.userId,
-			authorName: quiz.authorName,
-			questions: [],
-		} as QuizWithQuestions);
+		setSelectedQuiz(
+			({
+				id: quiz.id,
+				title: quiz.title,
+				coverUrl: quiz.coverUrl,
+				userId: quiz.userId,
+				authorName: quiz.authorName,
+				questions: [],
+			} as unknown) as QuizWithQuestions,
+		);
 	};
 
 	const goToDocumentsSearch = (fileName: string) => {
