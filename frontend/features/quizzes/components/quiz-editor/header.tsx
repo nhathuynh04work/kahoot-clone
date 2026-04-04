@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CloudCheck, Loader2, Sparkles } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
 import type { GeneratedQuestion } from "@/features/ai-quiz-chat/api/client-actions";
@@ -23,30 +23,27 @@ export function Header({ isSaving }: HeaderProps) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
 
-	const handleAddQuestion = useCallback(
-		(gen: GeneratedQuestion) => {
-			const lastSortOrder =
-				questions.length > 0 ? questions[questions.length - 1]?.sortOrder ?? -1 : -1;
-			const newId = Date.now() * -1;
-			append({
-				id: newId,
-				quizId: watch("id"),
-				text: gen.text,
-				timeLimit: 20000,
-				points: 1000,
-				imageUrl: undefined,
-				sortOrder: lastSortOrder + 1,
-				options: gen.options.map((o, i) => ({
-					id: newId * 10 - i,
-					questionId: newId,
-					text: o.text,
-					isCorrect: o.isCorrect,
-					sortOrder: i,
-				})),
-			});
-		},
-		[append, questions.length, watch],
-	);
+	const handleAddQuestion = (gen: GeneratedQuestion) => {
+		const lastSortOrder =
+			questions.length > 0 ? questions[questions.length - 1]?.sortOrder ?? -1 : -1;
+		const newId = Date.now() * -1;
+		append({
+			id: newId,
+			quizId: watch("id"),
+			text: gen.text,
+			timeLimit: 20000,
+			points: 1000,
+			imageUrl: undefined,
+			sortOrder: lastSortOrder + 1,
+			options: gen.options.map((o, i) => ({
+				id: newId * 10 - i,
+				questionId: newId,
+				text: o.text,
+				isCorrect: o.isCorrect,
+				sortOrder: i,
+			})),
+		});
+	};
 
 	function openTitleModal() {
 		setIsModalOpen(true);
@@ -56,7 +53,7 @@ export function Header({ isSaving }: HeaderProps) {
 		<>
 			<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
 				<Link
-					href="/dashboard"
+					href="/"
 					className="text-xl font-extrabold shrink-0 tracking-tight">
 					<AppLogo />
 				</Link>
@@ -98,7 +95,7 @@ export function Header({ isSaving }: HeaderProps) {
 					</div>
 
 					<Link
-						href="/dashboard"
+						href="/"
 						className="font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-4 py-2 text-sm transition-colors">
 						Done
 					</Link>

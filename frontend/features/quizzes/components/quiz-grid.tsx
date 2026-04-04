@@ -1,18 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { QuizCard } from "./quiz-card";
-import { QuizDetailsDrawer } from "./quiz-details-drawer";
 import { QuizWithQuestions } from "@/features/quizzes/types";
+import { getMySavedQuizIds } from "@/features/quizzes/api/client-actions";
 
 interface QuizGridProps {
 	quizzes: QuizWithQuestions[];
+	viewerId?: number;
+	onSelectQuiz?: (quizId: number) => void;
 }
 
-export function QuizGrid({ quizzes }: QuizGridProps) {
-	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(
-		null
-	);
+export function QuizGrid({
+	quizzes,
+	viewerId,
+	onSelectQuiz,
+}: QuizGridProps) {
+	useQuery({
+		queryKey: ["mySavedQuizzes"],
+		queryFn: getMySavedQuizIds,
+	});
 
 	return (
 		<>
@@ -21,17 +28,13 @@ export function QuizGrid({ quizzes }: QuizGridProps) {
 					<QuizCard
 						key={quiz.id}
 						quiz={quiz}
-						onCardClick={() => setSelectedQuiz(quiz)}
+						viewerId={viewerId}
+						onCardClick={() => {
+							onSelectQuiz?.(quiz.id);
+						}}
 					/>
 				))}
 			</div>
-
-			{selectedQuiz && (
-				<QuizDetailsDrawer
-					quiz={selectedQuiz}
-					onClose={() => setSelectedQuiz(null)}
-				/>
-			)}
 		</>
 	);
 }

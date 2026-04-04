@@ -295,7 +295,6 @@ export class AdminService {
         }
 
         if (Object.keys(data).length === 0) {
-            // Nothing to update; return the user as-is for convenience.
             const existing = (await this.prisma.user.findUnique({
                 where: { id: userId },
                 select: {

@@ -17,7 +17,7 @@ export function useCreateLobby(quizId: number) {
 			return data;
 		},
 		onSuccess: (lobby) => {
-			router.push(`/host/${lobby.id}`);
+			router.push(`/game/host/${lobby.id}`);
 		},
 		onError: (error) => {
 			toast.error(error.message);

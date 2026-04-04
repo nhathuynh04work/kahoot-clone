@@ -54,12 +54,6 @@ export function Select({
 		return () => document.removeEventListener("mousedown", onDocMouseDown);
 	}, [open]);
 
-	useEffect(() => {
-		if (!open) return;
-		const idx = options.findIndex((o) => o.value === value && !o.disabled);
-		setActiveIndex(idx >= 0 ? idx : options.findIndex((o) => !o.disabled));
-	}, [open, options, value]);
-
 	const move = (dir: 1 | -1) => {
 		if (enabledOptions.length === 0) return;
 		const currentValue = options[activeIndex]?.value;
@@ -89,11 +83,30 @@ export function Select({
 				aria-label={ariaLabel}
 				aria-haspopup="listbox"
 				aria-expanded={open}
-				onClick={() => setOpen((o) => !o)}
+				onClick={() => {
+					setOpen((o) => {
+						const next = !o;
+						if (next) {
+							const idx = options.findIndex(
+								(opt) => opt.value === value && !opt.disabled,
+							);
+							setActiveIndex(
+								idx >= 0 ? idx : options.findIndex((opt) => !opt.disabled),
+							);
+						}
+						return next;
+					});
+				}}
 				onKeyDown={(e) => {
 					if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 						e.preventDefault();
 						setOpen(true);
+						const idx = options.findIndex(
+							(opt) => opt.value === value && !opt.disabled,
+						);
+						setActiveIndex(
+							idx >= 0 ? idx : options.findIndex((opt) => !opt.disabled),
+						);
 						return;
 					}
 					if (e.key === "Enter" || e.key === " ") {

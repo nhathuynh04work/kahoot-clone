@@ -5,6 +5,9 @@ export type Quiz = {
 	description?: string;
 	coverUrl?: string;
 	authorName?: string | null;
+	visibility?: "PUBLIC" | "PRIVATE";
+	playCount?: number;
+	saveCount?: number;
 	createdAt: Date;
 };
 

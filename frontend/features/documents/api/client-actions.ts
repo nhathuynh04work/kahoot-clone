@@ -43,13 +43,37 @@ export const getDocuments = async () => {
 	return data;
 };
 
-export const searchDocuments = async (options: { q?: string; sort?: string }) => {
+export const searchDocuments = async (options: { q?: string }) => {
 	const params = new URLSearchParams();
 	if (options.q?.trim()) params.set("q", options.q.trim());
-	if (options.sort?.trim()) params.set("sort", options.sort.trim());
 	const qs = params.toString();
 	const { data } = await apiClient.get<Document[]>(
 		qs ? `/documents?${qs}` : "/documents",
+	);
+	return data;
+};
+
+export type DocumentPageResponse = {
+	items: Document[];
+	page: number;
+	pageSize: number;
+	totalItems: number;
+	totalPages: number;
+};
+
+export const searchDocumentsPage = async (options: {
+	q?: string;
+	page: number;
+	pageSize: number;
+	sort?: string;
+}) => {
+	const params = new URLSearchParams();
+	params.set("page", String(options.page));
+	params.set("pageSize", String(options.pageSize));
+	if (options.q?.trim()) params.set("q", options.q.trim());
+	if (options.sort?.trim()) params.set("sort", options.sort.trim());
+	const { data } = await apiClient.get<DocumentPageResponse>(
+		`/documents?${params.toString()}`,
 	);
 	return data;
 };
@@ -70,6 +94,36 @@ export const updateDocumentStatus = async (
 	const { data } = await apiClient.patch<Document>(`/documents/${id}/status`, {
 		status,
 	});
+	return data;
+};
+
+export const updateDocumentVisibility = async (
+	id: number,
+	visibility: "PUBLIC" | "PRIVATE",
+) => {
+	const { data } = await apiClient.patch<Document>(
+		`/documents/${id}/visibility`,
+		{ visibility },
+	);
+	return data;
+};
+
+export const toggleDocumentSave = async (documentId: number) => {
+	const { data } = await apiClient.post(
+		`/saves/documents/${documentId}`,
+	);
+	return data as { saved: boolean; documentId: number };
+};
+
+export const getMySavedDocumentIds = async (): Promise<number[]> => {
+	const { data } = await apiClient.get<{ documentIds: number[] }>(
+		"/saves/documents",
+	);
+	return data.documentIds;
+};
+
+export const getMySavedPublicDocuments = async (): Promise<Document[]> => {
+	const { data } = await apiClient.get<Document[]>("/saves/documents/public");
 	return data;
 };
 
@@ -105,10 +159,14 @@ async function openParseStream(id: number): Promise<ReadableStreamDefaultReader<
 
 /** Extracts and parses a single "data: {...}" line from an SSE block. */
 function parseSSEBlock(block: string): ParseProgressEvent | null {
-	const match = block.match(/^data:\s*(.+)$/m);
-	if (!match) return null;
+	// NestJS SSE may emit either:
+	// - single-line JSON payload: `data: {...}`
+	// - or multiple `data:` lines (SSE spec) for a single event.
+	const dataLines = Array.from(block.matchAll(/^data:\s*(.*)$/gm)).map((m) => m[1]);
+	if (dataLines.length === 0) return null;
 	try {
-		return JSON.parse(match[1].trim()) as ParseProgressEvent;
+		const jsonText = dataLines.join("\n").trim();
+		return JSON.parse(jsonText) as ParseProgressEvent;
 	} catch (e) {
 		if (e instanceof SyntaxError) return null;
 		throw e;
@@ -119,7 +177,9 @@ function parseSSEBlock(block: string): ParseProgressEvent | null {
 function processSSEBuffer(
 	buffer: string,
 ): { events: ParseProgressEvent[]; remaining: string } {
-	const blocks = buffer.split("\n\n");
+	// Normalize line endings so we can safely split on SSE "blank line" delimiters.
+	const normalized = buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+	const blocks = normalized.split("\n\n");
 	const remaining = blocks.pop() ?? "";
 	const events = blocks
 		.map(parseSSEBlock)

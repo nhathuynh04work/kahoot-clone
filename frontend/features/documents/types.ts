@@ -9,5 +9,8 @@ export interface Document {
 	mimeType: string;
 	cloudinaryPublicId?: string;
 	status: DocumentStatus;
+	visibility?: "PUBLIC" | "PRIVATE";
 	createdAt: string;
+	saveCount?: number;
+	authorName?: string | null;
 }

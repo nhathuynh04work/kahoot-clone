@@ -4,9 +4,11 @@ import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	searchDocuments,
+	searchDocumentsPage,
 	getDocumentsTotalSize,
 	deleteDocument,
 	updateDocumentStatus,
+	updateDocumentVisibility,
 	createDocument,
 	getDocumentSignature,
 	uploadPdfToCloudinary,
@@ -14,13 +16,26 @@ import {
 	parseDocumentStream,
 } from "../api/client-actions";
 import type { Document } from "../types";
+import type { DocumentPageResponse } from "../api/client-actions";
 
 export const documentsQueryKey = ["documents"] as const;
 
-export function useDocuments(options?: { q?: string; sort?: string }) {
+export function useDocuments(options?: { q?: string }) {
 	return useQuery({
-		queryKey: [...documentsQueryKey, options?.q ?? "", options?.sort ?? ""],
-		queryFn: () => searchDocuments({ q: options?.q, sort: options?.sort }),
+		queryKey: [...documentsQueryKey, options?.q ?? ""],
+		queryFn: () => searchDocuments({ q: options?.q }),
+	});
+}
+
+export function useDocumentsPage(options: { q?: string; page: number; pageSize: number }) {
+	return useQuery<DocumentPageResponse>({
+		queryKey: [...documentsQueryKey, "page", options.q ?? "", options.page, options.pageSize],
+		queryFn: () =>
+			searchDocumentsPage({
+				q: options.q,
+				page: options.page,
+				pageSize: options.pageSize,
+			}),
 	});
 }
 
@@ -62,6 +77,22 @@ export function useUpdateDocumentStatus() {
 	return useMutation({
 		mutationFn: ({ id, status }: { id: number; status: Document["status"] }) =>
 			updateDocumentStatus(id, status),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
+		},
+	});
+}
+
+export function useUpdateDocumentVisibility() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			visibility,
+		}: {
+			id: number;
+			visibility: "PUBLIC" | "PRIVATE";
+		}) => updateDocumentVisibility(id, visibility),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: documentsQueryKey });
 		},

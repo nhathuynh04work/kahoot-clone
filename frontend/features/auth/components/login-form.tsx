@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
@@ -20,14 +21,23 @@ export function LoginForm() {
 	} = useForm<LoginInput>();
 
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const [apiError, setApiError] = useState<string | null>(null);
+
+	function getValidatedReturnTo(raw: string | null): string | null {
+		if (!raw) return null;
+		if (!raw.startsWith("/")) return null;
+		if (raw.startsWith("/auth/") || raw === "/auth") return null;
+		return raw;
+	}
 
 	async function onSubmit(values: LoginInput) {
 		setApiError(null);
 
 		try {
 			await apiClient.post("/auth/login", values);
-			router.push("/dashboard");
+			const returnTo = getValidatedReturnTo(searchParams.get("returnTo"));
+			router.replace(returnTo ?? "/");
 		} catch (error: any) {
 			setApiError(error?.message);
 		}

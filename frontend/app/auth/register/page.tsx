@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 export default async function RegisterPage() {
 	const user = await getCurrentUser();
-	if (user) redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard");
+	if (user) redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
 
 	return (
 		<>

@@ -2,6 +2,7 @@
 
 import { Player } from "../../types";
 import { Trophy, Medal, Award } from "lucide-react";
+import Link from "next/link";
 
 interface HostFinishedScreenProps {
 	leaderboard: Player[];
@@ -90,6 +91,15 @@ export const HostFinishedScreen = ({
 						</>
 					)}
 				</div>
+			</div>
+
+			<div className="mt-10">
+				<Link
+					href="/library/quizzes"
+					className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition-colors"
+				>
+					Return to My quizzes
+				</Link>
 			</div>
 		</div>
 	);

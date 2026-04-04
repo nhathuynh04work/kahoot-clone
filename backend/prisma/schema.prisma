@@ -17,6 +17,7 @@ model User {
   id        Int         @id @default(autoincrement())
   email     String      @unique
   name      String?
+  avatarUrl String?
   password  String
   createdAt DateTime    @default(now())
 
@@ -25,6 +26,8 @@ model User {
   quizzes   Quiz[]
   lobbies   GameLobby[]
   documents Document[]
+  quizSaves QuizSave[]
+  documentSaves DocumentSave[]
   aiQuizChatSessions AiQuizChatSession[]
 }
 
@@ -37,11 +40,39 @@ model Document {
   mimeType           String         @default("application/pdf")
   cloudinaryPublicId String?
   status             DocumentStatus @default(UPLOADED)
+  visibility         Visibility     @default(PRIVATE)
   createdAt          DateTime       @default(now())
 
   user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   chunks DocumentChunk[]
   aiChatMessages AiQuizChatMessage[]
+  saves DocumentSave[]
+}
+
+model QuizSave {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  quizId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId])
+  @@index([quizId])
+}
+
+model DocumentSave {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  documentId  Int
+  createdAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@index([documentId])
 }
 
 model DocumentChunk {
@@ -63,17 +94,24 @@ enum DocumentStatus {
   ERROR
 }
 
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
 model Quiz {
   id          Int         @id @default(autoincrement())
   userId      Int
   title       String
   description String?
   coverUrl    String?
+  visibility  Visibility  @default(PRIVATE)
   createdAt   DateTime    @default(now())
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions   Question[]
   lobby       GameLobby[]
   aiChat      AiQuizChatSession[]
+  saves QuizSave[]
 }
 
 model Question {

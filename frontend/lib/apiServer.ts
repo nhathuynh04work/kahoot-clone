@@ -10,11 +10,14 @@ export const apiServer = async () => {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("access_token")?.value;
 
+	const headers: Record<string, string> = {};
+	if (token) {
+		headers.Cookie = `access_token=${token}`;
+	}
+
 	const api = axios.create({
 		baseURL,
-		headers: {
-			Cookie: `access_token=${token}`,
-		},
+		headers,
 	});
 
 	api.interceptors.response.use(

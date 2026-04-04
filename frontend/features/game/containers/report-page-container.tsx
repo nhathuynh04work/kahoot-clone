@@ -93,7 +93,7 @@ export function ReportPageContainer() {
 			<ReportSessionList
 				items={items}
 				quizTitleLoadingId={quizLoadingId}
-				hrefForLobbyId={(lobbyId) => `/dashboard/report/${lobbyId}`}
+				hrefForLobbyId={(lobbyId) => `/reports/${lobbyId}`}
 				onOpenQuizDetails={(nextQuizId) => {
 					if (quizLoadingId !== null) return;
 					setQuizError(null);

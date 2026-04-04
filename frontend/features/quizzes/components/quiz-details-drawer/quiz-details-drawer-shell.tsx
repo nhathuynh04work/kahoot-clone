@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {
 	X,
 	Loader2,
@@ -8,34 +9,74 @@ import {
 	ChevronRight,
 	Video,
 	Users,
+	Bookmark,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CSSProperties, ReactNode } from "react";
-import { QuizDetailsTabs } from "./quiz-details-tabs";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { toggleQuizSave } from "@/features/quizzes/api/client-actions";
+import { apiClient } from "@/lib/apiClient";
+import { Select } from "@/components/ui/select";
+
+const QuizDetailsDrawerPortal = dynamic(() => import("./quiz-details-drawer-portal"), {
+	ssr: false,
+});
 
 function DrawerHeader({
 	authorName,
+	showSaveButton,
+	saved,
+	isSaving,
+	onToggleSave,
 	onClose,
 }: {
 	authorName: string;
+	showSaveButton: boolean;
+	saved: boolean;
+	isSaving: boolean;
+	onToggleSave: () => void;
 	onClose: () => void;
 }) {
 	return (
-		<header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-gray-700 shrink-0">
-			<div className="flex items-center gap-3 min-w-0">
+		<header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-3 border-b border-gray-700 shrink-0">
+			<div className="flex items-center gap-3 min-w-0 justify-self-start">
 				<UserAvatar name={authorName} size={32} />
 				<span className="text-sm text-gray-300 truncate">{authorName}</span>
 			</div>
-			<button
-				type="button"
-				onClick={onClose}
-				className="p-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors shrink-0"
-				aria-label="Close"
-			>
-				<X className="w-5 h-5" />
-			</button>
+			<div className="flex items-center gap-2 justify-self-center">
+				{showSaveButton && (
+					<button
+						type="button"
+						onClick={onToggleSave}
+						disabled={isSaving}
+						className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+							saved
+								? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/30"
+								: "bg-gray-900/20 hover:bg-gray-900/40 text-gray-200 border-gray-700"
+						} ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+						aria-label={saved ? "Unsave quiz" : "Save quiz"}
+					>
+						<Bookmark
+							className="w-4 h-4"
+							fill={saved ? "currentColor" : "none"}
+						/>
+						<span>{isSaving ? "Saving…" : saved ? "Saved" : "Save"}</span>
+					</button>
+				)}
+			</div>
+			<div className="justify-self-end">
+				<button
+					type="button"
+					onClick={onClose}
+					className="p-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white transition-colors shrink-0"
+					aria-label="Close"
+				>
+					<X className="w-5 h-5" />
+				</button>
+			</div>
 		</header>
 	);
 }
@@ -93,11 +134,34 @@ function DrawerSidebar({
 	quizId,
 	isPending,
 	onHostLive,
+	isOwner,
+	initialVisibility,
 }: {
 	quizId: number;
 	isPending: boolean;
 	onHostLive: () => void;
+	isOwner: boolean;
+	initialVisibility?: "PUBLIC" | "PRIVATE";
 }) {
+	const queryClient = useQueryClient();
+	const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">(
+		initialVisibility ?? "PRIVATE",
+	);
+
+	const { mutate: updateVisibility, isPending: isUpdatingVisibility } =
+		useMutation({
+			mutationFn: async (next: "PUBLIC" | "PRIVATE") => {
+				const { data } = await apiClient.patch(`/quiz/${quizId}`, {
+					visibility: next,
+				});
+				return data as { visibility?: "PUBLIC" | "PRIVATE" };
+			},
+			onSuccess: (res) => {
+				if (res.visibility) setVisibility(res.visibility);
+				void queryClient.invalidateQueries({ queryKey: ["mySavedQuizzes"] });
+			},
+		});
+
 	return (
 		<aside className="w-[260px] shrink-0 border-l border-gray-700 flex flex-col bg-gray-800/50">
 			<div className="p-4 space-y-2">
@@ -111,6 +175,7 @@ function DrawerSidebar({
 					</span>
 					<ChevronRight className="w-4 h-4 text-gray-400" />
 				</Link>
+
 				<button
 					type="button"
 					disabled={isPending}
@@ -127,15 +192,34 @@ function DrawerSidebar({
 					</span>
 					<ChevronRight className="w-4 h-4 text-indigo-200" />
 				</button>
+
+				{isOwner && (
+					<div className="pt-3">
+						<p className="text-xs font-medium text-gray-400 mb-2">Visibility</p>
+						<Select
+							value={visibility}
+							onValueChange={(v) => {
+								if (isUpdatingVisibility) return;
+								const next = v as "PUBLIC" | "PRIVATE";
+								setVisibility(next);
+								updateVisibility(next);
+							}}
+							options={[
+								{ value: "PRIVATE", label: "Private" },
+								{ value: "PUBLIC", label: "Public" },
+							]}
+							ariaLabel="Quiz visibility"
+							placeholder="Select visibility"
+							buttonClassName={
+								isUpdatingVisibility ? "opacity-60 pointer-events-none" : undefined
+							}
+						/>
+					</div>
+				)}
 			</div>
 		</aside>
 	);
 }
-
-const DRAWER_TABS = [
-	{ id: "questions", label: "Questions" },
-	{ id: "reports", label: "Reports" },
-] as const;
 
 export type QuizDetailsDrawerShellProps = {
 	authorName: string;
@@ -145,14 +229,18 @@ export type QuizDetailsDrawerShellProps = {
 	playsLabel: string;
 	participantsLabel: string;
 	quizId: number;
-	isHostPending: boolean;
-	onHostLive: () => void;
-	activeTabId: string;
-	onTabChange: (id: string) => void;
+	isHostPending?: boolean;
+	onHostLive?: () => void;
+	showSaveButton?: boolean;
+	initialIsSaved?: boolean;
+	isOwner?: boolean;
+	initialVisibility?: "PUBLIC" | "PRIVATE";
 	backdropStyle: CSSProperties;
 	panelStyle: CSSProperties;
 	onBackdropClick: () => void;
-	tabContent: ReactNode;
+	content: ReactNode;
+	hideSidebar?: boolean;
+	portal?: boolean;
 };
 
 export function QuizDetailsDrawerShell({
@@ -165,58 +253,81 @@ export function QuizDetailsDrawerShell({
 	quizId,
 	isHostPending,
 	onHostLive,
-	activeTabId,
-	onTabChange,
+	showSaveButton,
+	initialIsSaved,
+	isOwner,
+	initialVisibility,
 	backdropStyle,
 	panelStyle,
 	onBackdropClick,
-	tabContent,
+	content,
+	hideSidebar = false,
+	portal = false,
 }: QuizDetailsDrawerShellProps) {
-	return (
+	const queryClient = useQueryClient();
+	const [saved, setSaved] = useState(() => !!initialIsSaved);
+
+	const { mutate: toggleSave, isPending: isSaving } = useMutation({
+		mutationFn: () => toggleQuizSave(quizId),
+		onSuccess: (res) => {
+			setSaved(res.saved);
+			void queryClient.invalidateQueries({ queryKey: ["mySavedQuizzes"] });
+		},
+	});
+
+	const shell = (
 		<div
-			className="fixed inset-0 z-50 flex items-end justify-center touch-none bg-black/40 backdrop-blur-[1px] transition-opacity ease-out"
+			className="fixed inset-0 z-50 touch-none bg-black/40 backdrop-blur-[1px] transition-opacity ease-out"
 			style={backdropStyle}
 			onClick={onBackdropClick}
 			aria-modal
 			role="dialog"
 		>
-			<div
-				className="relative w-full max-w-full overflow-hidden rounded-t-2xl bg-gray-800 border border-gray-700 border-b-0 shadow-2xl flex flex-col transition-transform ease-out"
-				style={panelStyle}
-				onClick={(e) => e.stopPropagation()}
-			>
-				<DrawerHeader authorName={authorName} onClose={onClose} />
-
-				<div className="flex-1 flex min-h-0">
-					<div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-						<DrawerHero
-							coverUrl={coverUrl}
-							title={title}
-							playsLabel={playsLabel}
-							participantsLabel={participantsLabel}
-						/>
-
-						<div className="relative z-20 shrink-0 px-4 pt-3 pb-1 bg-[#1f2937]">
-							<QuizDetailsTabs
-								tabs={[...DRAWER_TABS]}
-								activeId={activeTabId}
-								onChange={onTabChange}
-							/>
-						</div>
-
-						<div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-0 bg-[#1f2937]">
-							{tabContent}
-						</div>
-					</div>
-
-					<DrawerSidebar
-						quizId={quizId}
-						isPending={isHostPending}
-						onHostLive={onHostLive}
+			<div className="relative h-full w-full">
+				<div
+					className="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-full overflow-hidden rounded-t-2xl bg-gray-800 border border-gray-700 border-b-0 shadow-2xl flex flex-col transition-transform ease-out"
+					style={panelStyle}
+					onClick={(e) => e.stopPropagation()}
+				>
+					<DrawerHeader
+						authorName={authorName}
+						showSaveButton={!!showSaveButton}
+						saved={saved}
+						isSaving={isSaving}
+						onToggleSave={() => toggleSave()}
+						onClose={onClose}
 					/>
+
+					<div className="flex-1 flex min-h-0">
+						<div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+							<DrawerHero
+								coverUrl={coverUrl}
+								title={title}
+								playsLabel={playsLabel}
+								participantsLabel={participantsLabel}
+							/>
+
+							<div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-4 pt-0 bg-[#1f2937]">
+								{content}
+							</div>
+						</div>
+
+						{!hideSidebar && onHostLive && typeof isHostPending === "boolean" && (
+							<DrawerSidebar
+								quizId={quizId}
+								isPending={isHostPending}
+								onHostLive={onHostLive}
+								isOwner={!!isOwner}
+								initialVisibility={initialVisibility}
+							/>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
 	);
+
+	if (!portal) return shell;
+	return <QuizDetailsDrawerPortal key={quizId}>{shell}</QuizDetailsDrawerPortal>;
 }
 

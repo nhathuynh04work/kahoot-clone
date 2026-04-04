@@ -15,11 +15,41 @@ interface AiChatbotPanelProps {
 
 export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {
 	const state = useAiChatState({ quizId, onFileSelect, onAddQuestion });
-	const currentQuestions = state.openCanvasMessageId
-		? state.generatedQuestionsByMessageId[state.openCanvasMessageId] ?? []
+	const {
+		docPopupOpen,
+		setDocPopupOpen,
+		attachButtonRef,
+		ownedDocumentsForMenu,
+		savedDocumentsForMenu,
+		selectedDoc,
+		messages,
+		input,
+		isGenerating,
+		isHistoryLoading,
+		scrollRef,
+		openCanvasMessageId,
+		generatedQuestionsByMessageId,
+		addedQuestionIdsByMessageId,
+		setOpenCanvasMessageId,
+		setInput,
+		sendMessage,
+		handleAddToQuiz,
+		handleUpdateQuestion,
+		handleSelectDocument,
+		handleUpload,
+		uploadPending,
+		activeParsingDocId,
+		parsingStageText,
+		parsingProgress,
+		usedBytes,
+		remainingBytes,
+		limitBytes,
+	} = state;
+	const currentQuestions = openCanvasMessageId
+		? generatedQuestionsByMessageId[openCanvasMessageId] ?? []
 		: [];
-	const currentAddedIds: Set<string> = state.openCanvasMessageId
-		? state.addedQuestionIdsByMessageId[state.openCanvasMessageId] ?? new Set<string>()
+	const currentAddedIds: Set<string> = openCanvasMessageId
+		? addedQuestionIdsByMessageId[openCanvasMessageId] ?? new Set<string>()
 		: new Set<string>();
 
 	return (
@@ -33,52 +63,56 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 			<div className="flex-1 flex min-h-0">
 				<div className="flex-1 flex flex-col min-w-0">
 					<div
-						ref={state.scrollRef}
+						ref={scrollRef}
 						className="flex-1 overflow-y-auto px-4 py-6"
 					>
 						<ChatMessageList
-							messages={state.messages}
-							isGenerating={state.isGenerating}
-							isHistoryLoading={state.isHistoryLoading}
-							onOpenCanvas={state.setOpenCanvasMessageId}
+							messages={messages}
+							isGenerating={isGenerating}
+							isHistoryLoading={isHistoryLoading}
+							onOpenCanvas={setOpenCanvasMessageId}
 						/>
 					</div>
 					<ChatInput
-						input={state.input}
-						onInputChange={state.setInput}
-						onSend={() => state.sendMessage(state.input)}
-						selectedDoc={state.selectedDoc}
-						onRemoveDoc={() => state.handleSelectDocument(null)}
-						onAttachClick={() => state.setDocPopupOpen((open) => !open)}
-						attachButtonRef={state.attachButtonRef}
-						isGenerating={state.isGenerating}
+						input={input}
+						onInputChange={setInput}
+						onSend={() => sendMessage(input)}
+						selectedDoc={selectedDoc}
+						onRemoveDoc={() => handleSelectDocument(null)}
+						onAttachClick={() => setDocPopupOpen((open) => !open)}
+						attachButtonRef={attachButtonRef}
+						isGenerating={isGenerating}
 					/>
 				</div>
 
-				{state.openCanvasMessageId && currentQuestions.length > 0 && (
+				{openCanvasMessageId && currentQuestions.length > 0 && (
 					<GeneratedQuestionsCanvas
 						questions={currentQuestions}
-						onAddToQuiz={state.handleAddToQuiz}
-						onUpdateQuestion={state.handleUpdateQuestion}
+						onAddToQuiz={handleAddToQuiz}
+						onUpdateQuestion={handleUpdateQuestion}
 						addedIds={currentAddedIds}
-						onClose={() => state.setOpenCanvasMessageId(null)}
+						onClose={() => setOpenCanvasMessageId(null)}
 						className="w-[380px] shrink-0"
 					/>
 				)}
 			</div>
 
 			<DocumentAttachMenu
-				open={state.docPopupOpen}
-				onClose={() => state.setDocPopupOpen(false)}
-				anchorRef={state.attachButtonRef}
-				documents={state.documents}
-				selectedId={state.selectedDoc?.id ?? null}
-				onSelect={state.handleSelectDocument}
-				onUpload={state.handleUpload}
-				uploadPending={state.uploadPending}
-				parsingStage={state.parsingStage}
-				usedBytes={state.usedBytes}
-				limitBytes={state.limitBytes}
+				open={docPopupOpen}
+				onClose={() => setDocPopupOpen(false)}
+				anchorRef={attachButtonRef}
+				ownedDocuments={ownedDocumentsForMenu}
+				savedDocuments={savedDocumentsForMenu}
+				selectedId={selectedDoc?.id ?? null}
+				onSelect={handleSelectDocument}
+				onUpload={handleUpload}
+				uploadPending={uploadPending}
+				activeParsingDocId={activeParsingDocId}
+				parsingStageText={parsingStageText}
+				parsingProgress={parsingProgress}
+				usedBytes={usedBytes}
+				remainingBytes={remainingBytes}
+				limitBytes={limitBytes}
 			/>
 		</div>
 	);
