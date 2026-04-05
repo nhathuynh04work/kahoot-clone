@@ -37,6 +37,34 @@ export function PerQuestionStatsList({
 				return { ...opt, chosen };
 			});
 
+			const qType = q.question?.type ?? "MULTIPLE_CHOICE";
+			const summary = q.answerSummary;
+			let freeTextRows: { label: string; count: number }[] = [];
+			if (qType === "SHORT_ANSWER" && summary && summary.kind === "short_answer") {
+				const counts = summary.counts as Record<string, number> | undefined;
+				if (counts) {
+					freeTextRows = Object.entries(counts)
+						.map(([label, count]) => ({ label, count }))
+						.sort((a, b) => b.count - a.count);
+				}
+			} else if (
+				qType === "NUMERIC_RANGE" &&
+				summary &&
+				summary.kind === "numeric_range"
+			) {
+				const values = summary.values as number[] | undefined;
+				if (values?.length) {
+					const m = new Map<string, number>();
+					for (const v of values) {
+						const k = String(v);
+						m.set(k, (m.get(k) ?? 0) + 1);
+					}
+					freeTextRows = [...m.entries()]
+						.map(([label, count]) => ({ label, count }))
+						.sort((a, b) => b.count - a.count);
+				}
+			}
+
 			return {
 				key: `${q.questionId}-${q.sortIndex}-${idx}`,
 				label: `Q${idx + 1}`,
@@ -46,6 +74,8 @@ export function PerQuestionStatsList({
 				incorrect: q.incorrectCount,
 				accuracy,
 				optionRows,
+				qType,
+				freeTextRows,
 			};
 		});
 	}, [report.questions, limit]);
@@ -134,7 +164,21 @@ export function PerQuestionStatsList({
 									<div className="overflow-hidden">
 										<div>
 											<div className="divide-y divide-gray-700/60 border-t border-gray-700/60">
-												{r.optionRows.length > 0 ? (
+												{r.qType !== "MULTIPLE_CHOICE" &&
+												r.freeTextRows.length > 0 ? (
+													r.freeTextRows.map((row) => (
+														<div
+															key={row.label}
+															className="flex items-center justify-between gap-3 px-3 py-2">
+															<p className="text-sm text-white truncate font-mono">
+																{row.label}
+															</p>
+															<span className="text-sm font-semibold text-indigo-300 tabular-nums">
+																{row.count}
+															</span>
+														</div>
+													))
+												) : r.optionRows.length > 0 ? (
 													r.optionRows.map((opt, optIdx) => {
 														const chosenLabel =
 															opt.chosen === 1
@@ -189,7 +233,9 @@ export function PerQuestionStatsList({
 													})
 												) : (
 													<p className="text-sm text-gray-400">
-														No options for this question.
+														{r.qType === "MULTIPLE_CHOICE"
+															? "No options for this question."
+															: "No answer breakdown for this question."}
 													</p>
 												)}
 											</div>

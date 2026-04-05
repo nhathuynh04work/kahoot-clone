@@ -36,15 +36,52 @@ export function AdminDashboardStats({ stats }: { stats: AdminDashboardStatsRespo
 		}));
 	}, [stats.charts.topQuizzes]);
 
+	const revenueChartData = useMemo(() => {
+		return (stats.charts.revenueByDay ?? []).map((p) => ({
+			date: p.date,
+			dollars: Math.round((p.amountCents / 100) * 100) / 100,
+		}));
+	}, [stats.charts.revenueByDay]);
+
+	const revenueDollarsAllTime =
+		Math.round((stats.totals.revenueCentsAllTime / 100) * 100) / 100;
+
 	return (
 		<div className="space-y-6">
-			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 				<StatTile label="Total users" value={stats.totals.users} />
 				<StatTile label="Total quizzes" value={stats.totals.quizzes} />
 				<StatTile label="Total documents" value={stats.totals.documents} />
+				<StatTile
+					label="All-time revenue (Stripe)"
+					value={`$${revenueDollarsAllTime.toFixed(2)}`}
+				/>
+				<StatTile
+					label="Active VIP subscriptions"
+					value={stats.totals.activeSubscriptions}
+				/>
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+				<div className="rounded-lg border border-gray-700 bg-gray-900/30 p-3 lg:col-span-3">
+					<div className="flex items-center justify-between gap-3">
+						<p className="text-sm font-medium text-white">
+							Revenue by day (paid invoices, selected range)
+						</p>
+					</div>
+					<div className="mt-3 h-64">
+						<ResponsiveContainer width="100%" height="100%">
+							<BarChart data={revenueChartData} margin={{ left: 0, right: 0 }}>
+								<CartesianGrid stroke="rgba(55, 65, 81, 0.35)" strokeDasharray="4 4" />
+								<XAxis dataKey="date" tickFormatter={formatDateTick} tick={{ fill: "#9ca3af", fontSize: 12 }} />
+								<YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} allowDecimals />
+								<Tooltip formatter={(v) => [`$${v}`, "Revenue"]} />
+								<Bar dataKey="dollars" fill="#fbbf24" radius={[6, 6, 0, 0]} />
+							</BarChart>
+						</ResponsiveContainer>
+					</div>
+				</div>
+
 				<div className="rounded-lg border border-gray-700 bg-gray-900/30 p-3">
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm font-medium text-white">User growth</p>

@@ -1,3 +1,5 @@
+export type QuestionType = "MULTIPLE_CHOICE" | "SHORT_ANSWER" | "NUMERIC_RANGE";
+
 export type Quiz = {
 	id: number;
 	userId: number;
@@ -19,6 +21,11 @@ export type Question = {
 	points: number;
 	imageUrl?: string;
 	sortOrder: number;
+	type?: QuestionType;
+	correctText?: string | null;
+	rangeMin?: number | string | null;
+	rangeMax?: number | string | null;
+	rangeInclusive?: boolean;
 };
 
 export type Option = {

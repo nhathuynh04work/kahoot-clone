@@ -1,12 +1,22 @@
 import {
     BadRequestException,
     ForbiddenException,
+    Inject,
     Injectable,
     NotFoundException,
 } from "@nestjs/common";
-import { LobbyStatus, Prisma, Question, Quiz } from "../generated/prisma/client.js";
+import {
+    LobbyStatus,
+    Prisma,
+    Question,
+    QuestionType,
+    Quiz,
+} from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { EntitlementService } from "../entitlements/entitlement.service.js";
+import Redis from "ioredis";
+import { quizQuestionsKey } from "../lib/redis-key-factory.js";
 
 /** Transaction client type workaround for Prisma + custom adapter */
 type TxClient = Pick<
@@ -14,13 +24,15 @@ type TxClient = Pick<
     "quiz" | "question" | "option"
 >;
 import { QuizFullDetails, QuizWithQuestions } from "./dto/quiz.dto.js";
-import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
+import { UpdateQuizDto, UpdateQuestionDto } from "./dto/update-quiz.dto.js";
 
 @Injectable()
 export class QuizService {
     constructor(
         private prisma: PrismaService,
         private userService: UserService,
+        private entitlementService: EntitlementService,
+        @Inject("REDIS_CLIENT") private readonly redis: Redis,
     ) {}
 
     async getQuiz(id: number, userId: number): Promise<QuizFullDetails> {
@@ -227,6 +239,10 @@ export class QuizService {
 
         const { questions, ...quizData } = data;
 
+        if (questions) {
+            await this.assertQuizQuestionsAllowed(userId, questions);
+        }
+
         await this.prisma.$transaction(async (tx) => {
             const db = tx as unknown as TxClient;
             await db.quiz.update({
@@ -265,7 +281,11 @@ export class QuizService {
                         });
                     }
 
-                    if (options) {
+                    if (savedQuestion.type !== QuestionType.MULTIPLE_CHOICE) {
+                        await db.option.deleteMany({
+                            where: { questionId: savedQuestion.id },
+                        });
+                    } else if (options) {
                         const incomingOptionIds = options
                             .filter((o) => o.id && o.id > 0)
                             .map((o) => o.id);
@@ -299,6 +319,8 @@ export class QuizService {
             }
         });
 
+        await this.redis.del(quizQuestionsKey(id));
+
         return this.prisma.quiz.findUniqueOrThrow({
             where: { id },
             include: {
@@ -320,6 +342,7 @@ export class QuizService {
         if (userId !== quiz.userId)
             throw new ForbiddenException("Cannot delete others' quizzes");
 
+        await this.redis.del(quizQuestionsKey(id));
         await this.prisma.quiz.delete({ where: { id } });
     }
 
@@ -342,6 +365,44 @@ export class QuizService {
             throw new ForbiddenException("Not allowed to access this quiz");
 
         return { quiz, questionCount: quiz._count.questions };
+    }
+
+    private async assertQuizQuestionsAllowed(userId: number, questions: UpdateQuestionDto[]) {
+        const limits = await this.entitlementService.getLimitsForUser(userId);
+        if (questions.length > limits.maxQuestionsPerQuiz) {
+            throw new ForbiddenException(
+                `You can have at most ${limits.maxQuestionsPerQuiz} questions per quiz. Upgrade to VIP for a higher limit.`,
+            );
+        }
+        const { isVip } = await this.entitlementService.getVipStatus(userId);
+        for (const q of questions) {
+            const type = q.type ?? QuestionType.MULTIPLE_CHOICE;
+            if (
+                (type === QuestionType.SHORT_ANSWER || type === QuestionType.NUMERIC_RANGE) &&
+                !isVip
+            ) {
+                throw new ForbiddenException(
+                    "Short answer and numeric range questions are available for VIP accounts only.",
+                );
+            }
+            if (type === QuestionType.SHORT_ANSWER) {
+                if (!q.correctText?.trim()) {
+                    throw new BadRequestException(
+                        "Short answer questions require a non-empty correctText.",
+                    );
+                }
+            }
+            if (type === QuestionType.NUMERIC_RANGE) {
+                if (q.rangeMin === undefined || q.rangeMax === undefined) {
+                    throw new BadRequestException(
+                        "Numeric range questions require rangeMin and rangeMax.",
+                    );
+                }
+                if (Number(q.rangeMin) > Number(q.rangeMax)) {
+                    throw new BadRequestException("rangeMin cannot be greater than rangeMax.");
+                }
+            }
+        }
     }
 
     private async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {

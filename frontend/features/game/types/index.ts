@@ -33,16 +33,30 @@ interface BaseGameState {
 	totalQuestions: number;
 }
 
+export type QuestionResultMeta = {
+	questionType: "MULTIPLE_CHOICE" | "SHORT_ANSWER" | "NUMERIC_RANGE";
+	correctOptionId?: number;
+	correctText?: string;
+	rangeMin?: number | null;
+	rangeMax?: number | null;
+	rangeInclusive?: boolean;
+};
+
 export interface HostGameState extends BaseGameState {
 	players: Player[];
 	currentQuestionAnswerCount: number;
 	answerStats: Record<string, string>;
 	leaderboard: Player[];
+	questionResultMeta: QuestionResultMeta | null;
 }
 
 export interface PlayerGameState extends BaseGameState, Player {
 	rank: number;
 	selectedOptionId: null | number;
+	submittedTextAnswer: string | null;
+	submittedNumericAnswer: number | null;
+	lastRoundCorrect: boolean;
+	lastRoundPointsEarned: number;
 }
 
 export interface NewQuestionEventPayload {
@@ -52,6 +66,12 @@ export interface NewQuestionEventPayload {
 }
 
 export interface ShowResultEventPayload {
-	optionId: number;
+	questionType: "MULTIPLE_CHOICE" | "SHORT_ANSWER" | "NUMERIC_RANGE";
+	optionId?: number;
+	correctOptionId?: number;
+	correctText?: string;
+	rangeMin?: number | null;
+	rangeMax?: number | null;
+	rangeInclusive?: boolean;
 	answerStats: Record<string, string>;
 }

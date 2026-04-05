@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
 	getMySavedPublicQuizzes,
 	searchQuizzes,
@@ -6,6 +7,11 @@ import { DashboardQuizToolbar } from "@/features/quizzes/components/dashboard-qu
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { LibraryQuizzesClient } from "./library-quizzes-client";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+	title: "My quizzes",
+	description: "Your saved and created quizzes.",
+};
 
 function normalizePage(value: string | undefined) {
 	const n = Number(value);
@@ -65,12 +71,6 @@ export default async function LibraryQuizzesPage({
 			<div className="max-w-6xl mx-auto">
 				<DashboardQuizToolbar />
 
-				<div className="flex items-center justify-between gap-3 mb-4">
-					<p className="text-xs text-gray-400">
-						Page {result.page} / {result.totalPages}
-					</p>
-				</div>
-
 				{result.items.length === 0 ? (
 					<div className="text-center bg-gray-800 p-10 rounded-lg shadow-sm border border-gray-700">
 						<h3 className="text-xl font-medium text-white">No quizzes found.</h3>
@@ -81,33 +81,38 @@ export default async function LibraryQuizzesPage({
 				) : (
 					<>
 						<LibraryQuizzesClient quizzes={result.items} viewerId={viewer?.id} />
-						<div className="flex items-center justify-between pt-6">
-							<Link
-								aria-disabled={result.page <= 1}
-								className={[
-									"px-3 py-2 rounded-lg text-sm border transition-colors",
-									result.page <= 1
-										? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-										: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-								].join(" ")}
-								href={buildHref({ page: Math.max(1, result.page - 1) })}
-							>
-								Previous
-							</Link>
-							<Link
-								aria-disabled={result.page >= result.totalPages}
-								className={[
-									"px-3 py-2 rounded-lg text-sm border transition-colors",
-									result.page >= result.totalPages
-										? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-										: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-								].join(" ")}
-								href={buildHref({
-									page: Math.min(result.totalPages, result.page + 1),
-								})}
-							>
-								Next
-							</Link>
+						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
+							<p className="text-xs text-gray-400">
+								Page {result.page} / {result.totalPages}
+							</p>
+							<div className="flex items-center gap-2">
+								<Link
+									aria-disabled={result.page <= 1}
+									className={[
+										"px-3 py-2 rounded-lg text-sm border transition-colors",
+										result.page <= 1
+											? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+											: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+									].join(" ")}
+									href={buildHref({ page: Math.max(1, result.page - 1) })}
+								>
+									Previous
+								</Link>
+								<Link
+									aria-disabled={result.page >= result.totalPages}
+									className={[
+										"px-3 py-2 rounded-lg text-sm border transition-colors",
+										result.page >= result.totalPages
+											? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+											: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+									].join(" ")}
+									href={buildHref({
+										page: Math.min(result.totalPages, result.page + 1),
+									})}
+								>
+									Next
+								</Link>
+							</div>
 						</div>
 					</>
 				)}

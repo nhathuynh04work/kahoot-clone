@@ -19,11 +19,17 @@ import { toast } from "sonner";
 interface PdfUploadZoneProps {
 	onUploadComplete?: (docId: number) => void;
 	className?: string;
+	maxTotalStorageBytes?: number;
+	documentCount?: number;
+	maxDocuments?: number;
 }
 
 export function PdfUploadZone({
 	onUploadComplete,
 	className = "",
+	maxTotalStorageBytes = MAX_TOTAL_STORAGE_BYTES,
+	documentCount = 0,
+	maxDocuments,
 }: PdfUploadZoneProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const { mutateAsync: uploadDoc, isPending } = useUploadDocument();
@@ -31,11 +37,21 @@ export function PdfUploadZone({
 	const { data: totalSize = 0 } = useDocumentsTotalSize();
 	const [parsingFileName, setParsingFileName] = useState<string | null>(null);
 
-	const remainingBytes = Math.max(0, MAX_TOTAL_STORAGE_BYTES - totalSize);
+	const remainingBytes = Math.max(0, maxTotalStorageBytes - totalSize);
 
 	const handleFiles = useCallback(
 		async (files: FileList | null) => {
 			if (!files?.length) return;
+
+			if (
+				maxDocuments != null &&
+				documentCount >= maxDocuments
+			) {
+				toast.error(
+					`Document limit reached (${maxDocuments}). Upgrade to VIP for more.`,
+				);
+				return;
+			}
 
 			const file = files[0];
 			if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -69,7 +85,15 @@ export function PdfUploadZone({
 				reset();
 			}
 		},
-		[uploadDoc, parse, reset, remainingBytes, onUploadComplete],
+		[
+			uploadDoc,
+			parse,
+			reset,
+			remainingBytes,
+			onUploadComplete,
+			maxDocuments,
+			documentCount,
+		],
 	);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

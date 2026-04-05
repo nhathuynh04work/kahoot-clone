@@ -250,13 +250,16 @@ export class GameGateway
     async handleSubmitAnswer(
         @MessageBody()
         body: {
-            optionId: number;
+            optionId?: number;
+            textAnswer?: string;
+            numericAnswer?: number;
             questionId: number;
             nickname: string;
             pin: string;
         },
     ) {
-        const { optionId, questionId, nickname, pin } = body;
+        const { optionId, textAnswer, numericAnswer, questionId, nickname, pin } =
+            body;
 
         try {
             const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
@@ -272,19 +275,22 @@ export class GameGateway
                 );
             }
 
-            // grade the answer
             const result = await this.lobbyService.gradeAnswer({
                 quizId: lobby.quizId,
                 questionId,
                 optionId,
+                textAnswer,
+                numericAnswer,
             });
 
-            // save answer
             const savedAnswer = await this.lobbyService.saveAnswer({
-                optionId,
+                optionId: optionId ?? null,
+                textAnswer: textAnswer ?? null,
+                numericAnswer: numericAnswer ?? null,
                 questionId,
-                playerId: player?.id,
-                ...result,
+                playerId: player.id,
+                isCorrect: result.isCorrect,
+                points: result.points,
             });
 
             await this.lobbyService.addScoreToLeaderboard(
@@ -297,21 +303,20 @@ export class GameGateway
                 `Player ${nickname} submitted their answer. It's ${savedAnswer.isCorrect ? "correct" : "incorrect"}. Points earned: ${savedAnswer.points}`,
             );
 
-            // add the answer to the stats
             await this.lobbyService.recordAnswerStats({
                 lobbyId: lobby.id,
                 questionId,
-                optionId,
+                optionId: optionId ?? null,
+                textAnswer: textAnswer ?? null,
+                numericAnswer: numericAnswer ?? null,
             });
 
-            // mark the player as having answered
             await this.lobbyService.markPlayerAsAnswered({
                 lobbyId: lobby.id,
                 questionId,
                 nickname,
             });
 
-            // check if all online players have answered
             const isAllAnswered =
                 await this.lobbyService.isAllOnlinePlayersAnswerCurrentQuestion(
                     { lobbyId: lobby.id, questionId },
@@ -321,9 +326,10 @@ export class GameGateway
                 return this.handleEndRound({ pin, questionId });
             }
 
-            // emit new answer event so host can update answer count
             this.socketService.emitToRoom(lobby.id.toString(), "newAnswer", {
-                optionId,
+                optionId: optionId ?? null,
+                textAnswer: textAnswer ?? null,
+                numericAnswer: numericAnswer ?? null,
             });
 
             return { success: true };
@@ -348,7 +354,7 @@ export class GameGateway
 
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
 
-        const { answer } = await this.lobbyService.findAnswerToQuestion(
+        const reveal = await this.lobbyService.getQuestionRevealForResult(
             lobby.quizId,
             questionId,
         );
@@ -359,8 +365,12 @@ export class GameGateway
         );
 
         this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
-            optionId: answer.id,
-            answerStats: stats, // { "optionId": "count" }
+            ...reveal,
+            optionId:
+                reveal.questionType === "MULTIPLE_CHOICE"
+                    ? reveal.correctOptionId
+                    : undefined,
+            answerStats: stats,
         });
 
         return { success: true };

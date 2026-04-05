@@ -4,15 +4,16 @@ import { v2 as cloudinary } from "cloudinary";
 import { Prisma, DocumentStatus } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateDocumentDto } from "./dto/create-document.dto";
+import { EntitlementService } from "../entitlements/entitlement.service";
 
 @Injectable()
 export class DocumentService {
     private readonly logger = new Logger(DocumentService.name);
-    private readonly MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
     constructor(
         private prisma: PrismaService,
         private config: ConfigService,
+        private entitlementService: EntitlementService,
     ) {
         cloudinary.config({
             cloud_name: this.config.get<string>("CLOUDINARY_CLOUD_NAME"),
@@ -22,16 +23,23 @@ export class DocumentService {
     }
 
     async create(userId: number, dto: CreateDocumentDto) {
+        const limits = await this.entitlementService.getLimitsForUser(userId);
         return this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw`SELECT 1 FROM "User" WHERE id = ${userId} FOR UPDATE`;
+            const docCount = await tx.document.count({ where: { userId } });
+            if (docCount >= limits.maxDocuments) {
+                throw new ForbiddenException(
+                    `Document limit reached (${limits.maxDocuments}). Upgrade to VIP for more uploads.`,
+                );
+            }
             const result = await tx.document.aggregate({
                 where: { userId },
                 _sum: { fileSize: true },
             });
             const totalSize = result._sum.fileSize ?? 0;
-            if (totalSize + dto.fileSize > this.MAX_TOTAL_SIZE_BYTES) {
+            if (totalSize + dto.fileSize > limits.maxTotalStorageBytes) {
                 throw new ForbiddenException(
-                    `Total storage limit exceeded. You have ${this.formatSize(totalSize)} used. Maximum allowed is ${this.formatSize(this.MAX_TOTAL_SIZE_BYTES)}.`,
+                    `Total storage limit exceeded. You have ${this.formatSize(totalSize)} used. Maximum allowed is ${this.formatSize(limits.maxTotalStorageBytes)}.`,
                 );
             }
             return tx.document.create({

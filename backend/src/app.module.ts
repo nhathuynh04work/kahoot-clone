@@ -17,6 +17,8 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { SavesModule } from "./saves/saves.module";
 import { PublicModule } from "./public/public.module";
 import { SearchModule } from "./search/search.module";
+import { BillingModule } from "./billing/billing.module.js";
+import { EntitlementsModule } from "./entitlements/entitlements.module.js";
 
 @Module({
     imports: [
@@ -36,6 +38,8 @@ import { SearchModule } from "./search/search.module";
         SavesModule,
         PublicModule,
         SearchModule,
+        EntitlementsModule,
+        BillingModule,
     ],
     controllers: [AppController],
     providers: [AppService],

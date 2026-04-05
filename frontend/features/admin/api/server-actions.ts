@@ -7,6 +7,8 @@ export type AdminDashboardStatsResponse = {
 		users: number;
 		quizzes: number;
 		documents: number;
+		revenueCentsAllTime: number;
+		activeSubscriptions: number;
 	};
 	charts: {
 		userGrowth: Array<{ date: string; count: number }>;
@@ -16,6 +18,7 @@ export type AdminDashboardStatsResponse = {
 		avgAccuracyOverTime: Array<{ date: string; avgAccuracy: number }>;
 		topQuizzes: Array<{ quizId: number; title: string; sessions: number }>;
 		documentStatusBreakdown: Array<{ status: string; count: number }>;
+		revenueByDay: Array<{ date: string; amountCents: number }>;
 	};
 };
 

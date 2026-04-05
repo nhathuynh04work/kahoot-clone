@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { ProfileEditForm } from "@/features/profile/components/profile-edit-form";
+
+export const metadata: Metadata = {
+	title: "Profile",
+	description: "Update your display name and profile settings.",
+};
 
 export default async function ProfileSettingsPage() {
 	const user = await getCurrentUser();

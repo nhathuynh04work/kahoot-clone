@@ -8,9 +8,10 @@ import { TxtParser } from "./parsers/txt.parser";
 import { PdfParser } from "./parsers/pdf.parser";
 import { ParserRegistry } from "./parsers/parser.registry";
 import { AiModule } from "../ai/ai.module";
+import { EntitlementsModule } from "../entitlements/entitlements.module";
 
 @Module({
-    imports: [PrismaModule, UploadModule, AiModule],
+    imports: [PrismaModule, UploadModule, AiModule, EntitlementsModule],
     controllers: [DocumentController],
     providers: [TxtParser, PdfParser, ParserRegistry, DocumentService, DocumentProcessingService],
     exports: [DocumentService, DocumentProcessingService],

@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { apiServer } from "@/lib/apiServer";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
+import { SITE_NAME } from "@/lib/site";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { QuizCard } from "@/features/quizzes/components/quiz-card";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
@@ -9,6 +11,32 @@ import { ProfileEditOwnerActions } from "@/features/profile/components/profile-e
 
 interface ProfilePageProps {
 	params: Promise<{ userId: string }>;
+}
+
+export async function generateMetadata({
+	params,
+}: ProfilePageProps): Promise<Metadata> {
+	const userId = parseInt((await params).userId, 10);
+	if (!Number.isFinite(userId)) {
+		return { title: "Profile" };
+	}
+	try {
+		const api = await apiServer();
+		const { data: profile } = await api.get<{
+			name?: string | null;
+			email?: string | null;
+		}>(`/users/${userId}`);
+		const label =
+			(profile?.name && String(profile.name).trim()) ||
+			(profile?.email && String(profile.email).trim()) ||
+			"User";
+		return {
+			title: label,
+			description: `Quizzes and documents by ${label} on ${SITE_NAME}.`,
+		};
+	} catch {
+		return { title: "Profile" };
+	}
 }
 
 export default async function UserProfilePage({ params }: ProfilePageProps) {

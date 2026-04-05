@@ -12,9 +12,13 @@ type GrowthPoint = { date: string; count: number };
 type AccuracyPoint = { date: string; avgAccuracy: number };
 type StatusCountPoint = { status: string; count: number };
 type TopQuizPoint = { quizId: number; title: string; sessions: number };
+type RevenuePoint = { date: string; amountCents: number };
 
 export type AdminDashboardStatsResponse = {
-    totals: DashboardTotals;
+    totals: DashboardTotals & {
+        revenueCentsAllTime: number;
+        activeSubscriptions: number;
+    };
     charts: {
         userGrowth: GrowthPoint[];
         quizGrowth: GrowthPoint[];
@@ -23,6 +27,7 @@ export type AdminDashboardStatsResponse = {
         avgAccuracyOverTime: AccuracyPoint[];
         topQuizzes: TopQuizPoint[];
         documentStatusBreakdown: StatusCountPoint[];
+        revenueByDay: RevenuePoint[];
     };
 };
 
@@ -110,7 +115,14 @@ export class AdminService {
                 `,
             ]);
 
-        const [activeSessionsRows, topQuizzesRows, documentStatusRows] = await Promise.all([
+        const [
+            activeSessionsRows,
+            topQuizzesRows,
+            documentStatusRows,
+            revenueDayRows,
+            revenueSumRow,
+            activeSubscriptions,
+        ] = await Promise.all([
             this.prisma.$queryRaw<{ status: string; count: bigint }[]>`
                 SELECT
                     status,
@@ -141,6 +153,25 @@ export class AdminService {
                 GROUP BY status
                 ORDER BY count DESC
             `,
+            this.prisma.$queryRaw<{ day: Date; amountCents: bigint }[]>`
+                SELECT
+                    date_trunc('day', "occurredAt") AS day,
+                    SUM("amountCents")::bigint AS "amountCents"
+                FROM "RevenueLedgerEntry"
+                WHERE
+                    "occurredAt" >= NOW() - (${rangeDays} * INTERVAL '1 day')
+                GROUP BY day
+                ORDER BY day ASC
+            `,
+            this.prisma.revenueLedgerEntry.aggregate({
+                _sum: { amountCents: true },
+            }),
+            this.prisma.subscription.count({
+                where: {
+                    status: { in: ["active", "trialing"] },
+                    currentPeriodEnd: { gt: new Date() },
+                },
+            }),
         ]);
 
         const charts = {
@@ -173,6 +204,10 @@ export class AdminService {
                 status: r.status,
                 count: Number(r.count),
             })),
+            revenueByDay: revenueDayRows.map((r) => ({
+                date: this.formatDay(r.day),
+                amountCents: Number(r.amountCents),
+            })),
         };
 
         return {
@@ -180,6 +215,8 @@ export class AdminService {
                 users: usersTotal,
                 quizzes: quizzesTotal,
                 documents: documentsTotal,
+                revenueCentsAllTime: revenueSumRow._sum.amountCents ?? 0,
+                activeSubscriptions,
             },
             charts,
         };

@@ -16,7 +16,7 @@ export const LogoutButton = ({ children, className }: LogoutButtonProps) => {
 		try {
 			await apiClient.post("/auth/logout");
 			router.refresh();
-			router.push("/auth/login");
+			router.push("/");
 		} catch {}
 	};
 

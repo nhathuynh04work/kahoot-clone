@@ -74,8 +74,9 @@ export default function HostGamePage() {
 		case "RESULT":
 			return (
 				<HostResultScreen
+					question={state.currentQuestion!}
+					meta={state.questionResultMeta}
 					stats={state.answerStats}
-					correctOptionId={state.currentQuestionCorrectOptionId!}
 					onNext={handlers.handleNextQuestion}
 				/>
 			);

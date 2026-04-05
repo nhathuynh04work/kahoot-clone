@@ -1,14 +1,37 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 
 export type SelectOption = {
 	value: string;
 	label: string;
 	disabled?: boolean;
+	icon?: ReactNode;
 };
+
+function optionInner(opt: SelectOption) {
+	return (
+		<span className="flex min-w-0 items-center gap-2">
+			{opt.icon ? (
+				<span
+					className="shrink-0 text-gray-400 [&_svg]:size-4"
+					aria-hidden
+				>
+					{opt.icon}
+				</span>
+			) : null}
+			<span className="truncate">{opt.label}</span>
+		</span>
+	);
+}
 
 export function Select({
 	value,
@@ -120,8 +143,17 @@ export function Select({
 					buttonClassName,
 				)}
 			>
-				<span className={cn("truncate", !selected && "text-gray-400")}>
-					{selected?.label ?? placeholder}
+				<span
+					className={cn(
+						"min-w-0 flex-1 text-left",
+						!selected && "text-gray-400",
+					)}
+				>
+					{selected ? (
+						optionInner(selected)
+					) : (
+						<span className="truncate">{placeholder}</span>
+					)}
 				</span>
 				<ChevronDown
 					className={cn(
@@ -188,7 +220,7 @@ export function Select({
 												"bg-gray-800",
 										)}
 									>
-										{opt.label}
+										{optionInner(opt)}
 									</button>
 								</li>
 							);

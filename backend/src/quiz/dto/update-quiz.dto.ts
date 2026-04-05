@@ -2,6 +2,7 @@ import { Type } from "class-transformer";
 import {
     IsArray,
     IsBoolean,
+    IsEnum,
     IsNumber,
     IsOptional,
     IsIn,
@@ -9,6 +10,7 @@ import {
     IsUrl,
     ValidateNested,
 } from "class-validator";
+import { QuestionType } from "../../generated/prisma/client.js";
 
 export class UpdateOptionDto {
     @IsOptional()
@@ -52,6 +54,28 @@ export class UpdateQuestionDto {
     @IsOptional()
     @IsNumber()
     sortOrder?: number;
+
+    @IsOptional()
+    @IsEnum(QuestionType)
+    type?: QuestionType;
+
+    @IsOptional()
+    @IsString()
+    correctText?: string;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    rangeMin?: number;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    rangeMax?: number;
+
+    @IsOptional()
+    @IsBoolean()
+    rangeInclusive?: boolean;
 
     @IsOptional()
     @IsArray()

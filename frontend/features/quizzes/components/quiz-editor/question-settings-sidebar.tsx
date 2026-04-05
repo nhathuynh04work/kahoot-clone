@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFormContext } from "react-hook-form";
 import {
 	Clock,
@@ -8,8 +9,12 @@ import {
 	ChevronRight,
 	Copy,
 	Trash2,
+	ListChecks,
+	TextCursorInput,
+	BetweenHorizontalStart,
+	Shapes,
 } from "lucide-react";
-import { QuizFullDetails } from "@/features/quizzes/types";
+import { QuizFullDetails, type QuestionType } from "@/features/quizzes/types";
 import { Select } from "@/components/ui/select";
 
 interface QuestionSettingsSidebarProps {
@@ -19,6 +24,7 @@ interface QuestionSettingsSidebarProps {
 	onDelete: () => void;
 	onDuplicate: () => void;
 	canDelete: boolean;
+	canUseVipQuestionTypes: boolean;
 }
 
 export function QuestionSettingsSidebar({
@@ -28,11 +34,41 @@ export function QuestionSettingsSidebar({
 	onDelete,
 	onDuplicate,
 	canDelete,
+	canUseVipQuestionTypes,
 }: QuestionSettingsSidebarProps) {
 	const { setValue, watch } = useFormContext<QuizFullDetails>();
+	const prefix = `questions.${questionIndex}` as const;
 
 	const timeLimit = watch(`questions.${questionIndex}.timeLimit`) ?? 30000;
 	const points = watch(`questions.${questionIndex}.points`) ?? 1000;
+	const questionType =
+		(watch(`${prefix}.type`) as QuestionType | undefined) ?? "MULTIPLE_CHOICE";
+
+	function applyQuestionType(next: QuestionType) {
+		setValue(`${prefix}.type`, next, { shouldDirty: true, shouldTouch: true });
+		if (next === "MULTIPLE_CHOICE") {
+			const opts = watch(`${prefix}.options`);
+			if (!opts?.length) {
+				const newId = Date.now() * -1;
+				setValue(`${prefix}.options`, [
+					{
+						id: newId,
+						questionId: watch(`${prefix}.id`),
+						text: "Option 1",
+						isCorrect: true,
+						sortOrder: 0,
+					},
+					{
+						id: newId - 1,
+						questionId: watch(`${prefix}.id`),
+						text: "Option 2",
+						isCorrect: false,
+						sortOrder: 1,
+					},
+				]);
+			}
+		}
+	}
 
 	return (
 		<div
@@ -53,6 +89,50 @@ export function QuestionSettingsSidebar({
 				className={`grow h-full p-5 overflow-y-auto min-w-[18rem] ${
 					!isOpen && "hidden"
 				}`}>
+				<div className="mb-6">
+					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+						<Shapes className="w-4 h-4 mr-2" aria-hidden />
+						Question type
+					</label>
+					<Select
+						value={questionType}
+						onValueChange={(v) => applyQuestionType(v as QuestionType)}
+						options={[
+							{
+								value: "MULTIPLE_CHOICE",
+								label: "Multiple choice",
+								icon: <ListChecks />,
+							},
+							{
+								value: "SHORT_ANSWER",
+								label: "Short answer",
+								disabled: !canUseVipQuestionTypes,
+								icon: <TextCursorInput />,
+							},
+							{
+								value: "NUMERIC_RANGE",
+								label: "Numeric range",
+								disabled: !canUseVipQuestionTypes,
+								icon: <BetweenHorizontalStart />,
+							},
+						]}
+						ariaLabel="Question type"
+						buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
+						menuClassName="border-gray-600"
+					/>
+					{!canUseVipQuestionTypes ? (
+						<p className="mt-2 text-xs text-gray-500">
+							Short answer and numeric range are VIP-only.{" "}
+							<Link
+								href="/settings/subscription"
+								className="text-indigo-400 hover:text-indigo-300"
+							>
+								View plans
+							</Link>
+						</p>
+					) : null}
+				</div>
+
 				{/* Time Limit Select */}
 				<div className="mb-6">
 					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">

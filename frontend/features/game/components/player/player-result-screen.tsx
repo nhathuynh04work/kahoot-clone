@@ -5,11 +5,13 @@ import { Check, X, Trophy } from "lucide-react";
 interface PlayerResultScreenProps {
 	isCorrect: boolean;
 	points: number;
+	pointsThisRound?: number;
 }
 
 export const PlayerResultScreen = ({
 	isCorrect,
 	points,
+	pointsThisRound = 0,
 }: PlayerResultScreenProps) => {
 	return (
 		<div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6">
@@ -41,11 +43,18 @@ export const PlayerResultScreen = ({
 				</h2>
 
 				{/* Message */}
-				<p className="text-gray-400 mb-8">
+				<p className="text-gray-400 mb-2">
 					{isCorrect
 						? "Great job! Keep it up."
 						: "Don't worry, you'll get the next one."}
 				</p>
+				{pointsThisRound > 0 ? (
+					<p className="text-indigo-300 text-sm font-medium mb-8">
+						+{pointsThisRound} points this question
+					</p>
+				) : (
+					<div className="mb-8" />
+				)}
 
 				{/* Score Card */}
 				<div className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 flex items-center justify-between">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ExploreQuizGrid } from "@/features/public/components/explore-quiz-grid";
 import { DocumentCard } from "@/features/documents/components/document-card";
 import type { Document } from "@/features/documents/types";
@@ -20,6 +21,12 @@ function normalizeTab(value: string | undefined): DiscoverTab {
 	if (value && TABS.includes(value as DiscoverTab)) return value as DiscoverTab;
 	return "quizzes";
 }
+
+export const metadata: Metadata = {
+	title: "Discover",
+	description:
+		"Browse public quizzes and documents on Quiztopia. Save favorites and join live games with a PIN.",
+};
 
 function normalizePage(value: string | undefined) {
 	const n = Number(value);
@@ -110,12 +117,6 @@ export default async function DiscoverPage({
 			<div className="max-w-6xl mx-auto space-y-6">
 				<ExploreToolbar defaultTab={tab} defaultQ={q} />
 
-				<div className="flex items-center justify-between gap-3">
-					<p className="text-xs text-gray-400">
-						Page {page} / {totalPages}
-					</p>
-				</div>
-
 				{tab === "quizzes" ? (
 					quizzes.length === 0 ? (
 						<div className="p-6 rounded-lg bg-gray-800/50 border border-gray-700 text-center text-gray-400">
@@ -144,31 +145,36 @@ export default async function DiscoverPage({
 					</div>
 				)}
 
-				<div className="flex items-center justify-between pt-2">
-					<Link
-						aria-disabled={page <= 1}
-						className={[
-							"px-3 py-2 rounded-lg text-sm border transition-colors",
-							page <= 1
-								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-						].join(" ")}
-						href={buildHref({ page: Math.max(1, page - 1) })}
-					>
-						Previous
-					</Link>
-					<Link
-						aria-disabled={page >= totalPages}
-						className={[
-							"px-3 py-2 rounded-lg text-sm border transition-colors",
-							page >= totalPages
-								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-						].join(" ")}
-						href={buildHref({ page: Math.min(totalPages, page + 1) })}
-					>
-						Next
-					</Link>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
+					<p className="text-xs text-gray-400">
+						Page {page} / {totalPages}
+					</p>
+					<div className="flex items-center gap-2">
+						<Link
+							aria-disabled={page <= 1}
+							className={[
+								"px-3 py-2 rounded-lg text-sm border transition-colors",
+								page <= 1
+									? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+									: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+							].join(" ")}
+							href={buildHref({ page: Math.max(1, page - 1) })}
+						>
+							Previous
+						</Link>
+						<Link
+							aria-disabled={page >= totalPages}
+							className={[
+								"px-3 py-2 rounded-lg text-sm border transition-colors",
+								page >= totalPages
+									? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+									: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+							].join(" ")}
+							href={buildHref({ page: Math.min(totalPages, page + 1) })}
+						>
+							Next
+						</Link>
+					</div>
 				</div>
 			</div>
 		</div>

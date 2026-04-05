@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import {
 	getAdminUsersPage,
 } from "@/features/admin/api/server-actions";
 import { AdminUserManagement } from "@/features/admin/components/admin-user-management";
+
+export const metadata: Metadata = {
+	title: "Users",
+};
 
 export default async function AdminUsersPage({
 	searchParams,

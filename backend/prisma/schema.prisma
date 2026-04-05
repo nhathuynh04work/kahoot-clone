@@ -23,12 +23,50 @@ model User {
 
   role      UserRole @default(USER)
   isBlocked Boolean   @default(false)
+  stripeCustomerId String? @unique
+  lifetimeVip      Boolean @default(false)
   quizzes   Quiz[]
   lobbies   GameLobby[]
   documents Document[]
   quizSaves QuizSave[]
   documentSaves DocumentSave[]
   aiQuizChatSessions AiQuizChatSession[]
+  subscription Subscription?
+  revenueLedgerEntries RevenueLedgerEntry[]
+}
+
+model Subscription {
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  stripeSubscriptionId String   @unique
+  stripePriceId        String
+  status               String
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StripeProcessedEvent {
+  eventId   String   @id
+  createdAt DateTime @default(now())
+}
+
+model RevenueLedgerEntry {
+  id               Int      @id @default(autoincrement())
+  stripeInvoiceId  String   @unique
+  amountCents      Int
+  currency         String   @default("usd")
+  userId           Int?
+  occurredAt       DateTime
+  createdAt        DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([occurredAt])
+  @@index([userId])
 }
 
 model Document {
@@ -99,6 +137,12 @@ enum Visibility {
   PRIVATE
 }
 
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+  NUMERIC_RANGE
+}
+
 model Quiz {
   id          Int         @id @default(autoincrement())
   userId      Int
@@ -122,6 +166,11 @@ model Question {
   points    Int     @default(1000)
   imageUrl  String?
   sortOrder Int
+  type      QuestionType @default(MULTIPLE_CHOICE)
+  correctText     String?
+  rangeMin        Decimal? @db.Decimal(18, 6)
+  rangeMax        Decimal? @db.Decimal(18, 6)
+  rangeInclusive  Boolean  @default(true)
 
   quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
   options Option[]
@@ -221,13 +270,15 @@ model PlayerAnswer {
   id         Int     @id @default(autoincrement())
   playerId   Int
   questionId Int
-  optionId   Int
+  optionId   Int?
+  textAnswer String?
+  numericAnswer Decimal? @db.Decimal(18, 6)
   isCorrect  Boolean
   points     Int     @default(0)
 
   player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
   question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  option   Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  option   Option?    @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, questionId])
 }
@@ -261,6 +312,7 @@ model GameLobbyQuestionReport {
   incorrectCount Int
   correctRate   Float
   optionCountsJson Json
+  answerSummaryJson Json?
 
   report   GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
   lobby    GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)

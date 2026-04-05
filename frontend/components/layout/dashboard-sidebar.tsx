@@ -3,10 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@/features/auth/types";
-import { LayoutGrid, FileText, History, Compass, LogOut } from "lucide-react";
-import { toast } from "sonner";
+import {
+	LayoutGrid,
+	FileText,
+	History,
+	Compass,
+	LogOut,
+	Crown,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCreateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 import { LogoutButton } from "@/features/auth/components/logout-button";
 
 const navItems = [
@@ -14,6 +19,7 @@ const navItems = [
 	{ href: "/library/files", label: "Files", icon: FileText },
 	{ href: "/discover", label: "Discover", icon: Compass },
 	{ href: "/reports", label: "Reports", icon: History },
+	{ href: "/settings/subscription", label: "VIP", icon: Crown },
 ] as const;
 
 const getInitials = (email: string) => email[0]?.toUpperCase() || "?";
@@ -21,21 +27,6 @@ const getInitials = (email: string) => email[0]?.toUpperCase() || "?";
 export function DashboardSidebar({ user }: { user: User }) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { mutateAsync: createQuiz } = useCreateQuiz();
-
-	const handleCreateQuiz = async () => {
-		try {
-			const quiz = await createQuiz();
-			toast.success("Quiz created successfully.");
-			router.push(`/quiz/${quiz.id}/edit`);
-		} catch (error) {
-			if (error instanceof Error) {
-				toast.error(error.message);
-			} else {
-				toast.error("Something went wrong.");
-			}
-		}
-	};
 
 	return (
 		<aside className="w-[76px] shrink-0 border-r border-gray-700 bg-gray-800/50 flex flex-col sticky top-[58px] z-40 self-stretch">
@@ -45,18 +36,35 @@ export function DashboardSidebar({ user }: { user: User }) {
 						href === "/library/quizzes"
 							? pathname === "/library/quizzes" || pathname.startsWith("/library/quizzes/")
 							: pathname.startsWith(href);
+					const isVipNav = href === "/settings/subscription";
+					const isVipUser = user.vip?.isVip === true;
+					const vipMinimal = isVipNav && isVipUser;
 					return (
 						<Link
 							key={href}
 							href={href}
-							className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg text-[11px] font-medium transition-colors border ${
+							title={
+								isVipNav
+									? isVipUser
+										? "Billing & VIP"
+										: "Upgrade to VIP"
+									: undefined
+							}
+							className={`flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-colors border ${
 								isActive
 									? "bg-indigo-600/10 text-white border-indigo-500/30 shadow-[0_0_0_1px_rgba(79,70,229,0.15)]"
-									: "text-gray-400 border-transparent hover:text-white hover:bg-gray-700/70 hover:border-gray-700"
+									: isVipNav && !isVipUser
+										? "text-gray-400 border-transparent hover:text-amber-200 hover:bg-amber-500/10 hover:border-amber-500/20"
+										: "text-gray-400 border-transparent hover:text-white hover:bg-gray-700/70 hover:border-gray-700"
 							}`}
 						>
 							<Icon className="w-5 h-5 shrink-0" aria-hidden />
 							<span className="leading-none">{label}</span>
+							{isVipNav && !vipMinimal ? (
+								<span className="text-[9px] font-bold leading-none tracking-wide text-gray-600">
+									FREE
+								</span>
+							) : null}
 						</Link>
 					);
 				})}
