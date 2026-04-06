@@ -35,7 +35,9 @@ export function QuizEditor({
 				.map((q) => ({
 					...q,
 					type: q.type ?? "MULTIPLE_CHOICE",
-					rangeInclusive: q.rangeInclusive ?? true,
+					onlyOneCorrect: q.onlyOneCorrect !== false,
+					caseSensitive: q.caseSensitive === true,
+						rangeProximity: q.rangeProximity ?? 0,
 				})),
 		},
 		mode: "onChange",
@@ -94,6 +96,7 @@ export function QuizEditor({
 			imageUrl: "",
 			sortOrder: lastSortOrder + 1,
 			type: "MULTIPLE_CHOICE",
+			onlyOneCorrect: true,
 			options: [
 				{
 					id: Date.now() * -1 - 1,
@@ -165,6 +168,8 @@ export function QuizEditor({
 			imageUrl: source.imageUrl ?? "",
 			sortOrder: activeIndex + 1,
 			type: source.type ?? "MULTIPLE_CHOICE",
+			onlyOneCorrect: source.onlyOneCorrect !== false,
+			caseSensitive: source.caseSensitive === true,
 			options: duplicatedOptions,
 		};
 

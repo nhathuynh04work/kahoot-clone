@@ -48,9 +48,9 @@ export function PerQuestionStatsList({
 						.sort((a, b) => b.count - a.count);
 				}
 			} else if (
-				qType === "NUMERIC_RANGE" &&
+				qType === "NUMBER_INPUT" &&
 				summary &&
-				summary.kind === "numeric_range"
+				summary.kind === "number_input"
 			) {
 				const values = summary.values as number[] | undefined;
 				if (values?.length) {
@@ -164,7 +164,8 @@ export function PerQuestionStatsList({
 									<div className="overflow-hidden">
 										<div>
 											<div className="divide-y divide-gray-700/60 border-t border-gray-700/60">
-												{r.qType !== "MULTIPLE_CHOICE" &&
+												{(r.qType === "SHORT_ANSWER" ||
+													r.qType === "NUMBER_INPUT") &&
 												r.freeTextRows.length > 0 ? (
 													r.freeTextRows.map((row) => (
 														<div
@@ -233,7 +234,8 @@ export function PerQuestionStatsList({
 													})
 												) : (
 													<p className="text-sm text-gray-400">
-														{r.qType === "MULTIPLE_CHOICE"
+														{r.qType === "MULTIPLE_CHOICE" ||
+														r.qType === "TRUE_FALSE"
 															? "No options for this question."
 															: "No answer breakdown for this question."}
 													</p>

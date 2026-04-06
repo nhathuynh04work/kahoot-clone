@@ -6,11 +6,13 @@ import { ChatMessageList } from "./chat-message-list";
 import { ChatInput } from "./chat-input";
 import { DocumentAttachMenu } from "./document-attach-menu";
 import { GeneratedQuestionsCanvas } from "./generated-questions-canvas";
+import type { GeneratedQuestion } from "../api/client-actions";
+
 interface AiChatbotPanelProps {
 	onClose: () => void;
 	quizId?: number | null;
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
-	onAddQuestion?: (question: { text: string; options: { text: string; isCorrect: boolean }[] }) => void;
+	onAddQuestion?: (question: GeneratedQuestion) => void;
 }
 
 export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {

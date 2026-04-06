@@ -43,11 +43,16 @@ export const HostResultScreen = ({
 	const qType =
 		meta?.questionType ?? question.type ?? "MULTIPLE_CHOICE";
 
-	if (qType === "MULTIPLE_CHOICE") {
-		const correctId =
-			meta?.correctOptionId ??
-			question.options.find((o) => o.isCorrect)?.id ??
-			0;
+	const mcLike = qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
+
+	if (mcLike) {
+		const correctSet = new Set<number>(
+			meta?.correctOptionIndices?.length
+				? meta.correctOptionIndices
+				: meta?.correctOptionIndex != null
+					? [meta.correctOptionIndex]
+					: question.options.filter((o) => o.isCorrect).map((o) => o.id),
+		);
 
 		const sortedStats = Object.entries(stats).sort(
 			(a, b) => parseInt(a[0], 10) - parseInt(b[0], 10)
@@ -73,15 +78,15 @@ export const HostResultScreen = ({
 				</div>
 
 				<div className="flex-1 min-h-[400px] flex items-end justify-center gap-4 md:gap-8 pb-12 px-4 max-w-5xl mx-auto w-full">
-					{sortedStats.map(([optionId, countStr], index) => {
+					{sortedStats.map(([idxKey, countStr], index) => {
 						const count = parseInt(countStr, 10) || 0;
-						const isCorrect = parseInt(optionId, 10) === correctId;
+						const isCorrect = correctSet.has(parseInt(idxKey, 10));
 						const Icon = getIcon(index);
 						const heightPercent = (count / maxCount) * 100;
 
 						return (
 							<div
-								key={optionId}
+								key={idxKey}
 								className="flex flex-col items-center justify-end w-full max-w-[120px] h-[60vh] group">
 								<div
 									className={`w-full relative transition-all duration-1000 ease-out rounded-t-sm ${getBarColor(
@@ -130,12 +135,30 @@ export const HostResultScreen = ({
 		.sort((a, b) => b.count - a.count);
 	const maxCount = Math.max(...rows.map((r) => r.count), 1);
 
-	let subtitle = "";
+	let heroLabel = "";
+	let heroValue = "";
+	let heroBadge: string | null = null;
 	if (qType === "SHORT_ANSWER") {
-		subtitle = `Correct answer: "${meta?.correctText ?? "—"}"`;
-	} else if (qType === "NUMERIC_RANGE") {
-		const inc = meta?.rangeInclusive !== false;
-		subtitle = `Correct range: ${meta?.rangeMin ?? "?"} – ${meta?.rangeMax ?? "?"}${inc ? " (inclusive)" : " (exclusive)"}`;
+		heroLabel = "Correct answer";
+		heroValue = (meta?.correctText ?? "—").trim() || "—";
+	} else if (qType === "NUMBER_INPUT") {
+		if (meta?.allowRange === true) {
+			heroLabel = "Accepted range";
+			if (
+				typeof meta?.correctNumber === "number" &&
+				Number.isFinite(meta.correctNumber) &&
+				typeof meta?.rangeProximity === "number" &&
+				Number.isFinite(meta.rangeProximity)
+			) {
+				const min = meta.correctNumber - meta.rangeProximity;
+				const max = meta.correctNumber + meta.rangeProximity;
+				heroValue = `${min} – ${max}`;
+				heroBadge = "Inclusive";
+			}
+		} else {
+			heroLabel = "Correct number";
+			heroValue = `${meta?.correctNumber ?? "—"}`;
+		}
 	}
 
 	return (
@@ -147,7 +170,6 @@ export const HostResultScreen = ({
 					</div>
 					<div className="min-w-0">
 						<h2 className="text-2xl font-bold text-white">Results</h2>
-						<p className="text-sm text-gray-400 mt-1">{subtitle}</p>
 					</div>
 				</div>
 				<button
@@ -158,11 +180,30 @@ export const HostResultScreen = ({
 				</button>
 			</div>
 
-			<div className="max-w-2xl mx-auto w-full space-y-2">
+			<div className="max-w-4xl mx-auto w-full">
+				<div className="rounded-3xl border border-gray-700 bg-gray-900/40 px-6 py-10 text-center mb-8">
+					{heroLabel ? (
+						<p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">
+							{heroLabel}
+						</p>
+					) : null}
+					<p className="text-white font-extrabold text-5xl md:text-6xl mt-3 leading-tight">
+						{heroValue || "—"}
+					</p>
+					{heroBadge ? (
+						<div className="mt-4 flex justify-center">
+							<span className="inline-flex items-center rounded-full border border-gray-700 bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-200">
+								{heroBadge}
+							</span>
+						</div>
+					) : null}
+				</div>
+
+				<div className="max-w-2xl mx-auto w-full space-y-2">
 				{rows.length === 0 ? (
 					<p className="text-gray-500 text-sm">No answers recorded.</p>
 				) : (
-					rows.map((r, i) => (
+					rows.map((r) => (
 						<div
 							key={r.key}
 							className="flex items-center gap-3 rounded-lg bg-gray-800/80 border border-gray-700 p-3">
@@ -182,6 +223,7 @@ export const HostResultScreen = ({
 						</div>
 					))
 				)}
+				</div>
 			</div>
 		</div>
 	);

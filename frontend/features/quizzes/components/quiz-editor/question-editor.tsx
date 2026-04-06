@@ -18,6 +18,9 @@ export function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 
 	if (!question) return null;
 
+	const showOptionsGrid =
+		qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
+
 	return (
 		<div className="flex flex-col items-center p-8 md:p-10 bg-gray-900 gap-10">
 			<QuestionTextInput
@@ -32,16 +35,12 @@ export function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 
 			<QuestionTypeFields questionIndex={questionIndex} />
 
-			{qType === "MULTIPLE_CHOICE" ? (
+			{showOptionsGrid ? (
 				<OptionsGrid
 					key={`options-${questionIndex}`}
 					questionIndex={questionIndex}
 				/>
-			) : (
-				<p className="text-sm text-gray-500 max-w-xl text-center">
-					This question uses typed input during play — no answer options.
-				</p>
-			)}
+			) : null}
 		</div>
 	);
 }

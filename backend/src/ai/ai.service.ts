@@ -12,11 +12,17 @@ import { AiQuizChatService } from "./ai-quiz-chat.service";
 import {
     EMBEDDING_DIMENSIONS,
     PROMPT_VALIDATION_SYSTEM,
+    quizAccountTierAppendix,
     RAG_TOP_K,
     SYSTEM_PROMPT_FREEFORM,
     SYSTEM_PROMPT_RAG,
 } from "./ai.constants";
-import type { GenerateQuestionsResult, GeneratedQuestion } from "./ai.types";
+import type {
+    GenerateQuestionsResult,
+    GeneratedQuestion,
+    GeneratedQuestionType,
+} from "./ai.types";
+import { EntitlementService } from "../entitlements/entitlement.service.js";
 import { AiClient } from "./ai.client";
 import { QUIZ_RESPONSE_SCHEMA } from "./ai.schemas";
 
@@ -35,6 +41,7 @@ export class AiService {
         private prisma: PrismaService,
         private readonly aiClient: AiClient,
         private readonly aiQuizChatService: AiQuizChatService,
+        private readonly entitlementService: EntitlementService,
     ) {}
 
     async generateQuestions(
@@ -115,7 +122,7 @@ export class AiService {
                 throw new BadRequestException(message);
             }
 
-            const result = await this.generateFreestyle(userPrompt);
+            const result = await this.generateFreestyle(userId, userPrompt);
             if (quizId != null) {
                 await this.aiQuizChatService.appendMessage({
                     userId,
@@ -285,7 +292,9 @@ export class AiService {
         }
 
         const userMessage = `Context from the document:\n\n${context}\n\n---\n\nUser request: ${userPrompt}`;
-        const result = await this.generateQuizFromPrompt(SYSTEM_PROMPT_RAG, userMessage);
+        const { isVip } = await this.entitlementService.getVipStatus(userId);
+        const systemPrompt = `${SYSTEM_PROMPT_RAG}\n${quizAccountTierAppendix(isVip)}`;
+        const result = await this.generateQuizFromPrompt(systemPrompt, userMessage, isVip);
         this.logger.log(
             JSON.stringify({
                 event: "ai.generateWithRag.completed",
@@ -297,13 +306,18 @@ export class AiService {
         return result;
     }
 
-    private async generateFreestyle(userPrompt: string): Promise<GenerateQuestionsResult> {
+    private async generateFreestyle(
+        userId: number,
+        userPrompt: string,
+    ): Promise<GenerateQuestionsResult> {
         this.logger.log(
             JSON.stringify({
                 event: "ai.generateFreestyle.start",
             }),
         );
-        const result = await this.generateQuizFromPrompt(SYSTEM_PROMPT_FREEFORM, userPrompt);
+        const { isVip } = await this.entitlementService.getVipStatus(userId);
+        const systemPrompt = `${SYSTEM_PROMPT_FREEFORM}\n${quizAccountTierAppendix(isVip)}`;
+        const result = await this.generateQuizFromPrompt(systemPrompt, userPrompt, isVip);
         this.logger.log(
             JSON.stringify({
                 event: "ai.generateFreestyle.completed",
@@ -316,6 +330,7 @@ export class AiService {
     private async generateQuizFromPrompt(
         systemPrompt: string,
         userMessage: string,
+        isVip: boolean,
     ): Promise<GenerateQuestionsResult> {
         const jsonText = await this.aiClient.generateJsonContent({
             systemPrompt,
@@ -323,7 +338,7 @@ export class AiService {
             responseMimeType: "application/json",
             responseSchema: QUIZ_RESPONSE_SCHEMA,
         });
-        return this.parseStructuredOutput(jsonText);
+        return this.parseStructuredOutput(jsonText, isVip);
     }
 
     private async embedQuery(text: string): Promise<number[]> {
@@ -362,12 +377,103 @@ export class AiService {
         return t.trim();
     }
 
-    private parseStructuredOutput(jsonText: string): GenerateQuestionsResult {
-        let parsed: { questions?: GeneratedQuestion[]; meta?: unknown };
+    private inferQuestionType(
+        o: Record<string, unknown>,
+        isVip: boolean,
+    ): GeneratedQuestionType {
+        const raw = o.type;
+        if (typeof raw === "string") {
+            const u = raw.toUpperCase().replace(/-/g, "_");
+            if (
+                u === "SHORT_ANSWER" ||
+                u === "NUMBER_INPUT" ||
+                u === "MULTIPLE_CHOICE" ||
+                u === "TRUE_FALSE"
+            ) {
+                return u as GeneratedQuestionType;
+            }
+        }
+        if (Array.isArray(o.options)) return "MULTIPLE_CHOICE";
+        if (typeof o.correctIsTrue === "boolean") return "TRUE_FALSE";
+        if (isVip && typeof o.correctText === "string") return "SHORT_ANSWER";
+        if (
+            isVip &&
+            typeof o.correctNumber === "number" &&
+            typeof o.rangeProximity === "number" &&
+            Number.isFinite(o.correctNumber) &&
+            Number.isFinite(o.rangeProximity)
+        ) {
+            return "NUMBER_INPUT";
+        }
+        return "MULTIPLE_CHOICE";
+    }
+
+    private normalizeOneQuestion(
+        raw: unknown,
+        isVip: boolean,
+    ): GeneratedQuestion | null {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+        const o = raw as Record<string, unknown>;
+        const text = this.sanitizeQuestionText(String(o.text ?? ""));
+        if (!text) return null;
+
+        const type = this.inferQuestionType(o, isVip);
+        if ((type === "SHORT_ANSWER" || type === "NUMBER_INPUT") && !isVip) {
+            return null;
+        }
+
+        if (type === "TRUE_FALSE") {
+            const correctIsTrue =
+                typeof o.correctIsTrue === "boolean" ? o.correctIsTrue : true;
+            return { type: "TRUE_FALSE", text, correctIsTrue };
+        }
+
+        if (type === "MULTIPLE_CHOICE") {
+            if (!Array.isArray(o.options)) return null;
+            const opts = o.options
+                .filter((x) => x && typeof x === "object" && typeof (x as { text?: unknown }).text === "string")
+                .map((x) => {
+                    const r = x as { text: string; isCorrect?: unknown };
+                    return {
+                        text: String(r.text).trim(),
+                        isCorrect: Boolean(r.isCorrect),
+                    };
+                });
+            if (opts.length < 2 || opts.length > 4) return null;
+            const correctCount = opts.filter((x) => x.isCorrect).length;
+            if (correctCount < 1 || correctCount > opts.length) return null;
+            return {
+                type: "MULTIPLE_CHOICE",
+                text,
+                options: opts,
+                onlyOneCorrect: correctCount === 1,
+            };
+        }
+
+        if (type === "SHORT_ANSWER") {
+            const correctText = String(o.correctText ?? "").trim();
+            if (!correctText) return null;
+            return { type: "SHORT_ANSWER", text, correctText };
+        }
+
+        const correctNumber = Number(o.correctNumber);
+        const rangeProximity = Number(o.rangeProximity);
+        if (!Number.isFinite(correctNumber) || !Number.isFinite(rangeProximity)) return null;
+        if (rangeProximity < 0) return null;
+        return {
+            type: "NUMBER_INPUT",
+            text,
+            correctNumber,
+            rangeProximity,
+        };
+    }
+
+    private parseStructuredOutput(jsonText: string, isVip: boolean): GenerateQuestionsResult {
+        let parsed: { questions?: unknown[]; meta?: unknown };
 
         try {
             const clean = this.cleanJsonText(jsonText);
-            parsed = JSON.parse(clean) as { questions?: GeneratedQuestion[]; meta?: unknown };
+            parsed = JSON.parse(clean) as { questions?: unknown[]; meta?: unknown };
         } catch (err) {
             this.logger.warn(
                 JSON.stringify({
@@ -380,32 +486,24 @@ export class AiService {
             );
         }
 
-        const questions = parsed?.questions;
-        if (!Array.isArray(questions) || questions.length === 0) {
+        const rawList = parsed?.questions;
+        if (!Array.isArray(rawList) || rawList.length === 0) {
             throw new BadRequestException(
                 "I couldn’t generate any valid questions from that request. Try being more specific about the topic and difficulty.",
             );
         }
 
-        const validated: GeneratedQuestion[] = questions
-            .filter((q): q is GeneratedQuestion => {
-                if (!q || typeof q.text !== "string" || !Array.isArray(q.options)) return false;
-                const optCount = q.options.length;
-                if (optCount < 2 || optCount > 4) return false;
-                const correctCount = q.options.filter(
-                    (o) => o && typeof o.text === "string" && o.isCorrect === true,
-                ).length;
-                return correctCount === 1;
-            })
-            .map((q) => ({
-                text: this.sanitizeQuestionText(q.text),
-                options: q.options
-                    .filter((o) => o && typeof o.text === "string")
-                    .map((o) => ({
-                        text: String(o.text).trim(),
-                        isCorrect: Boolean(o.isCorrect),
-                    })),
-            }));
+        const validated: GeneratedQuestion[] = [];
+        for (const item of rawList) {
+            const q = this.normalizeOneQuestion(item, isVip);
+            if (q) validated.push(q);
+        }
+
+        if (validated.length === 0) {
+            throw new BadRequestException(
+                "I couldn’t generate any valid questions from that request. Try being more specific about the topic and difficulty.",
+            );
+        }
 
         const rawMeta = parsed?.meta as Record<string, unknown> | undefined;
         const safeMeta = rawMeta && typeof rawMeta === "object" ? rawMeta : undefined;

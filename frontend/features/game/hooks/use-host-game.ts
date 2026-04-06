@@ -44,11 +44,13 @@ type HostAction =
 function metaFromPayload(p: ShowResultEventPayload): QuestionResultMeta {
 	return {
 		questionType: p.questionType ?? "MULTIPLE_CHOICE",
-		correctOptionId: p.correctOptionId ?? p.optionId,
+		correctOptionIndices: p.correctOptionIndices,
+		correctOptionIndex: p.correctOptionIndex,
 		correctText: p.correctText,
-		rangeMin: p.rangeMin,
-		rangeMax: p.rangeMax,
-		rangeInclusive: p.rangeInclusive,
+		caseSensitive: p.caseSensitive,
+		allowRange: p.allowRange,
+		correctNumber: p.correctNumber,
+		rangeProximity: p.rangeProximity,
 	};
 }
 
@@ -112,9 +114,9 @@ const hostReducer = (
 				...state,
 				status: "RESULT",
 				currentQuestionCorrectOptionId:
-					action.payload.correctOptionId ??
-					action.payload.optionId ??
-					null,
+					action.payload.correctOptionIndices?.length === 1
+						? action.payload.correctOptionIndices[0]
+						: (action.payload.correctOptionIndex ?? null),
 				answerStats: action.payload.answerStats,
 				questionResultMeta: metaFromPayload(action.payload),
 			};
@@ -156,7 +158,7 @@ export const useHostGame = (lobbyId: number) => {
 	useSocketEvent(
 		"newAnswer",
 		(_payload: {
-			optionId?: number | null;
+			mcSelectedIndex?: number | null;
 			textAnswer?: string | null;
 			numericAnswer?: number | null;
 		}) => {

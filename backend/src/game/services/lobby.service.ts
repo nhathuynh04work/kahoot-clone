@@ -11,11 +11,20 @@ import {
     GameLobby,
     LobbyStatus,
     Prisma,
+    Question,
     QuestionType,
 } from "../../generated/prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import Redis from "ioredis";
 import { QuestionWithOptions } from "../../quiz/dto/quiz.dto";
+import {
+    attachClientOptions,
+    getMcCorrectIndicesForGrading,
+    parseQuestionData,
+    sortMcOptions,
+    stripQuestionForPlay,
+} from "../../quiz/question-payload";
+import type { MultipleChoiceData, ShortAnswerData } from "../../quiz/question-payload";
 import {
     lobbyAnsweredKey,
     lobbyCurrentQuestionIndexKey,
@@ -124,7 +133,7 @@ export class LobbyService {
         const lobby = await this.prisma.gameLobby.findUnique({
             where: { id: lobbyId },
             include: {
-                quiz: { include: { questions: { include: { options: true } } } },
+                quiz: { include: { questions: { orderBy: { sortOrder: "asc" } } } },
                 players: { include: { answers: true } },
             },
         });
@@ -169,12 +178,19 @@ export class LobbyService {
                     : 0;
 
             const optionCounts: Record<string, number> = {};
-            q.options.forEach((opt) => {
-                optionCounts[opt.id.toString()] = 0;
-            });
+            if (q.type === QuestionType.MULTIPLE_CHOICE) {
+                const mc = parseQuestionData(q.type, q.data) as MultipleChoiceData;
+                const n = sortMcOptions(mc.options).length;
+                for (let i = 0; i < n; i++) {
+                    optionCounts[i.toString()] = 0;
+                }
+            } else if (q.type === QuestionType.TRUE_FALSE) {
+                optionCounts["0"] = 0;
+                optionCounts["1"] = 0;
+            }
             answersForQuestion.forEach((a) => {
-                if (a.optionId != null) {
-                    const key = a.optionId.toString();
+                if (a.mcSelectedIndex != null) {
+                    const key = a.mcSelectedIndex.toString();
                     optionCounts[key] = (optionCounts[key] ?? 0) + 1;
                 }
             });
@@ -191,14 +207,14 @@ export class LobbyService {
                     kind: "short_answer",
                     counts,
                 } as unknown as Prisma.JsonObject;
-            } else if (q.type === QuestionType.NUMERIC_RANGE) {
+            } else if (q.type === QuestionType.NUMBER_INPUT) {
                 const values = answersForQuestion
                     .map((a) =>
                         a.numericAnswer != null ? Number(a.numericAnswer) : null,
                     )
                     .filter((n): n is number => n != null && Number.isFinite(n));
                 answerSummaryJson = {
-                    kind: "numeric_range",
+                    kind: "number_input",
                     values,
                 } as unknown as Prisma.JsonObject;
             }
@@ -414,7 +430,7 @@ export class LobbyService {
         const lobby = await this.prisma.gameLobby.findFirst({
             where: { id: lobbyId },
             include: {
-                quiz: { include: { questions: { include: { options: true } } } },
+                quiz: { include: { questions: { orderBy: { sortOrder: "asc" } } } },
                 report: {
                     include: {
                         questionReports: { orderBy: { sortIndex: "asc" } },
@@ -468,7 +484,10 @@ export class LobbyService {
                     string,
                     unknown
                 > | null,
-                question: lobby.quiz.questions.find((q) => q.id === qr.questionId),
+                question: (() => {
+                    const raw = lobby.quiz.questions.find((qq) => qq.id === qr.questionId);
+                    return raw ? attachClientOptions(raw) : undefined;
+                })(),
             })),
             players: lobby.report.playerReports.map((pr) => ({
                 playerId: pr.playerId,
@@ -641,137 +660,183 @@ export class LobbyService {
         const cacheKey = quizQuestionsKey(quizId);
         const cachedData = await this.redis.get(cacheKey);
 
-        let questions: QuestionWithOptions[];
+        let rawQuestions: Question[];
 
         if (cachedData) {
-            questions = JSON.parse(cachedData);
+            rawQuestions = JSON.parse(cachedData) as Question[];
         } else {
             const quizData = await this.prisma.quiz.findUnique({
                 where: { id: quizId },
-                include: { questions: { include: { options: true } } },
+                include: { questions: { orderBy: { sortOrder: "asc" } } },
             });
 
             if (!quizData) {
                 throw new NotFoundException("Quiz not found");
             }
 
-            questions = quizData.questions;
+            rawQuestions = quizData.questions;
 
             await this.redis.set(
                 cacheKey,
-                JSON.stringify(questions),
+                JSON.stringify(rawQuestions),
                 "EX",
                 7200,
             );
         }
 
-        if (includeAnswer) return questions;
+        if (includeAnswer) {
+            return rawQuestions.map((q) => attachClientOptions(q));
+        }
 
-        return questions.map((q) => {
-            const options = q.options.map(({ isCorrect, ...rest }) => rest);
-            if (q.type === QuestionType.SHORT_ANSWER) {
-                const { correctText: _c, ...restQ } = q;
-                return { ...restQ, options };
-            }
-            if (q.type === QuestionType.NUMERIC_RANGE) {
-                const {
-                    rangeMin: _min,
-                    rangeMax: _max,
-                    rangeInclusive: _inc,
-                    ...restQ
-                } = q;
-                return { ...restQ, options };
-            }
-            return { ...q, options };
-        });
+        return rawQuestions.map((q) => stripQuestionForPlay(q));
     }
 
     async getQuestionRevealForResult(quizId: number, questionId: number) {
         const q = await this.prisma.question.findFirst({
             where: { id: questionId, quizId },
-            include: { options: true },
         });
         if (!q) {
             throw new NotFoundException("Question not found");
         }
         if (q.type === QuestionType.MULTIPLE_CHOICE) {
-            const correctOption = q.options.find((o) => o.isCorrect);
-            if (!correctOption) {
+            const mc = parseQuestionData(q.type, q.data) as MultipleChoiceData;
+            const sorted = sortMcOptions(mc.options);
+            if (sorted.length === 0) {
+                throw new NotFoundException("This question has no options set");
+            }
+            const indices = [...new Set(mc.correctIndices)]
+                .filter((i) => i >= 0 && i < sorted.length)
+                .sort((a, b) => a - b);
+            if (indices.length === 0) {
                 throw new NotFoundException(
-                    "This question has no correct option set",
+                    "This question has no valid correct option indices",
                 );
             }
             return {
                 questionType: QuestionType.MULTIPLE_CHOICE,
-                correctOptionId: correctOption.id,
+                correctOptionIndices: indices,
+            };
+        }
+        if (q.type === QuestionType.TRUE_FALSE) {
+            const indices = getMcCorrectIndicesForGrading(q.type, q.data);
+            if (!indices?.length) {
+                throw new NotFoundException("True/false question has no correct side set");
+            }
+            return {
+                questionType: QuestionType.TRUE_FALSE,
+                correctOptionIndices: indices,
             };
         }
         if (q.type === QuestionType.SHORT_ANSWER) {
+            const sa = parseQuestionData(q.type, q.data) as ShortAnswerData;
             return {
                 questionType: QuestionType.SHORT_ANSWER,
-                correctText: q.correctText ?? "",
+                correctText: sa.correctText ?? "",
+                caseSensitive: sa.caseSensitive === true,
+            };
+        }
+        const ni = parseQuestionData(q.type, q.data) as {
+            allowRange: boolean;
+            correctNumber?: number;
+            rangeProximity?: number;
+        };
+        if (ni.allowRange === true) {
+            return {
+                questionType: QuestionType.NUMBER_INPUT,
+                allowRange: true,
+                correctNumber: ni.correctNumber ?? 0,
+                rangeProximity: ni.rangeProximity ?? 0,
             };
         }
         return {
-            questionType: QuestionType.NUMERIC_RANGE,
-            rangeMin: q.rangeMin != null ? Number(q.rangeMin) : null,
-            rangeMax: q.rangeMax != null ? Number(q.rangeMax) : null,
-            rangeInclusive: q.rangeInclusive,
+            questionType: QuestionType.NUMBER_INPUT,
+            allowRange: false,
+            correctNumber: ni.correctNumber ?? 0,
         };
     }
 
     async gradeAnswer(params: {
         quizId: number;
         questionId: number;
-        optionId?: number;
+        mcSelectedIndex?: number;
         textAnswer?: string;
         numericAnswer?: number;
     }) {
-        const { quizId, questionId, optionId, textAnswer, numericAnswer } =
+        const { quizId, questionId, mcSelectedIndex, textAnswer, numericAnswer } =
             params;
 
         const question = await this.prisma.question.findFirst({
             where: { id: questionId, quizId },
-            include: { options: true },
         });
         if (!question) {
             throw new NotFoundException("Question not found");
         }
 
-        if (question.type === QuestionType.MULTIPLE_CHOICE) {
-            if (optionId == null) {
-                throw new BadRequestException("optionId is required");
+        if (
+            question.type === QuestionType.MULTIPLE_CHOICE ||
+            question.type === QuestionType.TRUE_FALSE
+        ) {
+            if (mcSelectedIndex == null || !Number.isFinite(mcSelectedIndex)) {
+                throw new BadRequestException("mcSelectedIndex is required");
             }
-            const correctOption = question.options.find((o) => o.isCorrect);
-            if (!correctOption) {
-                throw new NotFoundException(
-                    "This question has no correct option set",
-                );
+            const correct = getMcCorrectIndicesForGrading(question.type, question.data);
+            if (!correct?.length) {
+                throw new NotFoundException("This question has no correct options set");
             }
-            const isCorrect = correctOption.id === optionId;
+            const nOptions =
+                question.type === QuestionType.TRUE_FALSE
+                    ? 2
+                    : sortMcOptions(
+                          (parseQuestionData(question.type, question.data) as MultipleChoiceData)
+                              .options,
+                      ).length;
+            const idx = Math.floor(mcSelectedIndex);
+            const isCorrect =
+                idx >= 0 && idx < nOptions && correct.includes(idx);
             return { isCorrect, points: isCorrect ? question.points : 0 };
         }
 
         if (question.type === QuestionType.SHORT_ANSWER) {
-            const got = (textAnswer ?? "").trim().toLowerCase();
-            const expected = (question.correctText ?? "").trim().toLowerCase();
-            const isCorrect = got.length > 0 && got === expected;
+            const sa = parseQuestionData(question.type, question.data) as ShortAnswerData;
+            const got = (textAnswer ?? "").trim();
+            const expected = (sa.correctText ?? "").trim();
+            if (!got.length) {
+                return { isCorrect: false, points: 0 };
+            }
+            const isCorrect =
+                sa.caseSensitive === true
+                    ? got === expected
+                    : got.toLowerCase() === expected.toLowerCase();
             return { isCorrect, points: isCorrect ? question.points : 0 };
         }
 
-        if (question.type === QuestionType.NUMERIC_RANGE) {
+        if (question.type === QuestionType.NUMBER_INPUT) {
             if (numericAnswer == null || !Number.isFinite(numericAnswer)) {
                 return { isCorrect: false, points: 0 };
             }
-            if (question.rangeMin == null || question.rangeMax == null) {
-                throw new NotFoundException("Range bounds not set");
-            }
-            const min = Number(question.rangeMin);
-            const max = Number(question.rangeMax);
+            const ni = parseQuestionData(question.type, question.data) as {
+                allowRange: boolean;
+                correctNumber?: number;
+                rangeProximity?: number;
+            };
             const n = numericAnswer;
-            const isCorrect = question.rangeInclusive
-                ? n >= min && n <= max
-                : n > min && n < max;
+            const isCorrect =
+                ni.allowRange === true
+                    ? (() => {
+                          if (
+                              typeof ni.correctNumber === "number" &&
+                              Number.isFinite(ni.correctNumber) &&
+                              typeof ni.rangeProximity === "number" &&
+                              Number.isFinite(ni.rangeProximity) &&
+                              ni.rangeProximity >= 0
+                          ) {
+                              const min = ni.correctNumber - ni.rangeProximity;
+                              const max = ni.correctNumber + ni.rangeProximity;
+                              return n >= min && n <= max;
+                          }
+                          return false;
+                      })()
+                    : n === (ni.correctNumber ?? 0);
             return { isCorrect, points: isCorrect ? question.points : 0 };
         }
 
@@ -779,7 +844,7 @@ export class LobbyService {
     }
 
     async saveAnswer(params: {
-        optionId: number | null;
+        mcSelectedIndex: number | null;
         textAnswer?: string | null;
         numericAnswer?: number | null;
         questionId: number;
@@ -791,7 +856,7 @@ export class LobbyService {
             data: {
                 playerId: params.playerId,
                 questionId: params.questionId,
-                optionId: params.optionId,
+                mcSelectedIndex: params.mcSelectedIndex,
                 textAnswer: params.textAnswer ?? null,
                 numericAnswer:
                     params.numericAnswer != null && Number.isFinite(params.numericAnswer)
@@ -829,16 +894,16 @@ export class LobbyService {
     async recordAnswerStats(params: {
         lobbyId: number;
         questionId: number;
-        optionId?: number | null;
+        mcSelectedIndex?: number | null;
         textAnswer?: string | null;
         numericAnswer?: number | null;
     }) {
-        const { lobbyId, questionId, optionId, textAnswer, numericAnswer } =
+        const { lobbyId, questionId, mcSelectedIndex, textAnswer, numericAnswer } =
             params;
         const key = questionStatsKey(lobbyId, questionId);
 
-        if (optionId != null) {
-            await this.redis.hincrby(key, optionId.toString(), 1);
+        if (mcSelectedIndex != null) {
+            await this.redis.hincrby(key, mcSelectedIndex.toString(), 1);
         } else if (textAnswer != null) {
             const field = this.truncateStatField(
                 textAnswer.trim().toLowerCase() || "(empty)",
@@ -923,15 +988,21 @@ export class LobbyService {
         const key = questionStatsKey(lobbyId, question.id);
         await this.redis.del(key);
 
-        if (question.type !== QuestionType.MULTIPLE_CHOICE) {
+        let n = 0;
+        if (question.type === QuestionType.MULTIPLE_CHOICE) {
+            const mc = parseQuestionData(question.type, question.data) as MultipleChoiceData;
+            n = sortMcOptions(mc.options).length;
+        } else if (question.type === QuestionType.TRUE_FALSE) {
+            n = 2;
+        } else {
             await this.redis.expire(key, 7200);
             return;
         }
 
         const pipeline = this.redis.pipeline();
-        question.options.forEach((option) => {
-            pipeline.hset(key, option.id.toString(), "0");
-        });
+        for (let i = 0; i < n; i++) {
+            pipeline.hset(key, i.toString(), "0");
+        }
         pipeline.expire(key, 7200);
         await pipeline.exec();
     }

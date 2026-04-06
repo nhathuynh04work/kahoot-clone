@@ -250,7 +250,7 @@ export class GameGateway
     async handleSubmitAnswer(
         @MessageBody()
         body: {
-            optionId?: number;
+            mcSelectedIndex?: number;
             textAnswer?: string;
             numericAnswer?: number;
             questionId: number;
@@ -258,7 +258,7 @@ export class GameGateway
             pin: string;
         },
     ) {
-        const { optionId, textAnswer, numericAnswer, questionId, nickname, pin } =
+        const { mcSelectedIndex, textAnswer, numericAnswer, questionId, nickname, pin } =
             body;
 
         try {
@@ -278,13 +278,13 @@ export class GameGateway
             const result = await this.lobbyService.gradeAnswer({
                 quizId: lobby.quizId,
                 questionId,
-                optionId,
+                mcSelectedIndex,
                 textAnswer,
                 numericAnswer,
             });
 
             const savedAnswer = await this.lobbyService.saveAnswer({
-                optionId: optionId ?? null,
+                mcSelectedIndex: mcSelectedIndex ?? null,
                 textAnswer: textAnswer ?? null,
                 numericAnswer: numericAnswer ?? null,
                 questionId,
@@ -306,7 +306,7 @@ export class GameGateway
             await this.lobbyService.recordAnswerStats({
                 lobbyId: lobby.id,
                 questionId,
-                optionId: optionId ?? null,
+                mcSelectedIndex: mcSelectedIndex ?? null,
                 textAnswer: textAnswer ?? null,
                 numericAnswer: numericAnswer ?? null,
             });
@@ -327,7 +327,7 @@ export class GameGateway
             }
 
             this.socketService.emitToRoom(lobby.id.toString(), "newAnswer", {
-                optionId: optionId ?? null,
+                mcSelectedIndex: mcSelectedIndex ?? null,
                 textAnswer: textAnswer ?? null,
                 numericAnswer: numericAnswer ?? null,
             });
@@ -364,12 +364,12 @@ export class GameGateway
             questionId,
         );
 
+        const indices = reveal.correctOptionIndices;
         this.socketService.emitToRoom(lobby.id.toString(), "showResult", {
             ...reveal,
-            optionId:
-                reveal.questionType === "MULTIPLE_CHOICE"
-                    ? reveal.correctOptionId
-                    : undefined,
+            correctOptionIndices: indices,
+            correctOptionIndex:
+                Array.isArray(indices) && indices.length === 1 ? indices[0] : undefined,
             answerStats: stats,
         });
 

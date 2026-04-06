@@ -79,11 +79,7 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 
 	const goToDocumentsSearch = (fileName: string) => {
 		setOpen(false);
-		const params = new URLSearchParams();
-		params.set("tab", "documents");
-		params.set("q", fileName);
-		params.set("page", "1");
-		router.push(`/discover?${params.toString()}`);
+		router.push("/library/files");
 	};
 
 	return (

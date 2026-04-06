@@ -1,14 +1,33 @@
 import { apiClient } from "@/lib/apiClient";
 
-export interface GeneratedOption {
+export interface GeneratedMcOption {
 	text: string;
 	isCorrect: boolean;
 }
 
-export interface GeneratedQuestion {
-	text: string;
-	options: GeneratedOption[];
-}
+export type GeneratedQuestion =
+	| {
+			type: "MULTIPLE_CHOICE";
+			text: string;
+			options: GeneratedMcOption[];
+			onlyOneCorrect?: boolean;
+	  }
+	| {
+			type: "TRUE_FALSE";
+			text: string;
+			correctIsTrue: boolean;
+	  }
+	| {
+			type: "SHORT_ANSWER";
+			text: string;
+			correctText: string;
+	  }
+	| {
+			type: "NUMBER_INPUT";
+			text: string;
+			correctNumber: number;
+			rangeProximity: number;
+	  };
 
 type QuestionSourceMode = "rag" | "freestyle";
 

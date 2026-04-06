@@ -21,7 +21,7 @@ interface GeneratedQuestionsCanvasProps {
 		questionId: string,
 		updates: Partial<Pick<MockGeneratedQuestion, "text">> & {
 			option?: { index: number; text?: string; isCorrect?: boolean };
-		}
+		},
 	) => void;
 	addedIds?: Set<string>;
 	onClose?: () => void;
@@ -74,7 +74,10 @@ export function GeneratedQuestionsCanvas({
 							className="rounded-md border border-gray-700 bg-gray-800 overflow-hidden shadow-sm"
 						>
 							<div className="p-3 border-b border-gray-700 flex items-start justify-between gap-2">
-								<div className="min-w-0 flex-1">
+								<div className="min-w-0 flex-1 space-y-1">
+									<p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">
+										{q.type.replace(/_/g, " ")}
+									</p>
 									{editable && onUpdateQuestion ? (
 										<input
 											type="text"
@@ -112,64 +115,90 @@ export function GeneratedQuestionsCanvas({
 									</button>
 								)}
 							</div>
-							<div className="p-2 flex flex-col gap-1.5">
-								{q.options.map((opt, i) => (
-									<div
-										key={i}
-										className="py-1.5 px-2 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-2 min-h-0"
-									>
+
+							{q.type === "TRUE_FALSE" ? (
+								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
+									<span className="text-gray-500">Correct: </span>
+									<span className="text-emerald-400 font-medium">
+										{q.correctIsTrue ? "True" : "False"}
+									</span>
+								</div>
+							) : null}
+
+							{q.type === "MULTIPLE_CHOICE" ? (
+								<div className="p-2 flex flex-col gap-1.5">
+									{q.options.map((opt, i) => (
 										<div
-											className={cn(
-												"w-5 h-5 rounded shrink-0",
-												OPTION_COLORS[i % OPTION_COLORS.length],
-											)}
-										/>
-										{editable && onUpdateQuestion ? (
-											<input
-												type="text"
-												value={opt.text}
-												onChange={(e) =>
-													onUpdateQuestion(q.id, {
-														option: { index: i, text: e.target.value },
-													})
-												}
-												className="flex-1 min-w-0 text-xs text-white bg-transparent border border-gray-600 rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500"
-												placeholder={`Option ${i + 1}`}
+											key={i}
+											className="py-1.5 px-2 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-2 min-h-0"
+										>
+											<div
+												className={cn(
+													"w-5 h-5 rounded shrink-0",
+													OPTION_COLORS[i % OPTION_COLORS.length],
+												)}
 											/>
-										) : (
-											<span className="text-xs text-white wrap-break-word flex-1 min-w-0">
-												{opt.text}
-											</span>
-										)}
-										{editable && onUpdateQuestion ? (
-											<button
-												type="button"
-												onClick={() =>
-													onUpdateQuestion(q.id, {
-														option: { index: i, isCorrect: !opt.isCorrect },
-													})
-												}
-												className="shrink-0 p-0.5 rounded hover:bg-gray-700 transition-colors"
-												title={opt.isCorrect ? "Correct answer" : "Mark as correct"}
-											>
-												{opt.isCorrect ? (
-													<CheckCircle className="w-4 h-4 text-green-500" />
-												) : (
-													<Circle className="w-4 h-4 text-gray-600" />
-												)}
-											</button>
-										) : (
-											<>
-												{opt.isCorrect ? (
-													<CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-												) : (
-													<Circle className="w-4 h-4 text-gray-600 shrink-0" />
-												)}
-											</>
-										)}
-									</div>
-								))}
-							</div>
+											{editable && onUpdateQuestion ? (
+												<input
+													type="text"
+													value={opt.text}
+													onChange={(e) =>
+														onUpdateQuestion(q.id, {
+															option: { index: i, text: e.target.value },
+														})
+													}
+													className="flex-1 min-w-0 text-xs text-white bg-transparent border border-gray-600 rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500"
+													placeholder={`Option ${i + 1}`}
+												/>
+											) : (
+												<span className="text-xs text-white wrap-break-word flex-1 min-w-0">
+													{opt.text}
+												</span>
+											)}
+											{editable && onUpdateQuestion ? (
+												<button
+													type="button"
+													onClick={() =>
+														onUpdateQuestion(q.id, {
+															option: { index: i, isCorrect: !opt.isCorrect },
+														})
+													}
+													className="shrink-0 p-0.5 rounded hover:bg-gray-700 transition-colors"
+													title={opt.isCorrect ? "Correct answer" : "Mark as correct"}
+												>
+													{opt.isCorrect ? (
+														<CheckCircle className="w-4 h-4 text-green-500" />
+													) : (
+														<Circle className="w-4 h-4 text-gray-600" />
+													)}
+												</button>
+											) : (
+												<>
+													{opt.isCorrect ? (
+														<CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+													) : (
+														<Circle className="w-4 h-4 text-gray-600 shrink-0" />
+													)}
+												</>
+											)}
+										</div>
+									))}
+								</div>
+							) : null}
+
+							{q.type === "SHORT_ANSWER" ? (
+								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
+									<span className="text-gray-500">Correct: </span>
+									<span className="text-emerald-400 font-medium">{q.correctText}</span>
+								</div>
+							) : null}
+
+							{q.type === "NUMBER_INPUT" ? (
+								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
+									Correct: {q.correctNumber} (± {q.rangeProximity})
+								</div>
+							) : null}
+
 							<div className="px-3 pb-3">
 								<button
 									type="button"
@@ -183,9 +212,13 @@ export function GeneratedQuestionsCanvas({
 									)}
 								>
 									{added ? (
-										<><Check className="w-4 h-4" /> Added to quiz</>
+										<>
+											<Check className="w-4 h-4" /> Added to quiz
+										</>
 									) : (
-										<><Plus className="w-4 h-4" /> Add to quiz</>
+										<>
+											<Plus className="w-4 h-4" /> Add to quiz
+										</>
 									)}
 								</button>
 							</div>

@@ -27,7 +27,7 @@ export function Header({ isSaving }: HeaderProps) {
 		const lastSortOrder =
 			questions.length > 0 ? questions[questions.length - 1]?.sortOrder ?? -1 : -1;
 		const newId = Date.now() * -1;
-		append({
+		const base = {
 			id: newId,
 			quizId: watch("id"),
 			text: gen.text,
@@ -35,13 +35,63 @@ export function Header({ isSaving }: HeaderProps) {
 			points: 1000,
 			imageUrl: undefined,
 			sortOrder: lastSortOrder + 1,
-			options: gen.options.map((o, i) => ({
-				id: newId * 10 - i,
-				questionId: newId,
-				text: o.text,
-				isCorrect: o.isCorrect,
-				sortOrder: i,
-			})),
+		};
+
+		if (gen.type === "MULTIPLE_CHOICE") {
+			const nCorrect = gen.options.filter((o) => o.isCorrect).length;
+			append({
+				...base,
+				type: "MULTIPLE_CHOICE" as const,
+				onlyOneCorrect: nCorrect === 1,
+				options: gen.options.map((o, i) => ({
+					id: newId * 10 - i,
+					questionId: newId,
+					text: o.text,
+					isCorrect: o.isCorrect,
+					sortOrder: i,
+				})),
+			});
+			return;
+		}
+		if (gen.type === "TRUE_FALSE") {
+			append({
+				...base,
+				type: "TRUE_FALSE" as const,
+				options: [
+					{
+						id: newId * 10,
+						questionId: newId,
+						text: "True",
+						isCorrect: gen.correctIsTrue,
+						sortOrder: 0,
+					},
+					{
+						id: newId * 10 - 1,
+						questionId: newId,
+						text: "False",
+						isCorrect: !gen.correctIsTrue,
+						sortOrder: 1,
+					},
+				],
+			});
+			return;
+		}
+		if (gen.type === "SHORT_ANSWER") {
+			append({
+				...base,
+				type: "SHORT_ANSWER" as const,
+				options: [],
+				correctText: gen.correctText,
+			});
+			return;
+		}
+		append({
+			...base,
+			type: "NUMBER_INPUT" as const,
+			options: [],
+			allowRange: true,
+			correctNumber: gen.correctNumber,
+			rangeProximity: gen.rangeProximity,
 		});
 	};
 
@@ -53,7 +103,7 @@ export function Header({ isSaving }: HeaderProps) {
 		<>
 			<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
 				<Link
-					href="/"
+					href="/library/quizzes"
 					className="text-xl font-extrabold shrink-0 tracking-tight">
 					<AppLogo />
 				</Link>
@@ -95,7 +145,7 @@ export function Header({ isSaving }: HeaderProps) {
 					</div>
 
 					<Link
-						href="/"
+						href="/library/quizzes"
 						className="font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-4 py-2 text-sm transition-colors">
 						Done
 					</Link>

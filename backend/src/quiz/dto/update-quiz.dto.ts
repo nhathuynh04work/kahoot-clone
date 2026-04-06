@@ -1,34 +1,16 @@
 import { Type } from "class-transformer";
 import {
     IsArray,
-    IsBoolean,
     IsEnum,
-    IsNumber,
-    IsOptional,
     IsIn,
+    IsNumber,
+    IsObject,
+    IsOptional,
     IsString,
     IsUrl,
     ValidateNested,
 } from "class-validator";
 import { QuestionType } from "../../generated/prisma/client.js";
-
-export class UpdateOptionDto {
-    @IsOptional()
-    @IsNumber()
-    id?: number;
-
-    @IsOptional()
-    @IsString()
-    text?: string;
-
-    @IsOptional()
-    @IsBoolean()
-    isCorrect?: boolean;
-
-    @IsOptional()
-    @IsNumber()
-    sortOrder?: number;
-}
 
 export class UpdateQuestionDto {
     @IsOptional()
@@ -59,29 +41,10 @@ export class UpdateQuestionDto {
     @IsEnum(QuestionType)
     type?: QuestionType;
 
+    /** Type-specific JSON (MC/TF/SA/NR — see question-payload.ts). */
     @IsOptional()
-    @IsString()
-    correctText?: string;
-
-    @IsOptional()
-    @Type(() => Number)
-    @IsNumber()
-    rangeMin?: number;
-
-    @IsOptional()
-    @Type(() => Number)
-    @IsNumber()
-    rangeMax?: number;
-
-    @IsOptional()
-    @IsBoolean()
-    rangeInclusive?: boolean;
-
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => UpdateOptionDto)
-    options?: UpdateOptionDto[];
+    @IsObject()
+    data?: Record<string, unknown>;
 }
 
 export class UpdateQuizDto {

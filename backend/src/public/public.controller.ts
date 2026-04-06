@@ -8,11 +8,13 @@ export class PublicController {
     @Get("quizzes")
     getPublicQuizzes(
         @Query("mode") mode: string = "recent",
+        @Query("q") q?: string,
         @Query("page") page?: string,
         @Query("pageSize") pageSize?: string,
     ) {
         return this.catalog.getPublicQuizzes({
             mode,
+            q,
             page: page ? parseInt(page, 10) : 1,
             pageSize: pageSize ? parseInt(pageSize, 10) : 20,
         });
@@ -42,11 +44,13 @@ export class PublicController {
     @Get("documents")
     getPublicDocuments(
         @Query("mode") mode: string = "recent",
+        @Query("q") q?: string,
         @Query("page") page?: string,
         @Query("pageSize") pageSize?: string,
     ) {
         return this.catalog.getPublicDocuments({
             mode,
+            q,
             page: page ? parseInt(page, 10) : 1,
             pageSize: pageSize ? parseInt(pageSize, 10) : 20,
         });

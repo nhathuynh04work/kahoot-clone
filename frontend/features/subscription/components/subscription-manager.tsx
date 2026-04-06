@@ -8,8 +8,17 @@ import {
 	startCheckoutSession,
 	type PriceKey,
 } from "../lib/billing-client";
+import { VIP_PLANS } from "../lib/plan-display";
 import { toast } from "sonner";
-import { Loader2, CreditCard } from "lucide-react";
+import {
+	CheckCircle2,
+	FileText,
+	Loader2,
+	Sparkles,
+	ListChecks,
+	Crown,
+	CreditCard,
+} from "lucide-react";
 
 export type BillingStatus = {
 	stripeCustomerId: string | null;
@@ -24,17 +33,6 @@ export type BillingStatus = {
 	} | null;
 };
 
-const PLANS: {
-	key: PriceKey;
-	name: string;
-	description: string;
-}[] = [
-	{ key: "monthly", name: "Monthly", description: "Billed every month" },
-	{ key: "quarterly", name: "Quarterly", description: "Billed every 3 months" },
-	{ key: "yearly", name: "Yearly", description: "Billed once per year" },
-	{ key: "lifetime", name: "Lifetime", description: "One-time payment, VIP forever" },
-];
-
 function planDisplayName(planKey: string | null | undefined): string {
 	if (!planKey) return "VIP subscription";
 	const map: Record<string, string> = {
@@ -44,6 +42,10 @@ function planDisplayName(planKey: string | null | undefined): string {
 		lifetime: "Lifetime",
 	};
 	return map[planKey] ?? "VIP subscription";
+}
+
+function formatBytesAsMb(bytes: number): string {
+	return `${Math.round(bytes / (1024 * 1024))} MB`;
 }
 
 export function SubscriptionManager({
@@ -142,7 +144,7 @@ export function SubscriptionManager({
 	}
 
 	const showPlanGrid = !lifetimeMember;
-	const showLimitsAndPlansCard = Boolean(user.limits) || showPlanGrid;
+	const showLimitsAndPlansCard = showPlanGrid;
 
 	const cardClass =
 		"rounded-xl border border-gray-700 bg-gray-800/40 p-5 sm:p-6 space-y-6";
@@ -165,6 +167,9 @@ export function SubscriptionManager({
 
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
+						<p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+							Subscription
+						</p>
 						<p className="text-sm text-gray-500">{user.email}</p>
 					</div>
 					<span
@@ -179,7 +184,7 @@ export function SubscriptionManager({
 						<h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
 							Current plan
 						</h2>
-						<p className="text-lg font-semibold text-white">
+						<p className="text-xl font-semibold text-white">
 							{lifetimeMember
 								? "Lifetime VIP"
 								: planDisplayName(currentPlanKey ?? null)}
@@ -231,111 +236,196 @@ export function SubscriptionManager({
 
 			{showLimitsAndPlansCard ? (
 				<div className={cardClass}>
-					{user.limits ? (
-						<div className="space-y-3">
-							<h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-								Your limits
-							</h2>
-							<dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-								<div className="flex justify-between gap-4 border-b border-gray-800/80 py-2 sm:border-0 sm:block sm:py-0">
-									<dt className="text-gray-500">Questions per quiz</dt>
-									<dd className="text-gray-200 font-medium tabular-nums">
-										{user.limits.maxQuestionsPerQuiz}
-									</dd>
-								</div>
-								<div className="flex justify-between gap-4 border-b border-gray-800/80 py-2 sm:border-0 sm:block sm:py-0">
-									<dt className="text-gray-500">Documents</dt>
-									<dd className="text-gray-200 font-medium tabular-nums">
-										{user.limits.maxDocuments}
-									</dd>
-								</div>
-								<div className="flex justify-between gap-4 border-b border-gray-800/80 py-2 sm:border-0 sm:block sm:py-0">
-									<dt className="text-gray-500">File storage</dt>
-									<dd className="text-gray-200 font-medium tabular-nums">
-										{Math.round(user.limits.maxTotalStorageBytes / (1024 * 1024))}{" "}
-										MB
-									</dd>
-								</div>
-								<div className="flex justify-between gap-4 py-2 sm:block sm:py-0 sm:pt-0">
-									<dt className="text-gray-500">Short answer &amp; range</dt>
-									<dd className="text-gray-200 font-medium">
-										{user.limits.canUseShortAnswerAndRange ? "On" : "VIP only"}
-									</dd>
-								</div>
-							</dl>
-						</div>
-					) : null}
-
 					{showPlanGrid ? (
 						<div
 							className={
-								user.limits ? "space-y-4 border-t border-gray-800 pt-6" : "space-y-4"
+								"space-y-8"
 							}
 						>
-							<h2 className="text-sm font-semibold text-white">
-								{recurringActive ? "Change plan" : "Plans"}
-							</h2>
-							{recurringActive ? (
-								<p className="text-sm text-gray-500">
-									Checkout may start a new subscription depending on your Stripe
-									setup. Use billing portal to cancel or update your card.
-								</p>
-							) : (
-								<p className="text-sm text-gray-500">
-									Cancel recurring plans anytime from the billing portal after you
-									subscribe.
-								</p>
-							)}
-							<ul className="divide-y divide-gray-800 border-t border-b border-gray-800">
-								{PLANS.map((p) => {
+							<div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+								<div>
+									<h2 className="text-lg font-semibold text-white">
+										{recurringActive ? "Change billing option" : "Choose a plan"}
+									</h2>
+									<p className="text-sm text-gray-500 mt-1 max-w-2xl">
+										{recurringActive
+											? "For cancellations, invoices, or card updates, use the Stripe billing portal."
+											: "Pick a billing option. You can cancel recurring plans anytime from the Stripe billing portal after you subscribe."}
+									</p>
+								</div>
+							</div>
+
+							<div className="rounded-2xl border border-gray-800 bg-gray-950/30 p-5">
+								<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+									<div className="min-w-0">
+										<p className="text-sm font-semibold text-white">VIP includes</p>
+										<ul className="mt-3 space-y-3 text-sm text-gray-300">
+											<li className="flex items-start gap-3">
+												<CheckCircle2
+													className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+													aria-hidden
+												/>
+												<span>
+													<span className="font-semibold text-white">
+														Up to 200 questions
+													</span>{" "}
+													per quiz
+												</span>
+											</li>
+											<li className="flex items-start gap-3">
+												<ListChecks
+													className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+													aria-hidden
+												/>
+												<span>
+													<span className="font-semibold text-white">
+														Advanced question types
+													</span>{" "}
+													(short answer + number input)
+												</span>
+											</li>
+											<li className="flex items-start gap-3">
+												<FileText
+													className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+													aria-hidden
+												/>
+												<span>
+													<span className="font-semibold text-white">
+														100 documents
+													</span>{" "}
+													and{" "}
+													<span className="font-semibold text-white">500 MB</span>{" "}
+													total storage
+												</span>
+											</li>
+											<li className="flex items-start gap-3">
+												<Sparkles
+													className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+													aria-hidden
+												/>
+												<span>
+													<span className="font-semibold text-white">
+														VIP AI generation
+													</span>{" "}
+													can include advanced formats
+												</span>
+											</li>
+										</ul>
+									</div>
+
+									<div className="hidden lg:flex items-center justify-center shrink-0">
+										<div className="relative w-32 h-32 rounded-2xl border border-gray-800 bg-gray-950/20 flex items-center justify-center">
+											<Crown
+												className="w-16 h-16 text-indigo-300/90"
+												aria-hidden
+											/>
+											<div className="absolute inset-0 rounded-2xl shadow-[0_0_0_1px_rgba(99,102,241,0.10)]" />
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+								{VIP_PLANS.map((p) => {
 									const isCurrent =
 										recurringActive &&
 										currentPlanKey === p.key &&
 										p.key !== "lifetime";
 									const isLifetimePlan = p.key === "lifetime";
+									const isRecommended = p.badge === "Most popular";
+
+									const badge =
+										isCurrent ? "Current" : p.badge ? p.badge : null;
+
+									const badgeClass = isCurrent
+										? "bg-indigo-500/15 text-indigo-200 border-indigo-500/25"
+										: isRecommended
+											? "bg-amber-500/15 text-amber-200 border-amber-500/25"
+											: "bg-gray-800/60 text-gray-300 border-gray-700";
+
+									const cardOuterClass = isRecommended
+										? "rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.10)]"
+										: "rounded-2xl border border-gray-800 bg-gray-950/30 p-5";
+
+									const ctaLabel = isCurrent
+										? "Current plan"
+										: isLifetimePlan
+											? "Buy lifetime"
+											: recurringActive
+												? "Switch"
+												: "Subscribe";
+
+									const ctaClass = isCurrent
+										? "bg-gray-800 text-gray-400 cursor-default"
+										: isRecommended
+											? "bg-amber-500 hover:bg-amber-400 text-gray-950"
+											: "bg-indigo-600 hover:bg-indigo-500 text-white";
+
 									return (
-										<li
-											key={p.key}
-											className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-										>
-											<div className="min-w-0">
-												<div className="flex flex-wrap items-center gap-2">
-													<p className="font-medium text-white">{p.name}</p>
-													{isCurrent ? (
-														<span className="text-[10px] font-bold uppercase tracking-wide text-indigo-300">
-															Current
+										<div key={p.key} className={`${cardOuterClass} h-full`}>
+											<div className="flex flex-col h-full">
+												<div className="flex items-start justify-between gap-3 min-h-[64px]">
+													<div className="min-w-0">
+													<p className="text-sm font-semibold text-white">
+														{p.name}
+													</p>
+													<p className="text-xs text-gray-500 mt-1 leading-snug">
+														{p.description}
+													</p>
+													</div>
+													{badge ? (
+														<span
+															className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeClass}`}
+														>
+															{badge}
 														</span>
 													) : null}
 												</div>
-												<p className="text-xs text-gray-500 mt-0.5">
-													{p.description}
-												</p>
-											</div>
-											{isCurrent ? (
-												<p className="text-xs text-gray-500 sm:text-right sm:max-w-xs">
-													Use billing portal for payment method or cancel.
-												</p>
-											) : (
-												<button
-													type="button"
-													onClick={() => onCheckout(p.key)}
-													disabled={loadingKey !== null}
-													className="shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 inline-flex items-center justify-center gap-2 sm:min-w-36"
-												>
-													{loadingKey === p.key ? (
-														<Loader2 className="animate-spin w-4 h-4" />
+
+												<div className="mt-4 min-h-[64px]">
+													<p className="text-3xl font-black tracking-tight text-white tabular-nums">
+														{p.priceLabel}
+														<span className="text-sm font-semibold text-gray-400 ml-2">
+															{p.priceSubLabel}
+														</span>
+													</p>
+													{p.monthlyEquivalent ? (
+														<p className="text-xs text-gray-500 mt-1">
+															{p.monthlyEquivalent}
+														</p>
 													) : null}
-													{isLifetimePlan
-														? "Buy lifetime"
-														: recurringActive
-															? "Switch"
-															: "Subscribe"}
-												</button>
-											)}
-										</li>
+												</div>
+
+												<div className="mt-auto pt-5">
+													<button
+														type="button"
+														onClick={() => (isCurrent ? null : onCheckout(p.key))}
+														disabled={loadingKey !== null || isCurrent}
+														className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2 ${ctaClass}`}
+													>
+														{loadingKey === p.key ? (
+															<Loader2 className="animate-spin w-4 h-4" />
+														) : null}
+														{ctaLabel}
+													</button>
+
+													{isCurrent && hasStripeCustomer ? (
+														<p className="text-[11px] text-gray-500 mt-3 min-h-[32px]">
+															Manage cancellations and payment details in the billing portal above.
+														</p>
+													) : (
+														<p className="text-[11px] text-gray-500 mt-3 min-h-[32px]">
+															{isLifetimePlan
+																? "One-time purchase. VIP stays on this account."
+																: "Recurring plans can be canceled from the billing portal."}
+														</p>
+													)}
+												</div>
+											</div>
+										</div>
 									);
 								})}
-							</ul>
+							</div>
 						</div>
 					) : null}
 				</div>

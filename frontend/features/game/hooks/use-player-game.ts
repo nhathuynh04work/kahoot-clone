@@ -29,39 +29,58 @@ const initialState: PlayerGameState = {
 	totalQuestions: 0,
 };
 
+function mcCorrectIndices(payload: ShowResultEventPayload): number[] {
+	if (payload.correctOptionIndices?.length) {
+		return payload.correctOptionIndices;
+	}
+	if (payload.correctOptionIndex != null) {
+		return [payload.correctOptionIndex];
+	}
+	return [];
+}
+
 function playerWasCorrect(
 	state: PlayerGameState,
 	payload: ShowResultEventPayload
 ): boolean {
 	const qType = payload.questionType ?? "MULTIPLE_CHOICE";
-	if (qType === "MULTIPLE_CHOICE") {
-		const correctId = payload.correctOptionId ?? payload.optionId;
+	if (qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE") {
+		const indices = mcCorrectIndices(payload);
 		return (
-			correctId != null &&
+			indices.length > 0 &&
 			state.selectedOptionId != null &&
-			correctId === state.selectedOptionId
+			indices.includes(state.selectedOptionId)
 		);
 	}
 	if (qType === "SHORT_ANSWER") {
-		const got = (state.submittedTextAnswer ?? "").trim().toLowerCase();
-		const expected = (payload.correctText ?? "").trim().toLowerCase();
-		return got.length > 0 && got === expected;
+		const got = (state.submittedTextAnswer ?? "").trim();
+		const expected = (payload.correctText ?? "").trim();
+		if (!got.length) return false;
+		if (payload.caseSensitive === true) {
+			return got === expected;
+		}
+		return got.toLowerCase() === expected.toLowerCase();
 	}
-	if (qType === "NUMERIC_RANGE") {
+	if (qType === "NUMBER_INPUT") {
 		const n = state.submittedNumericAnswer;
 		if (n == null || !Number.isFinite(n)) return false;
-		if (
-			payload.rangeMin == null ||
-			payload.rangeMax == null ||
-			!Number.isFinite(payload.rangeMin) ||
-			!Number.isFinite(payload.rangeMax)
-		) {
+		if (payload.allowRange === true) {
+			if (
+				payload.correctNumber == null ||
+				!Number.isFinite(payload.correctNumber) ||
+				payload.rangeProximity == null ||
+				!Number.isFinite(payload.rangeProximity)
+			) {
+				return false;
+			}
+			const min = payload.correctNumber - payload.rangeProximity;
+			const max = payload.correctNumber + payload.rangeProximity;
+			return n >= min && n <= max;
+		}
+		if (payload.correctNumber == null || !Number.isFinite(payload.correctNumber)) {
 			return false;
 		}
-		const inc = payload.rangeInclusive !== false;
-		return inc
-			? n >= payload.rangeMin && n <= payload.rangeMax
-			: n > payload.rangeMin && n < payload.rangeMax;
+		return n === payload.correctNumber;
 	}
 	return false;
 }
@@ -72,7 +91,7 @@ type PlayerAction =
 	| {
 			type: "SUBMIT_ANSWER";
 			payload: {
-				optionId?: number;
+				mcSelectedIndex?: number;
 				textAnswer?: string;
 				numericAnswer?: number;
 			};
@@ -109,7 +128,7 @@ const playerReducer = (
 			return {
 				...state,
 				status: "SUBMITTED",
-				selectedOptionId: action.payload.optionId ?? null,
+				selectedOptionId: action.payload.mcSelectedIndex ?? null,
 				submittedTextAnswer: action.payload.textAnswer ?? null,
 				submittedNumericAnswer: action.payload.numericAnswer ?? null,
 			};
@@ -118,8 +137,9 @@ const playerReducer = (
 			const q = state.currentQuestion;
 			const correct = playerWasCorrect(state, action.payload);
 			const pts = q && correct ? q.points : 0;
+			const indices = mcCorrectIndices(action.payload);
 			const correctId =
-				action.payload.correctOptionId ?? action.payload.optionId ?? null;
+				indices.length === 1 ? indices[0] : (action.payload.correctOptionIndex ?? null);
 			return {
 				...state,
 				status: "RESULT",
@@ -184,10 +204,10 @@ export const usePlayerGame = () => {
 		dispatch({ type: "SHOW_LEADERBOARD", payload: payload.leaderboard });
 	});
 
-	const handleSelectOption = (optionId: number) => {
-		dispatch({ type: "SUBMIT_ANSWER", payload: { optionId } });
+	const handleSelectOption = (mcSelectedIndex: number) => {
+		dispatch({ type: "SUBMIT_ANSWER", payload: { mcSelectedIndex } });
 		socket.emit("submitAnswer", {
-			optionId,
+			mcSelectedIndex,
 			questionId: state.currentQuestion?.id,
 			nickname: state.nickname,
 			pin: state.pin,

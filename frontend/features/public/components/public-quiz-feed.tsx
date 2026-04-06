@@ -17,8 +17,10 @@ type PublicQuizPage = {
 
 export function PublicQuizFeed({
 	initial,
+	viewerId,
 }: {
 	initial: PublicQuizPage;
+	viewerId?: number;
 }) {
 	const apiBase = useMemo(
 		() => process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
@@ -69,6 +71,7 @@ export function PublicQuizFeed({
 							key={quiz.id}
 							quiz={quiz}
 							canEdit={false}
+							viewerId={viewerId}
 							onCardClick={() => setSelectedQuizId(quiz.id)}
 						/>
 					))}

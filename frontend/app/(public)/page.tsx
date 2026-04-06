@@ -5,8 +5,9 @@ import { apiServer } from "@/lib/apiServer";
 import { SITE_DESCRIPTION } from "@/lib/site";
 import { Footer } from "@/components/layout/footer";
 import { PublicQuizFeed } from "@/features/public/components/public-quiz-feed";
-import { getCurrentUser } from "@/features/auth/api/server-actions";
-import { redirect } from "next/navigation";
+import { LandingTopBar } from "@/components/layout/landing-top-bar";
+import { VIP_PLANS } from "@/features/subscription/lib/plan-display";
+import { CheckCircle2, FileText, Sparkles, ListChecks, Crown } from "lucide-react";
 
 async function fetchPublicQuizzes() {
 	const api = await apiServer();
@@ -53,16 +54,12 @@ export const metadata: Metadata = {
 };
 
 export default async function LandingPage() {
-	const user = await getCurrentUser();
-	if (user) {
-		redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
-	}
-
 	const initial = await fetchPublicQuizzes();
 
 	return (
-		<div className="min-h-[calc(100vh-58px)] flex flex-col">
-			<section className="px-4 pt-12 pb-16 border-b border-gray-800/80">
+		<div className="min-h-dvh flex flex-col">
+			<LandingTopBar />
+			<section className="px-4 pt-16 md:pt-20 pb-20 md:pb-24 border-b border-gray-800/80">
 				<div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-center">
 					<div className="space-y-6 order-2 lg:order-1">
 						<p className="text-xs font-semibold tracking-widest text-indigo-400 uppercase">
@@ -72,9 +69,11 @@ export default async function LandingPage() {
 							Become the host everyone remembers.
 						</h1>
 						<p className="text-gray-300 text-lg max-w-prose leading-relaxed">
-							Sign up free, build quizzes in minutes, and run live games with a PIN. Your
-							players join from their phones; you control the pace from the host screen.
-							Need bigger decks and extra question types?{" "}
+							Build a quiz in minutes. Host live games with a PIN. Players join from their
+							phones while you run the show.
+						</p>
+						<p className="text-gray-400 text-sm max-w-prose leading-relaxed">
+							Want bigger decks and extra question types?{" "}
 							<Link
 								href="/auth/login?returnTo=/settings/subscription"
 								className="text-indigo-400 hover:underline font-medium"
@@ -91,10 +90,10 @@ export default async function LandingPage() {
 								Start hosting — it&apos;s free
 							</Link>
 							<Link
-								href="/discover"
+								href="/#discover"
 								className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
 							>
-								Browse public quizzes →
+								Browse public quizzes
 							</Link>
 						</div>
 						<p className="text-sm text-gray-500">
@@ -107,7 +106,7 @@ export default async function LandingPage() {
 					</div>
 
 					<div className="order-1 lg:order-2">
-						<div className="relative rounded-2xl border border-gray-800 bg-gray-950/50 p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
+						<div className="relative rounded-2xl border border-gray-800 bg-gray-950/50 p-4 md:p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
 							<Image
 								src="/marketing/hero-placeholder.svg"
 								alt="Product preview: host dashboard and live quiz session (replace with 1200×675 PNG in public/marketing/hero.png)"
@@ -117,10 +116,7 @@ export default async function LandingPage() {
 								priority
 								unoptimized
 							/>
-							<p className="mt-3 text-[11px] text-gray-600 text-center px-2">
-								Placeholder · Capture at ~1440px wide, export 1200×675 (2×: 2400×1350) to{" "}
-								<code className="text-gray-500">public/marketing/hero.png</code>
-							</p>
+							<div className="mt-4" />
 						</div>
 					</div>
 				</div>
@@ -179,25 +175,125 @@ export default async function LandingPage() {
 							Go beyond free limits
 						</h2>
 						<p className="text-gray-400 text-sm mt-2">
-							More questions per quiz, short answer and numeric range types, and higher
-							document storage. Cancel recurring plans anytime from the billing portal.
+							See pricing upfront. Unlock bigger quizzes, advanced question types, and higher
+							document caps.
 						</p>
 					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-						{[
-							{ title: "1 month", desc: "Flexible monthly billing" },
-							{ title: "3 months", desc: "Save with a quarter" },
-							{ title: "1 year", desc: "Best for regular hosts" },
-							{ title: "Lifetime", desc: "Pay once, VIP forever" },
-						].map((card) => (
-							<div
-								key={card.title}
-								className="rounded-2xl border border-gray-800 bg-gray-950/50 p-5 flex flex-col gap-2"
-							>
-								<p className="text-lg font-bold text-white">{card.title}</p>
-								<p className="text-sm text-gray-500 flex-1">{card.desc}</p>
+
+					<div className="rounded-2xl border border-gray-800 bg-gray-950/30 p-5 mb-6">
+						<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+							<div className="min-w-0">
+								<p className="text-sm font-semibold text-white">VIP includes</p>
+								<ul className="mt-3 space-y-3 text-sm text-gray-300">
+									<li className="flex items-start gap-3">
+										<CheckCircle2
+											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+											aria-hidden
+										/>
+										<span>
+											<span className="font-semibold text-white">
+												Up to 200 questions
+											</span>{" "}
+											per quiz
+										</span>
+									</li>
+									<li className="flex items-start gap-3">
+										<ListChecks
+											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+											aria-hidden
+										/>
+										<span>
+											<span className="font-semibold text-white">
+												Advanced question types
+											</span>{" "}
+											(short answer + number input)
+										</span>
+									</li>
+									<li className="flex items-start gap-3">
+										<FileText
+											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+											aria-hidden
+										/>
+										<span>
+											<span className="font-semibold text-white">
+												100 documents
+											</span>{" "}
+											and{" "}
+											<span className="font-semibold text-white">500 MB</span>{" "}
+											total storage
+										</span>
+									</li>
+									<li className="flex items-start gap-3">
+										<Sparkles
+											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
+											aria-hidden
+										/>
+										<span>
+											<span className="font-semibold text-white">
+												VIP AI generation
+											</span>{" "}
+											can include advanced formats
+										</span>
+									</li>
+								</ul>
 							</div>
-						))}
+
+							<div className="hidden lg:flex items-center justify-center shrink-0">
+								<div className="relative w-32 h-32 rounded-2xl border border-gray-800 bg-gray-950/20 flex items-center justify-center">
+									<Crown className="w-16 h-16 text-indigo-300/90" aria-hidden />
+									<div className="absolute inset-0 rounded-2xl shadow-[0_0_0_1px_rgba(99,102,241,0.10)]" />
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+						{VIP_PLANS.map((p) => {
+							const isRecommended = p.badge === "Most popular";
+							const cardClass = isRecommended
+								? "rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.10)]"
+								: "rounded-2xl border border-gray-800 bg-gray-950/50 p-5";
+							return (
+								<div key={p.key} className={`${cardClass} h-full`}>
+									<div className="flex flex-col h-full">
+										<div className="flex items-start justify-between gap-3 min-h-[48px]">
+											<div className="min-w-0">
+											<p className="text-sm font-semibold text-white">{p.name}</p>
+											<p className="text-xs text-gray-500 mt-1 leading-snug">
+												{p.description}
+											</p>
+											</div>
+											{p.badge ? (
+												<span
+													className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+														isRecommended
+															? "bg-amber-500/15 text-amber-200 border-amber-500/25"
+															: "bg-gray-800/60 text-gray-300 border-gray-700"
+													}`}
+												>
+													{p.badge}
+												</span>
+											) : null}
+										</div>
+
+										<p className="mt-4 text-3xl font-black tracking-tight text-white tabular-nums">
+											{p.priceLabel}
+											<span className="text-sm font-semibold text-gray-400 ml-2">
+												{p.priceSubLabel}
+											</span>
+										</p>
+										{p.monthlyEquivalent ? (
+											<p className="text-xs text-gray-500 mt-1">{p.monthlyEquivalent}</p>
+										) : null}
+										<p className="text-[11px] text-gray-500 mt-auto pt-5 min-h-[28px]">
+											{p.key === "lifetime"
+												? "One-time purchase. VIP stays on this account."
+												: "Recurring plans can be canceled anytime."}
+										</p>
+									</div>
+								</div>
+							);
+						})}
 					</div>
 					<div className="flex flex-wrap justify-center gap-3 mt-10">
 						<Link
@@ -216,7 +312,7 @@ export default async function LandingPage() {
 				</div>
 			</section>
 
-			<section className="px-4 pb-16">
+			<section className="px-4 pb-16" id="discover">
 				<div className="max-w-6xl mx-auto">
 					<div className="flex items-end justify-between gap-4">
 						<div>
@@ -225,12 +321,6 @@ export default async function LandingPage() {
 								Try what the community is playing — no account required to preview.
 							</p>
 						</div>
-						<Link
-							href="/discover"
-							className="text-sm text-gray-300 hover:text-white transition-colors shrink-0"
-						>
-							Explore all
-						</Link>
 					</div>
 
 					<div className="mt-6">
