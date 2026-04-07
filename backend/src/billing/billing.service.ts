@@ -8,14 +8,10 @@ import {
 import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 import { PrismaService } from "../prisma/prisma.service.js";
-import type { PriceKey } from "./dto/checkout-session.dto.js";
+import { SubscriptionStatus } from "../generated/prisma/client.js";
 
-const PRICE_ENV_KEYS: Record<PriceKey, string> = {
-    monthly: "STRIPE_PRICE_MONTHLY",
-    quarterly: "STRIPE_PRICE_QUARTERLY",
-    yearly: "STRIPE_PRICE_YEARLY",
-    lifetime: "STRIPE_PRICE_LIFETIME",
-};
+const STRIPE_PRICE_ENV_PRIMARY = "STRIPE_PRICE_VIP";
+const STRIPE_PRICE_ENV_FALLBACK = "STRIPE_PRICE_QUARTERLY";
 
 @Injectable()
 export class BillingService {
@@ -37,41 +33,70 @@ export class BillingService {
         return this.stripe;
     }
 
-    getPriceId(key: PriceKey): string {
-        const envKey = PRICE_ENV_KEYS[key];
-        const id = this.config.get<string>(envKey);
-        if (!id?.trim()) {
-            throw new BadRequestException(
-                `Missing env ${envKey}. Add your Stripe Price ID for the ${key} plan.`,
-            );
-        }
-        return id.trim();
+    getVipPriceId(): string {
+        const primary = this.config.get<string>(STRIPE_PRICE_ENV_PRIMARY)?.trim();
+        if (primary) return primary;
+        const fallback = this.config.get<string>(STRIPE_PRICE_ENV_FALLBACK)?.trim();
+        if (fallback) return fallback;
+        throw new BadRequestException(
+            `Missing env ${STRIPE_PRICE_ENV_PRIMARY}. Add your Stripe Price ID for the VIP plan.`,
+        );
     }
 
-    resolvePlanKeyFromPriceId(priceId: string | null | undefined): string | null {
-        if (!priceId) return null;
-        for (const [key, envKey] of Object.entries(PRICE_ENV_KEYS) as [PriceKey, string][]) {
-            const v = this.config.get<string>(envKey);
-            if (v?.trim() === priceId) return key;
-        }
-        return null;
+    private mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
+        return status as unknown as SubscriptionStatus;
     }
 
-    async createCheckoutSession(userId: number, email: string, priceKey: PriceKey) {
+    async syncSubscriptionFromStripeForUser(userId: number): Promise<void> {
+        if (!this.stripe) return;
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                stripeCustomerId: true,
+                subscription: { select: { stripeSubscriptionId: true } } as any,
+            } as any,
+        });
+        if (!user?.stripeCustomerId) return;
+
+        const stripe = this.requireStripe();
+
+        try {
+            let sub: Stripe.Subscription | null = null;
+            const existingSubId = (user as any).subscription?.stripeSubscriptionId as string | undefined;
+
+            if (existingSubId) {
+                sub = await stripe.subscriptions.retrieve(existingSubId);
+            } else {
+                // Pick the most recently created subscription (any status).
+                const list = await stripe.subscriptions.list({
+                    customer: String(user.stripeCustomerId),
+                    status: "all",
+                    limit: 1,
+                });
+                sub = list.data?.[0] ?? null;
+            }
+
+            if (!sub) return;
+            await this.upsertSubscriptionRow(userId, sub);
+        } catch (e) {
+            this.logger.warn(`Stripe sync failed for user ${userId}: ${String(e)}`);
+        }
+    }
+
+    async createCheckoutSession(userId: number, email: string) {
         const stripe = this.requireStripe();
         const frontendUrl = this.config.get<string>("FRONTEND_URL")?.replace(/\/$/, "") || "";
         if (!frontendUrl) {
             throw new InternalServerErrorException("FRONTEND_URL is not set");
         }
 
-        const priceId = this.getPriceId(priceKey);
+        const priceId = this.getVipPriceId();
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException("User not found");
 
-        const mode = priceKey === "lifetime" ? "payment" : "subscription";
-
         const sessionParams: Stripe.Checkout.SessionCreateParams = {
-            mode,
+            mode: "subscription",
             line_items: [{ price: priceId, quantity: 1 }],
             success_url: `${frontendUrl}/settings/subscription?checkout=success`,
             cancel_url: `${frontendUrl}/settings/subscription?checkout=canceled`,
@@ -85,11 +110,9 @@ export class BillingService {
             sessionParams.customer_email = email;
         }
 
-        if (mode === "subscription") {
-            sessionParams.subscription_data = {
-                metadata: { userId: String(userId) },
-            };
-        }
+        sessionParams.subscription_data = {
+            metadata: { userId: String(userId) },
+        };
 
         const session = await stripe.checkout.sessions.create(sessionParams);
         if (!session.url) {
@@ -118,6 +141,8 @@ export class BillingService {
     }
 
     async getBillingStatus(userId: number) {
+        await this.syncSubscriptionFromStripeForUser(userId);
+
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
             include: { subscription: true },
@@ -128,22 +153,58 @@ export class BillingService {
         const sub = user.subscription;
         const recurringActive =
             sub &&
-            (sub.status === "active" || sub.status === "trialing") &&
+            (sub.status === SubscriptionStatus.active || sub.status === SubscriptionStatus.trialing) &&
+            (!sub.endedAt || sub.endedAt > now) &&
             sub.currentPeriodEnd > now;
 
         return {
             stripeCustomerId: user.stripeCustomerId,
-            lifetimeVip: user.lifetimeVip,
+            lifetimeVip: false,
             subscription: sub
                 ? {
                       status: sub.status,
-                      stripePriceId: sub.stripePriceId,
-                      planKey: this.resolvePlanKeyFromPriceId(sub.stripePriceId),
                       currentPeriodEnd: sub.currentPeriodEnd.toISOString(),
                       cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
                       isActive: !!recurringActive,
                   }
                 : null,
+        };
+    }
+
+    async getBillingHistory(userId: number) {
+        await this.syncSubscriptionFromStripeForUser(userId);
+
+        const invoices = await this.prisma.stripeInvoice.findMany({
+            where: { userId },
+            orderBy: { occurredAt: "desc" },
+            take: 50,
+            select: {
+                stripeInvoiceId: true,
+                status: true,
+                totalCents: true,
+                amountPaidCents: true,
+                currency: true,
+                hostedInvoiceUrl: true,
+                invoicePdfUrl: true,
+                paidAt: true,
+                occurredAt: true,
+            } as any,
+        });
+
+        return {
+            invoices: (invoices as any[]).map((i) => ({
+                stripeInvoiceId: i.stripeInvoiceId,
+                status: i.status ?? null,
+                totalCents: i.totalCents ?? null,
+                amountPaidCents: i.amountPaidCents ?? null,
+                currency: i.currency,
+                hostedInvoiceUrl: i.hostedInvoiceUrl ?? null,
+                invoicePdfUrl: i.invoicePdfUrl ?? null,
+                paidAt: i.paidAt ? i.paidAt.toISOString() : null,
+                occurredAt: i.occurredAt ? i.occurredAt.toISOString() : null,
+            })),
+            // Kept for backwards-compat with older clients; ledger has been removed.
+            ledger: [],
         };
     }
 
@@ -166,38 +227,25 @@ export class BillingService {
         }
 
         try {
-            await this.prisma.stripeProcessedEvent.create({
-                data: { eventId: event.id },
-            });
-        } catch (e: unknown) {
-            const code = (e as { code?: string })?.code;
-            if (code === "P2002") {
-                this.logger.debug(`Skip duplicate webhook event ${event.id}`);
-                return { received: true };
-            }
-            throw e;
-        }
-
-        try {
             switch (event.type) {
                 case "checkout.session.completed":
                     await this.onCheckoutSessionCompleted(
-                        event.data.object as Stripe.Checkout.Session,
+                        event.data.object,
                     );
                     break;
                 case "customer.subscription.updated":
                 case "customer.subscription.created":
-                    await this.onSubscriptionUpdated(event.data.object as Stripe.Subscription);
+                    await this.onSubscriptionUpdated(event.data.object);
                     break;
                 case "customer.subscription.deleted":
-                    await this.onSubscriptionDeleted(event.data.object as Stripe.Subscription);
+                    await this.onSubscriptionDeleted(event.data.object);
                     break;
                 case "invoice.paid":
-                    await this.onInvoicePaid(event.data.object as Stripe.Invoice);
+                    await this.onInvoicePaid(event, event.data.object);
                     break;
                 case "invoice.payment_failed":
                     this.logger.warn(
-                        `Invoice payment failed: ${(event.data.object as Stripe.Invoice).id}`,
+                        `Invoice payment failed: ${(event.data.object).id}`,
                     );
                     break;
                 default:
@@ -242,14 +290,6 @@ export class BillingService {
             });
         }
 
-        if (session.mode === "payment" && session.payment_status === "paid") {
-            await this.prisma.user.update({
-                where: { id: userId },
-                data: { lifetimeVip: true },
-            });
-            return;
-        }
-
         if (session.mode === "subscription" && session.subscription) {
             const subId =
                 typeof session.subscription === "string"
@@ -270,15 +310,32 @@ export class BillingService {
     }
 
     private async onSubscriptionDeleted(sub: Stripe.Subscription) {
-        await this.prisma.subscription.deleteMany({
+        if (!Number.isFinite(sub.current_period_end)) {
+            this.logger.warn(
+                `subscription.deleted ${sub.id} missing current_period_end; skipping DB update`,
+            );
+            return;
+        }
+        await this.prisma.subscription.updateMany({
             where: { stripeSubscriptionId: sub.id },
+            data: {
+                status: this.mapStripeSubscriptionStatus(sub.status),
+                cancelAtPeriodEnd: sub.cancel_at_period_end,
+                currentPeriodStart: sub.current_period_start
+                    ? new Date(sub.current_period_start * 1000)
+                    : undefined,
+                currentPeriodEnd: new Date(sub.current_period_end * 1000),
+                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
+                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
+                endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : new Date(),
+                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
+            },
         });
     }
 
     private async upsertSubscriptionRow(userId: number, sub: Stripe.Subscription) {
-        const priceId = sub.items.data[0]?.price?.id;
-        if (!priceId) {
-            this.logger.warn(`Subscription ${sub.id} has no price on first item`);
+        if (!Number.isFinite(sub.current_period_end)) {
+            this.logger.warn(`Subscription ${sub.id} missing current_period_end; skip upsert`);
             return;
         }
 
@@ -287,22 +344,34 @@ export class BillingService {
             create: {
                 userId,
                 stripeSubscriptionId: sub.id,
-                stripePriceId: priceId,
-                status: sub.status,
+                status: this.mapStripeSubscriptionStatus(sub.status),
+                currentPeriodStart: sub.current_period_start
+                    ? new Date(sub.current_period_start * 1000)
+                    : null,
                 currentPeriodEnd: new Date(sub.current_period_end * 1000),
                 cancelAtPeriodEnd: sub.cancel_at_period_end,
+                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
+                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
+                endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : null,
+                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
             },
             update: {
                 stripeSubscriptionId: sub.id,
-                stripePriceId: priceId,
-                status: sub.status,
+                status: this.mapStripeSubscriptionStatus(sub.status),
+                currentPeriodStart: sub.current_period_start
+                    ? new Date(sub.current_period_start * 1000)
+                    : null,
                 currentPeriodEnd: new Date(sub.current_period_end * 1000),
                 cancelAtPeriodEnd: sub.cancel_at_period_end,
+                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
+                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
+                endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : null,
+                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
             },
         });
     }
 
-    private async onInvoicePaid(invoice: Stripe.Invoice) {
+    private async onInvoicePaid(event: Stripe.Event, invoice: Stripe.Invoice) {
         if (!invoice.id || invoice.amount_paid == null) return;
 
         const customerId =
@@ -319,19 +388,49 @@ export class BillingService {
             ? new Date(invoice.status_transitions.paid_at * 1000)
             : new Date();
 
-        await this.prisma.revenueLedgerEntry.upsert({
+        const stripeSubscriptionId =
+            typeof invoice.subscription === "string"
+                ? invoice.subscription
+                : invoice.subscription?.id;
+
+        const subscription =
+            userId != null
+                ? await this.prisma.subscription.findUnique({
+                      where: { userId },
+                      select: { id: true, stripeSubscriptionId: true },
+                  })
+                : null;
+
+        const stripeChargeId =
+            typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id;
+
+        await this.prisma.stripeInvoice.upsert({
             where: { stripeInvoiceId: invoice.id },
             create: {
                 stripeInvoiceId: invoice.id,
-                amountCents: invoice.amount_paid,
-                currency: invoice.currency || "usd",
                 userId,
+                subscriptionId: subscription?.id ?? null,
+                stripeSubscriptionId: stripeSubscriptionId ?? null,
+                status: invoice.status ?? null,
+                totalCents: invoice.total ?? null,
+                amountPaidCents: invoice.amount_paid ?? null,
+                currency: invoice.currency || "usd",
+                hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+                invoicePdfUrl: invoice.invoice_pdf ?? null,
+                paidAt,
                 occurredAt: paidAt,
             },
             update: {
-                amountCents: invoice.amount_paid,
-                currency: invoice.currency || "usd",
                 userId,
+                subscriptionId: subscription?.id ?? null,
+                stripeSubscriptionId: stripeSubscriptionId ?? null,
+                status: invoice.status ?? null,
+                totalCents: invoice.total ?? null,
+                amountPaidCents: invoice.amount_paid ?? null,
+                currency: invoice.currency || "usd",
+                hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+                invoicePdfUrl: invoice.invoice_pdf ?? null,
+                paidAt,
                 occurredAt: paidAt,
             },
         });

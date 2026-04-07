@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { Prisma, UserRole } from "../generated/prisma/client.js";
+import { BillingService } from "../billing/billing.service.js";
 
 type DashboardTotals = {
     users: number;
@@ -119,7 +120,6 @@ export type AdminRevenueSubscriptionItem = {
     id: number;
     userEmail: string;
     status: string;
-    stripePriceId: string;
     currentPeriodEnd: string;
     cancelAtPeriodEnd: boolean;
     createdAt: string;
@@ -139,7 +139,10 @@ export type AdminRevenuePageResponse = {
 
 @Injectable()
 export class AdminService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly billing: BillingService,
+    ) {}
 
     private formatDay(value: unknown): string {
         if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -200,8 +203,6 @@ export class AdminService {
             revenueSumRow,
             activeSubscriptions,
             activeSubUsersCount,
-            lifetimeVipCount,
-            planBreakdownRows,
         ] = await Promise.all([
             this.prisma.$queryRaw<{ quizId: number; title: string; sessions: bigint }[]>`
                 SELECT
@@ -240,16 +241,18 @@ export class AdminService {
             `,
             this.prisma.$queryRaw<{ day: Date; amountCents: bigint }[]>`
                 SELECT
-                    date_trunc('day', "occurredAt") AS day,
-                    SUM("amountCents")::bigint AS "amountCents"
-                FROM "RevenueLedgerEntry"
+                    date_trunc('day', COALESCE("occurredAt", "paidAt", "createdAt")) AS day,
+                    SUM(COALESCE("amountPaidCents", 0))::bigint AS "amountCents"
+                FROM "StripeInvoice"
                 WHERE
-                    "occurredAt" >= NOW() - (${rangeDays} * INTERVAL '1 day')
+                    COALESCE("occurredAt", "paidAt") >= NOW() - (${rangeDays} * INTERVAL '1 day')
+                    AND "amountPaidCents" IS NOT NULL
                 GROUP BY day
                 ORDER BY day ASC
             `,
-            this.prisma.revenueLedgerEntry.aggregate({
-                _sum: { amountCents: true },
+            this.prisma.stripeInvoice.aggregate({
+                where: { amountPaidCents: { not: null } } as any,
+                _sum: { amountPaidCents: true },
             }),
             this.prisma.subscription.count({
                 where: {
@@ -273,11 +276,6 @@ export class AdminService {
                     distinct: ["userId"] as any,
                 });
                 return rows.length;
-            }),
-            this.prisma.user.count({ where: { lifetimeVip: true } }),
-            this.prisma.subscription.groupBy({
-                by: ["stripePriceId"],
-                _count: { _all: true },
             }),
         ]);
 
@@ -310,21 +308,14 @@ export class AdminService {
                 saves: Number(r.saves),
             })),
             vipBreakdown: (() => {
-                const lifetime = lifetimeVipCount;
                 const activeRecurring = activeSubUsersCount;
-                const free = Math.max(0, usersTotal - lifetime - activeRecurring);
+                const free = Math.max(0, usersTotal - activeRecurring);
                 return [
-                    { label: "Lifetime VIP", count: lifetime },
                     { label: "Active subscription", count: activeRecurring },
                     { label: "Free", count: free },
                 ];
             })(),
-            planBreakdown: planBreakdownRows
-                .map((r) => ({
-                    label: r.stripePriceId,
-                    count: r._count._all,
-                }))
-                .sort((a, b) => b.count - a.count),
+            planBreakdown: [{ label: "VIP", count: activeSubscriptions }],
             revenueByDay: revenueDayRows.map((r) => ({
                 date: this.formatDay(r.day),
                 amountCents: Number(r.amountCents),
@@ -336,7 +327,7 @@ export class AdminService {
                 users: usersTotal,
                 quizzes: quizzesTotal,
                 documents: documentsTotal,
-                revenueCentsAllTime: revenueSumRow._sum.amountCents ?? 0,
+                revenueCentsAllTime: revenueSumRow._sum.amountPaidCents ?? 0,
                 activeSubscriptions,
             },
             charts,
@@ -405,6 +396,9 @@ export class AdminService {
     }
 
     async getUserDetail(userId: number) {
+        // Keep admin view consistent with Stripe even if webhooks were missed.
+        await this.billing.syncSubscriptionFromStripeForUser(userId);
+
         const user = (await this.prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -414,12 +408,10 @@ export class AdminService {
                 role: true,
                 isBlocked: true,
                 createdAt: true,
-                lifetimeVip: true,
                 stripeCustomerId: true,
                 subscription: {
                     select: {
                         status: true,
-                        stripePriceId: true,
                         currentPeriodEnd: true,
                         cancelAtPeriodEnd: true,
                         updatedAt: true,
@@ -593,7 +585,7 @@ export class AdminService {
                 saves: quiz._count?.saves ?? 0,
                 sessions: quiz._count?.lobby ?? 0,
             },
-            recentSessions: (recentSessions as any[]).map((s) => ({
+            recentSessions: (recentSessions).map((s) => ({
                 id: s.id,
                 pin: s.pin,
                 status: s.status,
@@ -871,7 +863,7 @@ export class AdminService {
         const { page, pageSize } = options;
         const q = options.q?.trim();
 
-        const where: Prisma.RevenueLedgerEntryWhereInput = q
+        const where: Prisma.StripeInvoiceWhereInput = q
             ? {
                   OR: [
                       { stripeInvoiceId: { contains: q, mode: "insensitive" } },
@@ -880,20 +872,20 @@ export class AdminService {
               }
             : {};
 
-        const totalItems = await this.prisma.revenueLedgerEntry.count({ where });
+        const totalItems = await this.prisma.stripeInvoice.count({ where });
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-        const ledger = await this.prisma.revenueLedgerEntry.findMany({
+        const ledger = await this.prisma.stripeInvoice.findMany({
             where,
             select: {
                 id: true,
                 stripeInvoiceId: true,
-                amountCents: true,
+                amountPaidCents: true,
                 currency: true,
                 occurredAt: true,
                 user: { select: { email: true } },
             } as any,
-            orderBy: { occurredAt: "desc" },
+            orderBy: [{ occurredAt: "desc" }, { paidAt: "desc" }, { createdAt: "desc" }] as any,
             skip: (page - 1) * pageSize,
             take: pageSize,
         });
@@ -902,7 +894,6 @@ export class AdminService {
             select: {
                 id: true,
                 status: true,
-                stripePriceId: true,
                 currentPeriodEnd: true,
                 cancelAtPeriodEnd: true,
                 createdAt: true,
@@ -917,10 +908,10 @@ export class AdminService {
             ledger: {
                 items: (ledger as any[]).map((e) => ({
                     id: e.id,
-                    stripeInvoiceId: e.stripeInvoiceId,
-                    amountCents: e.amountCents,
+                    stripeInvoiceId: e.stripeInvoiceId ?? "—",
+                    amountCents: e.amountPaidCents ?? 0,
                     currency: e.currency,
-                    occurredAt: e.occurredAt.toISOString(),
+                    occurredAt: (e.occurredAt ?? e.paidAt ?? e.createdAt).toISOString(),
                     userEmail: e.user?.email ?? null,
                 })),
                 page,
@@ -932,7 +923,6 @@ export class AdminService {
                 id: s.id,
                 userEmail: s.user?.email ?? "—",
                 status: s.status,
-                stripePriceId: s.stripePriceId,
                 currentPeriodEnd: s.currentPeriodEnd.toISOString(),
                 cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
                 createdAt: s.createdAt.toISOString(),

@@ -44,6 +44,8 @@ export const HostResultScreen = ({
 		meta?.questionType ?? question.type ?? "MULTIPLE_CHOICE";
 
 	const mcLike = qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
+	const hideSubmittedAnswerStats =
+		qType === "SHORT_ANSWER" || qType === "NUMBER_INPUT";
 
 	if (mcLike) {
 		const correctSet = new Set<number>(
@@ -199,31 +201,33 @@ export const HostResultScreen = ({
 					) : null}
 				</div>
 
-				<div className="max-w-2xl mx-auto w-full space-y-2">
-				{rows.length === 0 ? (
-					<p className="text-gray-500 text-sm">No answers recorded.</p>
-				) : (
-					rows.map((r) => (
-						<div
-							key={r.key}
-							className="flex items-center gap-3 rounded-lg bg-gray-800/80 border border-gray-700 p-3">
-							<div
-								className="h-2 rounded-full bg-indigo-500 transition-all"
-								style={{
-									width: `${Math.max(8, (r.count / maxCount) * 100)}%`,
-									minWidth: "2rem",
-								}}
-							/>
-							<span className="flex-1 text-sm text-white truncate font-mono">
-								{r.key}
-							</span>
-							<span className="text-sm font-semibold text-indigo-300 tabular-nums">
-								{r.count}
-							</span>
-						</div>
-					))
+				{hideSubmittedAnswerStats ? null : (
+					<div className="max-w-2xl mx-auto w-full space-y-2">
+						{rows.length === 0 ? (
+							<p className="text-gray-500 text-sm">No answers recorded.</p>
+						) : (
+							rows.map((r) => (
+								<div
+									key={r.key}
+									className="flex items-center gap-3 rounded-lg bg-gray-800/80 border border-gray-700 p-3">
+									<div
+										className="h-2 rounded-full bg-indigo-500 transition-all"
+										style={{
+											width: `${Math.max(8, (r.count / maxCount) * 100)}%`,
+											minWidth: "2rem",
+										}}
+									/>
+									<span className="flex-1 text-sm text-white truncate font-mono">
+										{r.key}
+									</span>
+									<span className="text-sm font-semibold text-indigo-300 tabular-nums">
+										{r.count}
+									</span>
+								</div>
+							))
+						)}
+					</div>
 				)}
-				</div>
 			</div>
 		</div>
 	);

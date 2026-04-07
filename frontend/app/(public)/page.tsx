@@ -6,7 +6,6 @@ import { SITE_DESCRIPTION } from "@/lib/site";
 import { Footer } from "@/components/layout/footer";
 import { PublicQuizFeed } from "@/features/public/components/public-quiz-feed";
 import { LandingTopBar } from "@/components/layout/landing-top-bar";
-import { VIP_PLANS } from "@/features/subscription/lib/plan-display";
 import { CheckCircle2, FileText, Sparkles, ListChecks, Crown } from "lucide-react";
 
 async function fetchPublicQuizzes() {
@@ -180,134 +179,122 @@ export default async function LandingPage() {
 						</p>
 					</div>
 
-					<div className="rounded-2xl border border-gray-800 bg-gray-950/30 p-5 mb-6">
-						<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-							<div className="min-w-0">
-								<p className="text-sm font-semibold text-white">VIP includes</p>
-								<ul className="mt-3 space-y-3 text-sm text-gray-300">
-									<li className="flex items-start gap-3">
-										<CheckCircle2
-											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
-											aria-hidden
-										/>
-										<span>
-											<span className="font-semibold text-white">
-												Up to 200 questions
-											</span>{" "}
-											per quiz
-										</span>
-									</li>
-									<li className="flex items-start gap-3">
-										<ListChecks
-											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
-											aria-hidden
-										/>
-										<span>
-											<span className="font-semibold text-white">
-												Advanced question types
-											</span>{" "}
-											(short answer + number input)
-										</span>
-									</li>
-									<li className="flex items-start gap-3">
-										<FileText
-											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
-											aria-hidden
-										/>
-										<span>
-											<span className="font-semibold text-white">
-												100 documents
-											</span>{" "}
-											and{" "}
-											<span className="font-semibold text-white">500 MB</span>{" "}
-											total storage
-										</span>
-									</li>
-									<li className="flex items-start gap-3">
-										<Sparkles
-											className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0"
-											aria-hidden
-										/>
-										<span>
-											<span className="font-semibold text-white">
-												VIP AI generation
-											</span>{" "}
-											can include advanced formats
-										</span>
-									</li>
-								</ul>
-							</div>
-
-							<div className="hidden lg:flex items-center justify-center shrink-0">
-								<div className="relative w-32 h-32 rounded-2xl border border-gray-800 bg-gray-950/20 flex items-center justify-center">
-									<Crown className="w-16 h-16 text-indigo-300/90" aria-hidden />
-									<div className="absolute inset-0 rounded-2xl shadow-[0_0_0_1px_rgba(99,102,241,0.10)]" />
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+						<div className="rounded-2xl border border-gray-800 bg-gray-950/30 p-6">
+							<div className="flex items-start justify-between gap-4">
+								<div className="min-w-0">
+									<p className="text-sm font-semibold text-white">Free</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Perfect for casual games and smaller quizzes.
+									</p>
 								</div>
+								<span className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-300">
+									Always available
+								</span>
 							</div>
+
+							<ul className="mt-5 space-y-3 text-sm text-gray-300">
+								<li className="flex items-start gap-3">
+									<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">Up to 20 questions</span> per quiz
+									</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">Basic question types</span>{" "}
+										(multiple choice + true/false)
+									</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">10 documents</span> and{" "}
+										<span className="font-semibold text-white">50 MB</span> total storage
+									</span>
+								</li>
+							</ul>
 						</div>
-					</div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-						{VIP_PLANS.map((p) => {
-							const isRecommended = p.badge === "Most popular";
-							const cardClass = isRecommended
-								? "rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.10)]"
-								: "rounded-2xl border border-gray-800 bg-gray-950/50 p-5";
-							return (
-								<div key={p.key} className={`${cardClass} h-full`}>
-									<div className="flex flex-col h-full">
-										<div className="flex items-start justify-between gap-3 min-h-[48px]">
-											<div className="min-w-0">
-											<p className="text-sm font-semibold text-white">{p.name}</p>
-											<p className="text-xs text-gray-500 mt-1 leading-snug">
-												{p.description}
-											</p>
-											</div>
-											{p.badge ? (
-												<span
-													className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-														isRecommended
-															? "bg-amber-500/15 text-amber-200 border-amber-500/25"
-															: "bg-gray-800/60 text-gray-300 border-gray-700"
-													}`}
-												>
-													{p.badge}
-												</span>
-											) : null}
-										</div>
-
-										<p className="mt-4 text-3xl font-black tracking-tight text-white tabular-nums">
-											{p.priceLabel}
-											<span className="text-sm font-semibold text-gray-400 ml-2">
-												{p.priceSubLabel}
-											</span>
-										</p>
-										{p.monthlyEquivalent ? (
-											<p className="text-xs text-gray-500 mt-1">{p.monthlyEquivalent}</p>
-										) : null}
-										<p className="text-[11px] text-gray-500 mt-auto pt-5 min-h-[28px]">
-											{p.key === "lifetime"
-												? "One-time purchase. VIP stays on this account."
-												: "Recurring plans can be canceled anytime."}
-										</p>
+						<div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-6 shadow-[0_0_0_1px_rgba(245,158,11,0.10)]">
+							<div className="flex items-start justify-between gap-4">
+								<div className="min-w-0">
+									<p className="text-sm font-semibold text-white inline-flex items-center gap-2">
+										VIP
+										<span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+											Subscription
+										</span>
+									</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Bigger limits for serious hosting and larger content.
+									</p>
+								</div>
+								<div className="hidden sm:flex items-center justify-center shrink-0">
+									<div className="relative w-12 h-12 rounded-xl border border-gray-800 bg-gray-950/20 flex items-center justify-center">
+										<Crown className="w-6 h-6 text-indigo-300/90" aria-hidden />
 									</div>
 								</div>
-							);
-						})}
-					</div>
-					<div className="flex flex-wrap justify-center gap-3 mt-10">
-						<Link
-							href="/auth/register?returnTo=/settings/subscription"
-							className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold transition-colors"
-						>
-							Sign up to subscribe
-						</Link>
-						<Link
-							href="/auth/login?returnTo=/settings/subscription"
-							className="px-6 py-3 rounded-xl border border-gray-600 bg-gray-900/30 hover:bg-gray-800/60 font-semibold transition-colors"
-						>
-							Log in for VIP
-						</Link>
+							</div>
+
+							<div className="mt-5">
+								<p className="text-3xl font-black tracking-tight text-white tabular-nums">
+									$10
+									<span className="text-sm font-semibold text-gray-400 ml-2">
+										every 3 months
+									</span>
+								</p>
+								<p className="text-xs text-gray-500 mt-1">$3.33/mo</p>
+							</div>
+
+							<ul className="mt-5 space-y-3 text-sm text-gray-300">
+								<li className="flex items-start gap-3">
+									<CheckCircle2 className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">Up to 200 questions</span> per quiz
+									</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<ListChecks className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">Advanced question types</span>{" "}
+										(short answer + number input)
+									</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<FileText className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">100 documents</span> and{" "}
+										<span className="font-semibold text-white">500 MB</span> total storage
+									</span>
+								</li>
+								<li className="flex items-start gap-3">
+									<Sparkles className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+									<span>
+										<span className="font-semibold text-white">VIP AI generation</span> can include advanced formats
+									</span>
+								</li>
+							</ul>
+
+							<div className="mt-6 flex flex-wrap gap-3">
+								<Link
+									href="/auth/register?returnTo=/settings/subscription"
+									className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold transition-colors"
+								>
+									Sign up to subscribe
+								</Link>
+								<Link
+									href="/auth/login?returnTo=/settings/subscription"
+									className="px-6 py-3 rounded-xl border border-gray-600 bg-gray-900/30 hover:bg-gray-800/60 font-semibold transition-colors"
+								>
+									Log in for VIP
+								</Link>
+							</div>
+
+							<p className="text-[11px] text-gray-500 mt-4">
+								Recurring subscription can be canceled anytime.
+							</p>
+						</div>
 					</div>
 				</div>
 			</section>

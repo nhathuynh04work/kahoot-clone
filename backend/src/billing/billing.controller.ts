@@ -22,8 +22,8 @@ export class BillingController {
 
     @UseGuards(JwtHttpGuard)
     @Post("checkout-session")
-    async checkoutSession(@User() user: JwtUser, @Body() body: CheckoutSessionDto) {
-        return this.billing.createCheckoutSession(user.id, user.email, body.priceKey);
+    async checkoutSession(@User() user: JwtUser, @Body() _body: CheckoutSessionDto) {
+        return this.billing.createCheckoutSession(user.id, user.email);
     }
 
     @UseGuards(JwtHttpGuard)
@@ -36,6 +36,12 @@ export class BillingController {
     @Get("status")
     async status(@User() user: JwtUser) {
         return this.billing.getBillingStatus(user.id);
+    }
+
+    @UseGuards(JwtHttpGuard)
+    @Get("history")
+    async history(@User() user: JwtUser) {
+        return this.billing.getBillingHistory(user.id);
     }
 
     @Post("webhook")
