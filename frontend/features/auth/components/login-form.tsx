@@ -37,7 +37,7 @@ export function LoginForm() {
 		try {
 			await apiClient.post("/auth/login", values);
 			const returnTo = getValidatedReturnTo(searchParams.get("returnTo"));
-			router.replace(returnTo ?? "/");
+			router.replace(returnTo ?? "/library/quizzes");
 		} catch (error: any) {
 			setApiError(error?.message);
 		}

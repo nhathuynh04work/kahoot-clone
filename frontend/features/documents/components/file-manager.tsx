@@ -28,7 +28,15 @@ function normalizePage(value: string | null) {
 	return Math.max(1, Math.floor(n));
 }
 
-export function FileManager({ viewerId }: { viewerId?: number }) {
+export function FileManager({
+	viewerId,
+	maxTotalStorageBytes = MAX_TOTAL_STORAGE_BYTES,
+	maxDocuments,
+}: {
+	viewerId?: number;
+	maxTotalStorageBytes?: number;
+	maxDocuments?: number;
+}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -90,7 +98,8 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 			(d.fileName ?? "").toLowerCase().includes(needle),
 		);
 	}, [favoriteDocuments, q]);
-	const usagePercent = (totalSize / MAX_TOTAL_STORAGE_BYTES) * 100;
+	const usagePercent = (totalSize / maxTotalStorageBytes) * 100;
+	const docTotalCount = docsPage?.totalItems ?? 0;
 
 	const favoritesPage = useMemo(() => {
 		const totalItems = filteredFavorites.length;
@@ -138,19 +147,14 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 				</div>
 			</div>
 
-			<div className="flex items-center justify-between gap-3">
-				<p className="text-xs text-gray-400">
-					Page {pageInfo.page} / {pageInfo.totalPages}
-				</p>
-			</div>
-
 			{/* Storage usage bar */}
 			{tab === "my" && (
 				<div className="p-3 rounded-lg bg-gray-800 border border-gray-700">
 					<div className="flex justify-between text-xs mb-1">
 						<span className="text-gray-400">Storage</span>
 						<span className="text-white font-medium">
-							{formatBytes(totalSize)} / {formatBytes(MAX_TOTAL_STORAGE_BYTES)}
+							{formatBytes(totalSize)} /{" "}
+							{formatBytes(maxTotalStorageBytes)}
 						</span>
 					</div>
 					<div className="h-2 bg-gray-700 rounded-full overflow-hidden">
@@ -163,7 +167,13 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 			)}
 
 			{/* Upload zone (My docs only) */}
-			{tab === "my" && <PdfUploadZone />}
+			{tab === "my" && (
+				<PdfUploadZone
+					maxTotalStorageBytes={maxTotalStorageBytes}
+					documentCount={docTotalCount}
+					maxDocuments={maxDocuments}
+				/>
+			)}
 
 			{/* Document list */}
 			{tab === "my" && isLoading ? (
@@ -216,37 +226,44 @@ export function FileManager({ viewerId }: { viewerId?: number }) {
 				</div>
 			)}
 
-			<div className="flex items-center justify-between pt-2">
-				<button
-					type="button"
-					disabled={pageInfo.page <= 1}
-					className={[
-						"px-3 py-2 rounded-lg text-sm border transition-colors",
-						pageInfo.page <= 1
-							? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-							: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-					].join(" ")}
-					onClick={() => setParams({ page: String(Math.max(1, pageInfo.page - 1)) })}
-				>
-					Previous
-				</button>
-				<button
-					type="button"
-					disabled={pageInfo.page >= pageInfo.totalPages}
-					className={[
-						"px-3 py-2 rounded-lg text-sm border transition-colors",
-						pageInfo.page >= pageInfo.totalPages
-							? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-							: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
-					].join(" ")}
-					onClick={() =>
-						setParams({
-							page: String(Math.min(pageInfo.totalPages, pageInfo.page + 1)),
-						})
-					}
-				>
-					Next
-				</button>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
+				<p className="text-xs text-gray-400">
+					Page {pageInfo.page} / {pageInfo.totalPages}
+				</p>
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						disabled={pageInfo.page <= 1}
+						className={[
+							"px-3 py-2 rounded-lg text-sm border transition-colors",
+							pageInfo.page <= 1
+								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+						].join(" ")}
+						onClick={() =>
+							setParams({ page: String(Math.max(1, pageInfo.page - 1)) })
+						}
+					>
+						Previous
+					</button>
+					<button
+						type="button"
+						disabled={pageInfo.page >= pageInfo.totalPages}
+						className={[
+							"px-3 py-2 rounded-lg text-sm border transition-colors",
+							pageInfo.page >= pageInfo.totalPages
+								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
+								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+						].join(" ")}
+						onClick={() =>
+							setParams({
+								page: String(Math.min(pageInfo.totalPages, pageInfo.page + 1)),
+							})
+						}
+					>
+						Next
+					</button>
+				</div>
 			</div>
 		</div>
 	);

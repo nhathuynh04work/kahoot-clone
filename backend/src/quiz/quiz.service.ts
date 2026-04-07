@@ -1,27 +1,56 @@
 import {
     BadRequestException,
     ForbiddenException,
+    Inject,
     Injectable,
     NotFoundException,
 } from "@nestjs/common";
-import { LobbyStatus, Prisma, Question, Quiz } from "../generated/prisma/client.js";
+import {
+    LobbyStatus,
+    Prisma,
+    Question,
+    QuestionType,
+    Quiz,
+} from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { EntitlementService } from "../entitlements/entitlement.service.js";
+import Redis from "ioredis";
+import { quizQuestionsKey } from "../lib/redis-key-factory.js";
+import {
+    attachClientOptions,
+    defaultQuestionData,
+    validateQuestionDataForSave,
+} from "./question-payload.js";
 
 /** Transaction client type workaround for Prisma + custom adapter */
-type TxClient = Pick<
-    PrismaService,
-    "quiz" | "question" | "option"
->;
+type TxClient = Pick<PrismaService, "quiz" | "question">;
 import { QuizFullDetails, QuizWithQuestions } from "./dto/quiz.dto.js";
-import { UpdateQuizDto } from "./dto/update-quiz.dto.js";
+import { UpdateQuizDto, UpdateQuestionDto } from "./dto/update-quiz.dto.js";
 
 @Injectable()
 export class QuizService {
     constructor(
         private prisma: PrismaService,
         private userService: UserService,
+        private entitlementService: EntitlementService,
+        @Inject("REDIS_CLIENT") private readonly redis: Redis,
     ) {}
+
+    private toQuizFullDetails(
+        quiz: Quiz & {
+            user?: { name: string | null; email: string | null } | null;
+            questions: Question[];
+        },
+    ): QuizFullDetails {
+        const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
+        const { user: _user, ...rest } = quiz;
+        return {
+            ...rest,
+            authorName,
+            questions: quiz.questions.map((q) => attachClientOptions(q)),
+        };
+    }
 
     async getQuiz(id: number, userId: number): Promise<QuizFullDetails> {
         const quiz = await this.prisma.quiz.findUnique({
@@ -29,7 +58,6 @@ export class QuizService {
             include: {
                 user: { select: { name: true, email: true } },
                 questions: {
-                    include: { options: true },
                     orderBy: { sortOrder: "asc" },
                 },
             },
@@ -42,11 +70,7 @@ export class QuizService {
                 "Not allowed to see this quiz details",
             );
 
-        const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-        // Keep API payload small: return `authorName` instead of the full user object.
-         
-        const { user: _user, ...rest } = quiz;
-        return { ...rest, authorName };
+        return this.toQuizFullDetails(quiz);
     }
 
     async getQuizzes(userId: number): Promise<QuizWithQuestions[]> {
@@ -56,7 +80,7 @@ export class QuizService {
         const quizzes = await this.prisma.quiz.findMany({
             where: { userId },
             include: {
-                questions: true,
+                questions: { orderBy: { sortOrder: "asc" } },
                 user: { select: { name: true, email: true } },
             },
         });
@@ -69,7 +93,6 @@ export class QuizService {
 
         return quizzes.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-             
             const { user: _user, ...rest } = quiz;
             return {
                 ...rest,
@@ -115,7 +138,6 @@ export class QuizService {
                 ? {
                       OR: [
                           { title: { contains: q, mode: "insensitive" } },
-                          // Treat empty titles as "Untitled" in UI; searching "untitled" should match those.
                           ...(q.toLowerCase() === "untitled"
                               ? [{ title: "" }]
                               : []),
@@ -132,7 +154,7 @@ export class QuizService {
         const items = await this.prisma.quiz.findMany({
             where,
             include: {
-                questions: true,
+                questions: { orderBy: { sortOrder: "asc" } },
                 user: { select: { name: true, email: true } },
             },
             orderBy,
@@ -148,7 +170,6 @@ export class QuizService {
 
         const quizzes = items.map((quiz) => {
             const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-             
             const { user: _user, ...rest } = quiz;
             return {
                 ...rest,
@@ -171,6 +192,8 @@ export class QuizService {
         const user = await this.userService.getUser({ id: userId });
         if (!user) throw new BadRequestException("User not found");
 
+        const mcData = defaultQuestionData(QuestionType.MULTIPLE_CHOICE);
+
         const payload: Prisma.QuizCreateInput = {
             title: "",
             user: {
@@ -183,20 +206,8 @@ export class QuizService {
                     {
                         text: "",
                         sortOrder: 0,
-                        options: {
-                            create: [
-                                {
-                                    text: "Option 1",
-                                    isCorrect: true,
-                                    sortOrder: 0,
-                                },
-                                {
-                                    text: "Option 2",
-                                    isCorrect: false,
-                                    sortOrder: 1,
-                                },
-                            ],
-                        },
+                        type: QuestionType.MULTIPLE_CHOICE,
+                        data: mcData as unknown as Prisma.InputJsonValue,
                     },
                 ],
             },
@@ -219,6 +230,7 @@ export class QuizService {
 
         const existingQuiz = await this.prisma.quiz.findUnique({
             where: { id },
+            include: { questions: { orderBy: { sortOrder: "asc" } } },
         });
         if (!existingQuiz) throw new NotFoundException("Quiz not found");
 
@@ -226,6 +238,11 @@ export class QuizService {
             throw new ForbiddenException("Cannot update others' quizzes");
 
         const { questions, ...quizData } = data;
+
+        if (questions) {
+            const merged = this.mergeQuestionsForSave(existingQuiz.questions, questions);
+            await this.assertQuizQuestionsAllowed(userId, merged);
+        }
 
         await this.prisma.$transaction(async (tx) => {
             const db = tx as unknown as TxClient;
@@ -247,67 +264,86 @@ export class QuizService {
                 });
 
                 for (const q of questions) {
-                    const { options, id: qId, ...qData } = q;
-                    let savedQuestion: Question;
+                    const { id: qId, ...qFields } = q;
+                    const prev = existingQuiz.questions.find((p) => p.id === qId);
+                    const type =
+                        q.type ?? prev?.type ?? QuestionType.MULTIPLE_CHOICE;
+                    const mergedData = this.resolveQuestionData(q, prev, type);
+
+                    validateQuestionDataForSave(type, mergedData);
+
+                    const dataPayload: Prisma.QuestionUpdateInput = {
+                        type,
+                        data: mergedData as Prisma.InputJsonValue,
+                    };
+                    if (qFields.text !== undefined) dataPayload.text = qFields.text;
+                    if (qFields.timeLimit !== undefined) dataPayload.timeLimit = qFields.timeLimit;
+                    if (qFields.points !== undefined) dataPayload.points = qFields.points;
+                    if (qFields.imageUrl !== undefined) dataPayload.imageUrl = qFields.imageUrl;
+                    if (qFields.sortOrder !== undefined) dataPayload.sortOrder = qFields.sortOrder;
 
                     if (qId && qId > 0) {
-                        savedQuestion = await db.question.update({
+                        await db.question.update({
                             where: { id: qId },
-                            data: qData,
+                            data: dataPayload,
                         });
                     } else {
-                        savedQuestion = await db.question.create({
+                        await db.question.create({
                             data: {
-                                ...qData,
-                                sortOrder: qData.sortOrder ?? 0,
                                 quizId: id,
+                                text: qFields.text ?? "",
+                                timeLimit: qFields.timeLimit ?? 20000,
+                                points: qFields.points ?? 1000,
+                                imageUrl: qFields.imageUrl ?? null,
+                                sortOrder: qFields.sortOrder ?? 0,
+                                type,
+                                data: mergedData as Prisma.InputJsonValue,
                             },
                         });
-                    }
-
-                    if (options) {
-                        const incomingOptionIds = options
-                            .filter((o) => o.id && o.id > 0)
-                            .map((o) => o.id);
-
-                        await db.option.deleteMany({
-                            where: {
-                                questionId: savedQuestion.id,
-                                id: { notIn: incomingOptionIds as number[] },
-                            },
-                        });
-
-                        for (const o of options) {
-                            const { id: oId, ...oData } = o;
-                            if (oId && oId > 0) {
-                                await db.option.update({
-                                    where: { id: oId },
-                                    data: oData,
-                                });
-                            } else {
-                                await db.option.create({
-                                    data: {
-                                        ...oData,
-                                        sortOrder: oData.sortOrder ?? 0,
-                                        questionId: savedQuestion.id,
-                                    },
-                                });
-                            }
-                        }
                     }
                 }
             }
         });
 
-        return this.prisma.quiz.findUniqueOrThrow({
+        await this.redis.del(quizQuestionsKey(id));
+
+        const updated = await this.prisma.quiz.findUniqueOrThrow({
             where: { id },
             include: {
+                user: { select: { name: true, email: true } },
                 questions: {
-                    include: { options: true },
                     orderBy: { sortOrder: "asc" },
                 },
             },
         });
+
+        return this.toQuizFullDetails(updated);
+    }
+
+    private mergeQuestionsForSave(
+        prevQuestions: Question[],
+        incoming: UpdateQuestionDto[],
+    ): UpdateQuestionDto[] {
+        return incoming.map((q) => {
+            const prev = prevQuestions.find((p) => p.id === q.id);
+            const type = q.type ?? prev?.type ?? QuestionType.MULTIPLE_CHOICE;
+            const data = this.resolveQuestionData(q, prev, type);
+            return { ...q, type, data: data as unknown as Record<string, unknown> };
+        });
+    }
+
+    private resolveQuestionData(
+        q: UpdateQuestionDto,
+        prev: Question | undefined,
+        type: QuestionType,
+    ): Prisma.JsonValue {
+        if (q.data !== undefined && q.data !== null) {
+            return q.data as unknown as Prisma.JsonValue;
+        }
+        if (prev?.data != null) {
+            return prev.data as Prisma.JsonValue;
+        }
+        return defaultQuestionData(type) as unknown as Prisma.JsonValue;
     }
 
     async delete(id: number, userId: number) {
@@ -320,6 +356,7 @@ export class QuizService {
         if (userId !== quiz.userId)
             throw new ForbiddenException("Cannot delete others' quizzes");
 
+        await this.redis.del(quizQuestionsKey(id));
         await this.prisma.quiz.delete({ where: { id } });
     }
 
@@ -342,6 +379,29 @@ export class QuizService {
             throw new ForbiddenException("Not allowed to access this quiz");
 
         return { quiz, questionCount: quiz._count.questions };
+    }
+
+    private async assertQuizQuestionsAllowed(userId: number, questions: UpdateQuestionDto[]) {
+        const limits = await this.entitlementService.getLimitsForUser(userId);
+        if (questions.length > limits.maxQuestionsPerQuiz) {
+            throw new ForbiddenException(
+                `You can have at most ${limits.maxQuestionsPerQuiz} questions per quiz. Upgrade to VIP for a higher limit.`,
+            );
+        }
+        const { isVip } = await this.entitlementService.getVipStatus(userId);
+        for (const q of questions) {
+            const type = q.type ?? QuestionType.MULTIPLE_CHOICE;
+            if (
+                (type === QuestionType.SHORT_ANSWER || type === QuestionType.NUMBER_INPUT) &&
+                !isVip
+            ) {
+                throw new ForbiddenException(
+                    "Short answer and number input questions are available for VIP accounts only.",
+                );
+            }
+            const data = q.data as unknown as Prisma.JsonValue;
+            validateQuestionDataForSave(type, data);
+        }
     }
 
     private async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {

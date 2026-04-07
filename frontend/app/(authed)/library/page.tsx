@@ -1,3 +1,9 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Library",
+};
+
 export default function LibraryHomePage() {
 	return (
 		<div className="p-4 md:p-8">

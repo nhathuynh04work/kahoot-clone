@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { ReportPageClient } from "@/features/game/components/report";
+
+export const metadata: Metadata = {
+	title: "Reports",
+	description: "Past game sessions and performance summaries.",
+};
 
 export default function ReportsPage() {
 	return (

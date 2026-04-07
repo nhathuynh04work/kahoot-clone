@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, LobbyStatus } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { attachClientOptions } from "../quiz/question-payload.js";
 
 type ExploreMode = "recent" | "mostPlayed" | "mostSaved";
 
@@ -21,15 +22,29 @@ export class PublicCatalogService {
 
     async getPublicQuizzes(options: {
         mode: string;
+        q?: string;
         page: number;
         pageSize: number;
     }) {
         const mode = normalizeMode(options.mode);
+        const q = (options.q ?? "").trim();
         const page = Math.max(1, options.page);
         const pageSize = Math.min(200, Math.max(1, options.pageSize));
 
+        const baseWhere: Prisma.QuizWhereInput = {
+            visibility: "PUBLIC",
+            ...(q
+                ? {
+                      title: {
+                          contains: q,
+                          mode: "insensitive",
+                      },
+                  }
+                : {}),
+        };
+
         const totalItems = await this.prisma.quiz.count({
-            where: { visibility: "PUBLIC" },
+            where: baseWhere,
         });
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
         const safePage = Math.min(page, totalPages);
@@ -37,7 +52,7 @@ export class PublicCatalogService {
 
         if (mode === "recent") {
             const quizzes = await this.prisma.quiz.findMany({
-                where: { visibility: "PUBLIC" },
+                where: baseWhere,
                 include: {
                     questions: true,
                     user: { select: { name: true, email: true } },
@@ -68,7 +83,7 @@ export class PublicCatalogService {
         }
 
         const publicQuizIds = await this.prisma.quiz.findMany({
-            where: { visibility: "PUBLIC" },
+            where: baseWhere,
             select: { id: true },
         });
         const allIds = publicQuizIds.map((r) => r.id);
@@ -233,7 +248,6 @@ export class PublicCatalogService {
             include: {
                 user: { select: { name: true, email: true } },
                 questions: {
-                    include: { options: true },
                     orderBy: { sortOrder: "asc" },
                 },
             },
@@ -262,10 +276,11 @@ export class PublicCatalogService {
         const playCount = playCountRows[0]?._count._all ?? 0;
 
         const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-        const { user: _user, ...rest } = quiz;
+        const { user: _user, questions: rawQuestions, ...rest } = quiz;
 
         return {
             ...rest,
+            questions: rawQuestions.map((q) => attachClientOptions(q)),
             authorName,
             saveCount,
             playCount,
@@ -274,15 +289,29 @@ export class PublicCatalogService {
 
     async getPublicDocuments(options: {
         mode: string;
+        q?: string;
         page: number;
         pageSize: number;
     }) {
         const mode = normalizeMode(options.mode);
+        const q = (options.q ?? "").trim();
         const page = Math.max(1, options.page);
         const pageSize = Math.min(200, Math.max(1, options.pageSize));
 
+        const baseWhere: Prisma.DocumentWhereInput = {
+            visibility: "PUBLIC",
+            ...(q
+                ? {
+                      fileName: {
+                          contains: q,
+                          mode: "insensitive",
+                      },
+                  }
+                : {}),
+        };
+
         const totalItems = await this.prisma.document.count({
-            where: { visibility: "PUBLIC" },
+            where: baseWhere,
         });
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
         const safePage = Math.min(page, totalPages);
@@ -293,7 +322,7 @@ export class PublicCatalogService {
 
         if (effectiveMode === "recent") {
             const docs = await this.prisma.document.findMany({
-                where: { visibility: "PUBLIC" },
+                where: baseWhere,
                 include: { user: { select: { name: true, email: true } } },
                 orderBy: [{ createdAt: "desc" }, { id: "desc" }],
                 skip,
@@ -315,7 +344,7 @@ export class PublicCatalogService {
         }
 
         const publicIds = await this.prisma.document.findMany({
-            where: { visibility: "PUBLIC" },
+            where: baseWhere,
             select: { id: true },
         });
         const allIds = publicIds.map((r) => r.id);

@@ -87,10 +87,12 @@ export type SessionReport = {
 		incorrectCount: number;
 		correctRate: number;
 		optionCounts: Record<string, number>;
+		answerSummary?: Record<string, unknown> | null;
 		question?: {
 			id: number;
 			text: string | null;
 			imageUrl: string | null;
+			type?: string;
 			options: Array<{
 				id: number;
 				text: string | null;

@@ -16,6 +16,76 @@ import {
 import { MAX_TOTAL_STORAGE_BYTES } from "@/features/documents/lib/constants";
 import { getMySavedPublicDocuments } from "@/features/documents/api/client-actions";
 
+function parsedStoredQuestionToMock(
+	id: string,
+	q: unknown,
+): import("../types").MockGeneratedQuestion | null {
+	if (!q || typeof q !== "object") return null;
+	const o = q as Record<string, unknown>;
+	const text = typeof o.text === "string" ? o.text : "";
+	if (o.type === "TRUE_FALSE" && typeof o.correctIsTrue === "boolean") {
+		return { id, type: "TRUE_FALSE", text, correctIsTrue: o.correctIsTrue };
+	}
+	if (o.type === "SHORT_ANSWER" && typeof o.correctText === "string") {
+		return { id, type: "SHORT_ANSWER", text, correctText: o.correctText };
+	}
+	if (
+		o.type === "NUMBER_INPUT" &&
+		typeof o.correctNumber === "number" &&
+		typeof o.rangeProximity === "number"
+	) {
+		return {
+			id,
+			type: "NUMBER_INPUT",
+			text,
+			correctNumber: o.correctNumber,
+			rangeProximity: o.rangeProximity,
+		};
+	}
+	if (Array.isArray(o.options)) {
+		const options = o.options
+			.filter((x) => x && typeof x === "object")
+			.map((x) => {
+				const r = x as { text?: unknown; isCorrect?: unknown };
+				return { text: String(r.text ?? ""), isCorrect: Boolean(r.isCorrect) };
+			});
+		return { id, type: "MULTIPLE_CHOICE", text, options };
+	}
+	return null;
+}
+
+function apiResultToMock(
+	id: string,
+	q: GeneratedQuestion,
+): import("../types").MockGeneratedQuestion {
+	if (q.type === "MULTIPLE_CHOICE") {
+		return {
+			id,
+			type: "MULTIPLE_CHOICE",
+			text: q.text,
+			options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
+		};
+	}
+	if (q.type === "TRUE_FALSE") {
+		return {
+			id,
+			type: "TRUE_FALSE",
+			text: q.text,
+			correctIsTrue: q.correctIsTrue,
+		};
+	}
+	if (q.type === "SHORT_ANSWER") {
+		return { id, type: "SHORT_ANSWER", text: q.text, correctText: q.correctText };
+	}
+	return {
+		id,
+		type: "NUMBER_INPUT",
+		text: q.text,
+		correctNumber: q.correctNumber,
+		rangeProximity: q.rangeProximity,
+	};
+}
+
 const INITIAL_MESSAGE: ChatMessage = {
 	id: "welcome",
 	role: "assistant",
@@ -105,11 +175,11 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 					if (m.role !== "assistant") continue;
 					if (!m.generatedQuestions || m.generatedQuestions.length === 0) continue;
 					const msgId = `persisted-${m.id}`;
-					hydratedQuestions[msgId] = m.generatedQuestions.map((q, i) => ({
-						id: `persisted-gen-${m.id}-${i}`,
-						text: q.text,
-						options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
-					}));
+					hydratedQuestions[msgId] = m.generatedQuestions
+						.map((q, i) =>
+							parsedStoredQuestionToMock(`persisted-gen-${m.id}-${i}`, q),
+						)
+						.filter((x): x is MockGeneratedQuestion => x != null);
 				}
 
 				setMessages([INITIAL_MESSAGE, ...hydrated].slice(-MAX_CHAT_MESSAGES));
@@ -215,10 +285,36 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 				...prev,
 				[openCanvasMessageId]: new Set([...(prev[openCanvasMessageId] ?? new Set<string>()), question.id]),
 			}));
-			const genQuestion: GeneratedQuestion = {
-				text: question.text,
-				options: question.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
-			};
+			let genQuestion: GeneratedQuestion;
+			if (question.type === "MULTIPLE_CHOICE") {
+				genQuestion = {
+					type: "MULTIPLE_CHOICE",
+					text: question.text,
+					options: question.options.map((o) => ({
+						text: o.text,
+						isCorrect: o.isCorrect,
+					})),
+				};
+			} else if (question.type === "TRUE_FALSE") {
+				genQuestion = {
+					type: "TRUE_FALSE",
+					text: question.text,
+					correctIsTrue: question.correctIsTrue,
+				};
+			} else if (question.type === "SHORT_ANSWER") {
+				genQuestion = {
+					type: "SHORT_ANSWER",
+					text: question.text,
+					correctText: question.correctText,
+				};
+			} else {
+				genQuestion = {
+					type: "NUMBER_INPUT",
+					text: question.text,
+					correctNumber: question.correctNumber,
+					rangeProximity: question.rangeProximity,
+				};
+			}
 			onAddQuestion?.(genQuestion);
 		},
 		[openCanvasMessageId, onAddQuestion],
@@ -239,6 +335,7 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 					[openCanvasMessageId]: list.map((q) => {
 						if (q.id !== questionId) return q;
 						if (updates.text !== undefined) return { ...q, text: updates.text };
+						if (q.type !== "MULTIPLE_CHOICE") return q;
 						if (updates.option !== undefined) {
 							const { index, text: optText, isCorrect } = updates.option;
 							const newOptions = q.options.map((o, i) => {
@@ -288,11 +385,9 @@ export function useAiChatState({ quizId, onFileSelect, onAddQuestion }: UseAiCha
 			try {
 				const result = await generateQuestions(trimmed, selectedDoc?.id, quizId);
 
-				const questions: MockGeneratedQuestion[] = result.questions.map((q, i) => ({
-					id: `gen-${msgId}-${i}`,
-					text: q.text,
-					options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect })),
-				}));
+				const questions: MockGeneratedQuestion[] = result.questions.map((q, i) =>
+					apiResultToMock(`gen-${msgId}-${i}`, q),
+				);
 
 				const baseSummary =
 					questions.length > 0

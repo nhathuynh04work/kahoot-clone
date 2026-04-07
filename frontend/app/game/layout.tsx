@@ -1,6 +1,10 @@
-"use client";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
-import { ReactNode } from "react";
+export const metadata: Metadata = {
+	title: "Game",
+	robots: { index: false, follow: false },
+};
 
 export default function GameLayout({ children }: { children: ReactNode }) {
 	return (
@@ -9,4 +13,3 @@ export default function GameLayout({ children }: { children: ReactNode }) {
 		</div>
 	);
 }
-

@@ -19,30 +19,52 @@ export type GameState =
 	| "SCOREBOARD"
 	| "FINISHED";
 
-export interface Player {
+export type Player = {
 	nickname: string;
 	points: number;
-}
+};
 
 interface BaseGameState {
 	pin: string;
 	status: GameState;
 	currentQuestionIndex: number;
+	/** For multiple choice: 0-based index of the correct option. */
 	currentQuestionCorrectOptionId: null | number;
 	currentQuestion: null | QuestionWithOptions;
 	totalQuestions: number;
 }
+
+export type QuestionResultMeta = {
+	questionType:
+		| "MULTIPLE_CHOICE"
+		| "TRUE_FALSE"
+		| "SHORT_ANSWER"
+		| "NUMBER_INPUT";
+	correctOptionIndices?: number[];
+	correctOptionIndex?: number;
+	correctText?: string;
+	caseSensitive?: boolean;
+	allowRange?: boolean;
+	correctNumber?: number | null;
+	rangeProximity?: number | null;
+};
 
 export interface HostGameState extends BaseGameState {
 	players: Player[];
 	currentQuestionAnswerCount: number;
 	answerStats: Record<string, string>;
 	leaderboard: Player[];
+	questionResultMeta: QuestionResultMeta | null;
 }
 
 export interface PlayerGameState extends BaseGameState, Player {
 	rank: number;
+	/** Selected multiple-choice option index (0-based). */
 	selectedOptionId: null | number;
+	submittedTextAnswer: string | null;
+	submittedNumericAnswer: number | null;
+	lastRoundCorrect: boolean;
+	lastRoundPointsEarned: number;
 }
 
 export interface NewQuestionEventPayload {
@@ -52,6 +74,17 @@ export interface NewQuestionEventPayload {
 }
 
 export interface ShowResultEventPayload {
-	optionId: number;
+	questionType:
+		| "MULTIPLE_CHOICE"
+		| "TRUE_FALSE"
+		| "SHORT_ANSWER"
+		| "NUMBER_INPUT";
+	correctOptionIndices?: number[];
+	correctOptionIndex?: number;
+	correctText?: string;
+	caseSensitive?: boolean;
+	allowRange?: boolean;
+	correctNumber?: number | null;
+	rangeProximity?: number | null;
 	answerStats: Record<string, string>;
 }

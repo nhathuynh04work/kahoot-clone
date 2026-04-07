@@ -7,12 +7,14 @@ import { LoginUserDto } from "./dto/login-user.dto.js";
 import { JwtService } from "@nestjs/jwt";
 import { JwtPayloadDto } from "./dto/jwt-payload.dto";
 import { UpdateMeDto } from "./dto/update-me.dto";
+import { EntitlementService } from "../entitlements/entitlement.service.js";
 
 @Injectable()
 export class AuthService {
     constructor(
         private userService: UserService,
         private jwtService: JwtService,
+        private entitlementService: EntitlementService,
     ) {}
 
     async register(payload: RegisterUserDto): Promise<UserResponseDto> {
@@ -107,12 +109,27 @@ export class AuthService {
             throw new BadRequestException("User not found");
         }
 
+        const vip = await this.entitlementService.getVipStatus(id);
+        const limits = this.entitlementService.getLimitsForVip(vip.isVip);
+
         return {
             id: user.id,
             email: user.email,
             name: user.name,
             avatarUrl: (user as any).avatarUrl ?? null,
             role: user.role ?? "USER",
+            vip: {
+                isVip: vip.isVip,
+                source: vip.source,
+                currentPeriodEnd: vip.currentPeriodEnd?.toISOString() ?? null,
+                cancelAtPeriodEnd: vip.cancelAtPeriodEnd ?? false,
+            },
+            limits: {
+                maxQuestionsPerQuiz: limits.maxQuestionsPerQuiz,
+                maxDocuments: limits.maxDocuments,
+                maxTotalStorageBytes: limits.maxTotalStorageBytes,
+                canUseShortAnswerAndRange: limits.canUseShortAnswerAndRange,
+            },
         };
     }
 
@@ -132,12 +149,6 @@ export class AuthService {
             ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
         });
 
-        return {
-            id: updated.id,
-            email: updated.email,
-            name: updated.name,
-            avatarUrl: (updated as any).avatarUrl ?? null,
-            role: updated.role ?? "USER",
-        };
+        return this.getProfile(updated.id);
     }
 }

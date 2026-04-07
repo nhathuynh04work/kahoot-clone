@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { AdminLoginForm } from "@/features/auth/components/admin-login-form";
 import { redirect } from "next/navigation";
 
+export const metadata: Metadata = {
+	title: "Admin sign in",
+	robots: { index: false, follow: false },
+};
+
 export default async function AdminLoginPage() {
 	const user = await getCurrentUser();
 
-	if (user?.role === "ADMIN") redirect("/admin/dashboard");
+	if (user?.role === "ADMIN") redirect("/admin");
 
 	return (
 		<>

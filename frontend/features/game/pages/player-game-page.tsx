@@ -18,7 +18,9 @@ export default function PlayerGamePage() {
 			return (
 				<PlayerQuestionScreen
 					question={state.currentQuestion!}
-					onSubmit={handlers.handleSelectOption}
+					onSelectOption={handlers.handleSelectOption}
+					onSubmitText={handlers.handleSubmitText}
+					onSubmitNumeric={handlers.handleSubmitNumeric}
 				/>
 			);
 
@@ -28,10 +30,9 @@ export default function PlayerGamePage() {
 		case "RESULT":
 			return (
 				<PlayerResultScreen
-					isCorrect={
-						state.currentQuestionCorrectOptionId === state.selectedOptionId
-					}
+					isCorrect={state.lastRoundCorrect}
 					points={state.points}
+					pointsThisRound={state.lastRoundPointsEarned}
 				/>
 			);
 

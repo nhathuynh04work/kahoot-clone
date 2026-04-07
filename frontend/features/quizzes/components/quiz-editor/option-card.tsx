@@ -10,21 +10,21 @@ interface RealOptionCardProps {
 	questionIndex: number;
 	optionIndex: number;
 	onDelete: () => void;
+	/** True/False type: fixed labels, no text editing. */
+	isTrueFalse?: boolean;
 }
 
-export function RealOptionCard({
+function McOptionTextarea({
 	questionIndex,
 	optionIndex,
 	onDelete,
-}: RealOptionCardProps) {
-	const { register, watch, setValue, getValues } =
-		useFormContext<QuizFullDetails>();
+}: {
+	questionIndex: number;
+	optionIndex: number;
+	onDelete: () => void;
+}) {
+	const { register } = useFormContext<QuizFullDetails>();
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-	const isCorrect = watch(
-		`questions.${questionIndex}.options.${optionIndex}.isCorrect`
-	);
-	const colorClass = optionColors[optionIndex % 4];
 
 	const adjustHeight = useCallback(() => {
 		const el = textareaRef.current;
@@ -46,6 +46,45 @@ export function RealOptionCard({
 		[ref, adjustHeight]
 	);
 
+	return (
+		<textarea
+			name={name}
+			ref={setRefs}
+			rows={1}
+			onChange={(e) => {
+				onChange(e);
+				adjustHeight();
+			}}
+			onBlur={(e) => {
+				onBlur(e);
+				if (!e.target.value.trim()) {
+					onDelete();
+				}
+			}}
+			onInput={adjustHeight}
+			placeholder={`Option ${optionIndex + 1}`}
+			className="grow min-h-6 py-0.5 bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none resize-none overflow-hidden"
+			autoComplete="off"
+		/>
+	);
+}
+
+export function RealOptionCard({
+	questionIndex,
+	optionIndex,
+	onDelete,
+	isTrueFalse = false,
+}: RealOptionCardProps) {
+	const { watch, setValue, getValues } = useFormContext<QuizFullDetails>();
+
+	const onlyOneCorrect =
+		watch(`questions.${questionIndex}.onlyOneCorrect`) !== false;
+
+	const isCorrect = watch(
+		`questions.${questionIndex}.options.${optionIndex}.isCorrect`
+	);
+	const colorClass = optionColors[optionIndex % 4];
+
 	const handleToggleCorrect = () => {
 		if (isCorrect) {
 			setValue(
@@ -57,17 +96,19 @@ export function RealOptionCard({
 			return;
 		}
 
-		const currentOptions = getValues(`questions.${questionIndex}.options`);
+		if (onlyOneCorrect) {
+			const currentOptions = getValues(`questions.${questionIndex}.options`);
 
-		currentOptions.forEach((_, idx) => {
-			if (idx !== optionIndex) {
-				setValue(
-					`questions.${questionIndex}.options.${idx}.isCorrect`,
-					false,
-					{ shouldDirty: true }
-				);
-			}
-		});
+			currentOptions.forEach((_, idx) => {
+				if (idx !== optionIndex) {
+					setValue(
+						`questions.${questionIndex}.options.${idx}.isCorrect`,
+						false,
+						{ shouldDirty: true }
+					);
+				}
+			});
+		}
 
 		setValue(
 			`questions.${questionIndex}.options.${optionIndex}.isCorrect`,
@@ -80,25 +121,17 @@ export function RealOptionCard({
 		<div className="p-4 rounded-md border border-gray-700 bg-gray-900 flex items-start gap-3 shadow-sm group transition-colors focus-within:border-gray-500">
 			<div className={`w-10 h-10 rounded-md shrink-0 mt-0.5 ${colorClass}`} />
 
-			<textarea
-				name={name}
-				ref={setRefs}
-				rows={1}
-				onChange={(e) => {
-					onChange(e);
-					adjustHeight();
-				}}
-				onBlur={(e) => {
-					onBlur(e);
-					if (!e.target.value.trim()) {
-						onDelete();
-					}
-				}}
-				onInput={adjustHeight}
-				placeholder={`Option ${optionIndex + 1}`}
-				className="grow min-h-6 py-0.5 bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none resize-none overflow-hidden"
-				autoComplete="off"
-			/>
+			{isTrueFalse ? (
+				<p className="grow min-h-6 py-0.5 text-white text-lg font-medium">
+					{optionIndex === 0 ? "True" : "False"}
+				</p>
+			) : (
+				<McOptionTextarea
+					questionIndex={questionIndex}
+					optionIndex={optionIndex}
+					onDelete={onDelete}
+				/>
+			)}
 
 			<button
 				type="button"

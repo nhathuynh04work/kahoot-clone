@@ -4,6 +4,7 @@ import {
 	NewQuestionEventPayload,
 	Player,
 	ShowResultEventPayload,
+	QuestionResultMeta,
 } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { useSocketEvent } from "../context/socket-context";
@@ -24,6 +25,7 @@ const initialState: HostGameState = {
 	currentQuestionCorrectOptionId: null,
 	currentQuestion: null,
 	totalQuestions: 0,
+	questionResultMeta: null,
 };
 
 type HostAction =
@@ -32,12 +34,25 @@ type HostAction =
 	| { type: "PLAYER_LEFT"; payload: string }
 	| { type: "PLAYER_REJOINED"; payload: Player }
 	| { type: "SET_QUESTION"; payload: NewQuestionEventPayload }
-	| { type: "ADD_NEW_ANSWER"; payload: number }
+	| { type: "ADD_NEW_ANSWER" }
 	| {
 			type: "SET_CORRECT_ANSWER";
 			payload: ShowResultEventPayload;
 	  }
 	| { type: "SHOW_LEADERBOARD"; payload: Player[] };
+
+function metaFromPayload(p: ShowResultEventPayload): QuestionResultMeta {
+	return {
+		questionType: p.questionType ?? "MULTIPLE_CHOICE",
+		correctOptionIndices: p.correctOptionIndices,
+		correctOptionIndex: p.correctOptionIndex,
+		correctText: p.correctText,
+		caseSensitive: p.caseSensitive,
+		allowRange: p.allowRange,
+		correctNumber: p.correctNumber,
+		rangeProximity: p.rangeProximity,
+	};
+}
 
 const hostReducer = (
 	state: HostGameState,
@@ -64,7 +79,7 @@ const hostReducer = (
 				),
 			};
 
-		case "PLAYER_REJOINED":
+		case "PLAYER_REJOINED": {
 			const filtered = state.players.filter(
 				(p) => p.nickname !== action.payload.nickname
 			);
@@ -73,6 +88,7 @@ const hostReducer = (
 				...state,
 				players: [...filtered, action.payload],
 			};
+		}
 
 		case "SET_QUESTION":
 			return {
@@ -83,6 +99,7 @@ const hostReducer = (
 				currentQuestionIndex: action.payload.currentQuestionIndex,
 				totalQuestions: action.payload.totalQuestions,
 				currentQuestionCorrectOptionId: null,
+				questionResultMeta: null,
 			};
 
 		case "ADD_NEW_ANSWER":
@@ -96,8 +113,12 @@ const hostReducer = (
 			return {
 				...state,
 				status: "RESULT",
-				currentQuestionCorrectOptionId: action.payload.optionId,
+				currentQuestionCorrectOptionId:
+					action.payload.correctOptionIndices?.length === 1
+						? action.payload.correctOptionIndices[0]
+						: (action.payload.correctOptionIndex ?? null),
 				answerStats: action.payload.answerStats,
+				questionResultMeta: metaFromPayload(action.payload),
 			};
 
 		case "SHOW_LEADERBOARD":
@@ -134,9 +155,16 @@ export const useHostGame = (lobbyId: number) => {
 		dispatch({ type: "SET_QUESTION", payload: payload });
 	});
 
-	useSocketEvent("newAnswer", (payload: { optionId: number }) => {
-		dispatch({ type: "ADD_NEW_ANSWER", payload: payload.optionId });
-	});
+	useSocketEvent(
+		"newAnswer",
+		(_payload: {
+			mcSelectedIndex?: number | null;
+			textAnswer?: string | null;
+			numericAnswer?: number | null;
+		}) => {
+			dispatch({ type: "ADD_NEW_ANSWER" });
+		}
+	);
 
 	useSocketEvent("showResult", (payload: ShowResultEventPayload) => {
 		dispatch({
@@ -156,7 +184,6 @@ export const useHostGame = (lobbyId: number) => {
 		}
 
 		socket.emit("startGame", { pin: state.pin }, (response: any) => {
-			//[TO-DO]: May need some logic here
 			if (!response.success) {
 				window.location.href = "/";
 			}

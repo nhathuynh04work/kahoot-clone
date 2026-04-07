@@ -1,4 +1,5 @@
-import { Option, Question, Quiz } from "../../generated/prisma/client.js";
+import { Question, Quiz } from "../../generated/prisma/client.js";
+import type { ClientMcOption } from "../question-payload.js";
 
 export type QuizWithQuestions = Quiz & {
     questions: Question[];
@@ -14,4 +15,4 @@ export type QuizFullDetails = Quiz & {
     playCount?: number;
 };
 
-export type QuestionWithOptions = Question & { options: Option[] };
+export type QuestionWithOptions = Question & { options: ClientMcOption[] };

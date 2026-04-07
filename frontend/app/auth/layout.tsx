@@ -1,5 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AppLogo } from "@/components/layout/app-logo";
+import { SITE_DESCRIPTION } from "@/lib/site";
+
+export const metadata: Metadata = {
+	title: "Account",
+	description: SITE_DESCRIPTION,
+	robots: { index: true, follow: true },
+};
 
 export default function AuthLayout({
 	children,
@@ -13,7 +21,7 @@ export default function AuthLayout({
 				<div className="relative hidden p-10 lg:flex lg:flex-col lg:bg-gray-800/30">
 					<div className="relative">
 						<div className="inline-flex items-center gap-2 rounded-full border border-gray-800 bg-gray-950/40 px-3 py-1 text-xs text-gray-200">
-							<span className="h-2 w-2 rounded-full bg-emerald-400" />
+							<span className="h-2 w-2 rounded-full bg-indigo-500" />
 							<span>Play. Create. Repeat.</span>
 						</div>
 
@@ -31,7 +39,7 @@ export default function AuthLayout({
 								<span>Build quizzes in minutes with a clean editor.</span>
 							</li>
 							<li className="flex items-start gap-3">
-								<span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-emerald-300" />
+								<span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-indigo-400" />
 								<span>Host lobbies and play in real time.</span>
 							</li>
 							<li className="flex items-start gap-3">

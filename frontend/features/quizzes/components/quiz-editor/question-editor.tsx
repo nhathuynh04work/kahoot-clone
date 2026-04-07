@@ -5,6 +5,7 @@ import { QuestionTextInput } from "./question-text-input";
 import { ImageUploader } from "./image-uploader";
 import { OptionsGrid } from "./options-grid";
 import { QuizFullDetails } from "@/features/quizzes/types";
+import { QuestionTypeFields } from "./question-type-fields";
 
 interface QuestionEditorProps {
 	questionIndex: number;
@@ -13,8 +14,12 @@ interface QuestionEditorProps {
 export function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 	const { watch } = useFormContext<QuizFullDetails>();
 	const question = watch(`questions.${questionIndex}`);
+	const qType = question?.type ?? "MULTIPLE_CHOICE";
 
 	if (!question) return null;
+
+	const showOptionsGrid =
+		qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
 
 	return (
 		<div className="flex flex-col items-center p-8 md:p-10 bg-gray-900 gap-10">
@@ -28,10 +33,14 @@ export function QuestionEditor({ questionIndex }: QuestionEditorProps) {
 				questionIndex={questionIndex}
 			/>
 
-			<OptionsGrid
-				key={`options-${questionIndex}`}
-				questionIndex={questionIndex}
-			/>
+			<QuestionTypeFields questionIndex={questionIndex} />
+
+			{showOptionsGrid ? (
+				<OptionsGrid
+					key={`options-${questionIndex}`}
+					questionIndex={questionIndex}
+				/>
+			) : null}
 		</div>
 	);
 }

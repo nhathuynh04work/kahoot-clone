@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import { RegisterForm } from "@/features/auth/components/register-form";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { redirect } from "next/navigation";
 
+export const metadata: Metadata = {
+	title: "Create account",
+	description:
+		"Create a free Quiztopia account to build quizzes, host sessions with a PIN, and track results.",
+};
+
 export default async function RegisterPage() {
 	const user = await getCurrentUser();
-	if (user) redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
+	if (user) redirect(user.role === "ADMIN" ? "/admin" : "/library/quizzes");
 
 	return (
 		<>

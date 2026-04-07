@@ -1,11 +1,29 @@
+import type { Metadata } from "next";
 import { getSessionReport } from "@/features/game/api/server-actions";
 import { SessionReportDetails } from "@/features/game/components/session-report";
 
-export default async function ReportDetailPage({
+type ReportDetailParams = { params: Promise<{ lobbyId: string }> };
+
+export async function generateMetadata({
 	params,
-}: {
-	params: Promise<{ lobbyId: string }>;
-}) {
+}: ReportDetailParams): Promise<Metadata> {
+	const { lobbyId } = await params;
+	const id = Number(lobbyId);
+	if (!Number.isFinite(id)) {
+		return { title: "Session report" };
+	}
+	try {
+		const report = await getSessionReport(id);
+		const title = report.session.quizTitle?.trim();
+		return {
+			title: title ? `${title} · Report` : "Session report",
+		};
+	} catch {
+		return { title: "Session report" };
+	}
+}
+
+export default async function ReportDetailPage({ params }: ReportDetailParams) {
 	const { lobbyId } = await params;
 	const id = Number(lobbyId);
 

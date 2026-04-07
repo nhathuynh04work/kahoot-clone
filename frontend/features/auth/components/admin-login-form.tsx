@@ -27,7 +27,7 @@ export function AdminLoginForm() {
 
 		try {
 			await apiClient.post("/auth/admin/login", values);
-			router.push("/admin/dashboard");
+			router.push("/admin");
 		} catch (error: any) {
 			setApiError(error?.message);
 		}

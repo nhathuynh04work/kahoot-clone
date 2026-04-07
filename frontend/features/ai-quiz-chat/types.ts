@@ -19,9 +19,30 @@ export interface MockDocument {
 	status: "READY" | "PARSING" | "UPLOADED" | "ERROR";
 }
 
-/** Mock generated question for the canvas (UI only) */
-export interface MockGeneratedQuestion {
-	id: string;
-	text: string;
-	options: { text: string; isCorrect: boolean }[];
-}
+/** Generated question in the canvas (editable before add-to-quiz) */
+export type MockGeneratedQuestion =
+	| {
+			id: string;
+			type: "MULTIPLE_CHOICE";
+			text: string;
+			options: { text: string; isCorrect: boolean }[];
+	  }
+	| {
+			id: string;
+			type: "TRUE_FALSE";
+			text: string;
+			correctIsTrue: boolean;
+	  }
+	| {
+			id: string;
+			type: "SHORT_ANSWER";
+			text: string;
+			correctText: string;
+	  }
+	| {
+			id: string;
+			type: "NUMBER_INPUT";
+			text: string;
+			correctNumber: number;
+			rangeProximity: number;
+	  };

@@ -14,18 +14,31 @@ import { QuestionEditor } from "./question-editor";
 import { QuestionSettingsSidebar } from "./question-settings-sidebar";
 import { Header } from "./header";
 import { useUpdateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
+import { toast } from "sonner";
 
 interface QuizEditorProps {
 	quiz: QuizFullDetails;
+	maxQuestionsPerQuiz: number;
+	canUseVipQuestionTypes: boolean;
 }
 
-export function QuizEditor({ quiz }: QuizEditorProps) {
+export function QuizEditor({
+	quiz,
+	maxQuestionsPerQuiz,
+	canUseVipQuestionTypes,
+}: QuizEditorProps) {
 	const methods = useForm<QuizFullDetails>({
 		defaultValues: {
 			...quiz,
-			questions: [...quiz.questions].sort(
-				(a, b) => a.sortOrder - b.sortOrder
-			),
+			questions: [...quiz.questions]
+				.sort((a, b) => a.sortOrder - b.sortOrder)
+				.map((q) => ({
+					...q,
+					type: q.type ?? "MULTIPLE_CHOICE",
+					onlyOneCorrect: q.onlyOneCorrect !== false,
+					caseSensitive: q.caseSensitive === true,
+						rangeProximity: q.rangeProximity ?? 0,
+				})),
 		},
 		mode: "onChange",
 	});
@@ -60,6 +73,13 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 	const activeQuestion = questions[activeIndex] || questions[0];
 
 	const handleAddQuestion = () => {
+		if (questions.length >= maxQuestionsPerQuiz) {
+			toast.error(
+				`You can add at most ${maxQuestionsPerQuiz} questions per quiz.`
+			);
+			return;
+		}
+
 		const newId = Date.now() * -1;
 
 		const lastSortOrder =
@@ -75,6 +95,8 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 			points: 1000,
 			imageUrl: "",
 			sortOrder: lastSortOrder + 1,
+			type: "MULTIPLE_CHOICE",
+			onlyOneCorrect: true,
 			options: [
 				{
 					id: Date.now() * -1 - 1,
@@ -119,6 +141,13 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 		const source = activeQuestion;
 		if (!source) return;
 
+		if (questions.length >= maxQuestionsPerQuiz) {
+			toast.error(
+				`You can add at most ${maxQuestionsPerQuiz} questions per quiz.`
+			);
+			return;
+		}
+
 		const newId = Date.now() * -1;
 		const baseOptionId = newId * 10;
 
@@ -138,6 +167,9 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 			text: source.text ?? "",
 			imageUrl: source.imageUrl ?? "",
 			sortOrder: activeIndex + 1,
+			type: source.type ?? "MULTIPLE_CHOICE",
+			onlyOneCorrect: source.onlyOneCorrect !== false,
+			caseSensitive: source.caseSensitive === true,
 			options: duplicatedOptions,
 		};
 
@@ -189,6 +221,7 @@ export function QuizEditor({ quiz }: QuizEditorProps) {
 								onDelete={handleDeleteQuestion}
 								onDuplicate={handleDuplicateQuestion}
 								canDelete={questions.length > 1}
+								canUseVipQuestionTypes={canUseVipQuestionTypes}
 							/>
 						)}
 					</div>

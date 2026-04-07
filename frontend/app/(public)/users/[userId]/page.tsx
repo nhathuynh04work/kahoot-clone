@@ -1,20 +1,53 @@
+import type { Metadata } from "next";
 import { apiServer } from "@/lib/apiServer";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
+import { SITE_NAME } from "@/lib/site";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { QuizCard } from "@/features/quizzes/components/quiz-card";
 import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { DocumentCard } from "@/features/documents/components/document-card";
 import type { Document } from "@/features/documents/types";
 import { ProfileEditOwnerActions } from "@/features/profile/components/profile-edit-owner-actions";
+import { LandingTopBar } from "@/components/layout/landing-top-bar";
+import TopBar from "@/components/layout/top-bar";
+import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
+import { redirect } from "next/navigation";
 
 interface ProfilePageProps {
 	params: Promise<{ userId: string }>;
+}
+
+export async function generateMetadata({
+	params,
+}: ProfilePageProps): Promise<Metadata> {
+	const userId = parseInt((await params).userId, 10);
+	if (!Number.isFinite(userId)) {
+		return { title: "Profile" };
+	}
+	try {
+		const api = await apiServer();
+		const { data: profile } = await api.get<{
+			name?: string | null;
+			email?: string | null;
+		}>(`/users/${userId}`);
+		const label =
+			(profile?.name && String(profile.name).trim()) ||
+			(profile?.email && String(profile.email).trim()) ||
+			"User";
+		return {
+			title: label,
+			description: `Quizzes and documents by ${label} on ${SITE_NAME}.`,
+		};
+	} catch {
+		return { title: "Profile" };
+	}
 }
 
 export default async function UserProfilePage({ params }: ProfilePageProps) {
 	const userId = parseInt((await params).userId, 10);
 	const viewer = await getCurrentUser();
 	const isOwner = !!viewer && viewer.id === userId;
+	if (viewer?.role === "ADMIN") redirect("/admin");
 
 	const api = await apiServer();
 	const { data: profile } = await api.get(`/users/${userId}`);
@@ -51,7 +84,7 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 		? (documentsResponse.data as any)
 		: (documentsResponse.data.items as any);
 
-	return (
+	const content = (
 		<div className="p-4 md:p-8">
 			<div className="max-w-6xl mx-auto space-y-8">
 				<header className="flex items-start justify-between gap-6">
@@ -136,6 +169,28 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 					)}
 				</section>
 			</div>
+		</div>
+	);
+
+	if (viewer) {
+		return (
+			<div
+				className="h-dvh overflow-hidden bg-gray-900 flex flex-col text-white"
+				style={{ ["--app-header-height" as string]: "58px" }}
+			>
+				<TopBar user={viewer} />
+				<div className="flex flex-1 min-h-0">
+					<DashboardSidebar user={viewer} />
+					<main className="flex-1 min-w-0 overflow-y-auto">{content}</main>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="min-h-dvh bg-gray-900 text-white flex flex-col">
+			<LandingTopBar />
+			<main className="flex-1">{content}</main>
 		</div>
 	);
 }

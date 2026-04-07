@@ -3,15 +3,13 @@ import {
     Injectable,
     NotFoundException,
 } from "@nestjs/common";
+import { AiChatRole, Prisma } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { AiChatRole } from "../generated/prisma/client";
+import type { GeneratedQuestion } from "./ai.types.js";
 
 const MAX_CHAT_MESSAGES = 50;
 
-type GeneratedQuestionsPayload = {
-    text: string;
-    options: { text: string; isCorrect: boolean }[];
-}[];
+type GeneratedQuestionsPayload = GeneratedQuestion[];
 
 @Injectable()
 export class AiQuizChatService {
@@ -88,7 +86,9 @@ export class AiQuizChatService {
                     content: trimmed,
                     documentId: documentId ?? null,
                     generatedCount: generatedCount ?? null,
-                    generatedQuestions: generatedQuestions ?? undefined,
+                    generatedQuestions: generatedQuestions
+                        ? (generatedQuestions as unknown as Prisma.InputJsonValue)
+                        : undefined,
                 },
             });
 

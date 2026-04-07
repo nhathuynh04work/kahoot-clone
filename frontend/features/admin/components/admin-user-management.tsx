@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Select } from "@/components/ui/select";
 import type {
@@ -12,6 +13,8 @@ import type {
 	AdminUserListResponse,
 } from "@/features/admin/api/server-actions";
 import { updateAdminUser } from "@/features/admin/api/client-actions";
+import { AdminDataTable } from "@/features/admin/components/admin-data-table";
+import { AdminPagination } from "@/features/admin/components/admin-pagination";
 
 const SORT_OPTIONS = [
 	{ value: "createdAt_desc", label: "Newest" },
@@ -97,6 +100,124 @@ export function AdminUserManagement({
 		[],
 	);
 
+	const columns = useMemo<Array<ColumnDef<AdminUserListItem>>>(() => {
+		return [
+			{
+				accessorKey: "email",
+				header: "User",
+				meta: { widthClassName: "w-[420px]" },
+				cell: ({ row }) => (
+					<div className="min-w-0">
+						<div className="text-sm font-semibold text-white truncate">
+							{row.original.name ?? "—"}
+						</div>
+						<div className="text-xs text-gray-400 truncate">
+							{row.original.email}
+						</div>
+					</div>
+				),
+			},
+			{
+				accessorKey: "role",
+				header: "Role",
+				meta: { widthClassName: "w-[140px]" },
+				cell: ({ row }) => {
+					const roleIsAdmin = row.original.role === "ADMIN";
+					return (
+						<span
+							className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
+								roleIsAdmin
+									? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+									: "bg-indigo-500/10 text-indigo-200 border border-indigo-500/30"
+							}`}
+						>
+							{row.original.role}
+						</span>
+					);
+				},
+			},
+			{
+				accessorKey: "isBlocked",
+				header: "Status",
+				meta: { widthClassName: "w-[140px]" },
+				cell: ({ row }) => {
+					const blocked = row.original.isBlocked;
+					return (
+						<span
+							className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
+								blocked
+									? "bg-red-500/10 text-red-200 border border-red-500/30"
+									: "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+							}`}
+						>
+							{blocked ? "BLOCKED" : "ACTIVE"}
+						</span>
+					);
+				},
+				sortingFn: "basic",
+			},
+			{
+				accessorKey: "createdAt",
+				header: "Created",
+				meta: { widthClassName: "w-[140px]" },
+				cell: ({ row }) => (
+					<span className="text-sm text-gray-300">
+						{formatDate(row.original.createdAt)}
+					</span>
+				),
+			},
+			{
+				id: "actions",
+				header: () => <div className="text-right">Actions</div>,
+				enableSorting: false,
+				meta: { widthClassName: "w-[260px]" },
+				cell: ({ row }) => {
+					const u = row.original;
+					const blocked = u.isBlocked;
+					const roleIsAdmin = u.role === "ADMIN";
+
+					return (
+						<div
+							className="flex justify-end gap-2"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<button
+								type="button"
+								disabled={isPending || (roleIsAdmin && !blocked)}
+								onClick={() => {
+									if (roleIsAdmin && !blocked) return;
+									mutateAsync({
+										userId: u.id,
+										payload: { isBlocked: !blocked },
+									}).catch(() => {});
+								}}
+								className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{blocked ? "Unblock" : "Block"}
+							</button>
+							<button
+								type="button"
+								disabled={isPending || roleIsAdmin}
+								onClick={() => {
+									if (roleIsAdmin) return;
+									mutateAsync({
+										userId: u.id,
+										payload: {
+											role: roleIsAdmin ? "USER" : "ADMIN",
+										},
+									}).catch(() => {});
+								}}
+								className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{roleIsAdmin ? "Demote" : "Promote"}
+							</button>
+						</div>
+					);
+				},
+			},
+		];
+	}, [isPending, mutateAsync]);
+
 	return (
 		<div className="space-y-4">
 			<div className="contents">
@@ -128,101 +249,12 @@ export function AdminUserManagement({
 				</div>
 
 				<div className="mt-4">
-					<div className="grid grid-cols-12 gap-3 text-xs text-gray-400 px-2 py-2 border-b border-gray-800">
-						<div className="col-span-4">User</div>
-						<div className="col-span-2">Role</div>
-						<div className="col-span-2">Status</div>
-						<div className="col-span-2">Created</div>
-						<div className="col-span-2 text-right">Actions</div>
-					</div>
-
-					<div className="divide-y divide-gray-800">
-						{pageData.items.map((u) => {
-							const blocked = u.isBlocked;
-							const roleIsAdmin = u.role === "ADMIN";
-
-							return (
-								<div
-									key={u.id}
-									className="grid grid-cols-12 gap-3 px-2 py-3 items-center"
-								>
-									<div className="col-span-4 min-w-0">
-										<div className="text-sm font-semibold text-white truncate">
-											{u.name ?? "—"}{" "}
-										</div>
-										<div className="text-xs text-gray-400 truncate">{u.email}</div>
-									</div>
-
-									<div className="col-span-2">
-										<span
-											className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
-												roleIsAdmin
-													? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
-													: "bg-indigo-500/10 text-indigo-200 border border-indigo-500/30"
-											}`}
-										>
-											{u.role}
-										</span>
-									</div>
-
-									<div className="col-span-2">
-										<span
-											className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
-												blocked
-													? "bg-red-500/10 text-red-200 border border-red-500/30"
-													: "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
-											}`}
-										>
-											{blocked ? "BLOCKED" : "ACTIVE"}
-										</span>
-									</div>
-
-									<div className="col-span-2 text-sm text-gray-300">
-										{formatDate(u.createdAt)}
-									</div>
-
-									<div className="col-span-2 text-right flex justify-end gap-2">
-										<button
-											type="button"
-											disabled={isPending || (roleIsAdmin && !blocked)}
-											onClick={() => {
-												if (roleIsAdmin && !blocked) return;
-												mutateAsync({
-													userId: u.id,
-													payload: { isBlocked: !blocked },
-												}).catch(() => {});
-											}}
-											className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-										>
-											{blocked ? "Unblock" : "Block"}
-										</button>
-										<button
-											type="button"
-											disabled={isPending || roleIsAdmin}
-											onClick={() => {
-												if (roleIsAdmin) return;
-												mutateAsync({
-													userId: u.id,
-													payload: {
-														role: roleIsAdmin ? "USER" : "ADMIN",
-													},
-												}).catch(() => {});
-											}}
-											className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-										>
-											{roleIsAdmin ? "Demote" : "Promote"}
-										</button>
-									</div>
-								</div>
-							);
-						})}
-
-						{pageData.items.length === 0 && (
-							<div className="px-2 py-8 text-center text-gray-400">
-								No users found.
-							</div>
-						)}
-					</div>
+					<AdminDataTable
+						data={pageData.items}
+						columns={columns}
+						emptyText="No users found."
+						onRowClick={(u) => router.push(`/admin/users/${u.id}`)}
+					/>
 
 					<div className="mt-6 flex items-center justify-between gap-3">
 						<div className="text-sm text-gray-400">
@@ -237,24 +269,11 @@ export function AdminUserManagement({
 							<span className="text-gray-600">•</span>{" "}
 							<span className="text-gray-300">{totalItems} users</span>
 						</div>
-						<div className="flex items-center gap-2">
-							<button
-								type="button"
-								disabled={page <= 1}
-								onClick={() => setParams({ page: String(page - 1) })}
-								className="px-3 py-2 rounded-md border border-gray-700 bg-gray-800/50 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800"
-							>
-								Prev
-							</button>
-							<button
-								type="button"
-								disabled={page >= totalPages}
-								onClick={() => setParams({ page: String(page + 1) })}
-								className="px-3 py-2 rounded-md border border-gray-700 bg-gray-800/50 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800"
-							>
-								Next
-							</button>
-						</div>
+						<AdminPagination
+							page={page}
+							totalPages={totalPages}
+							onPageChange={(p) => setParams({ page: String(p) })}
+						/>
 					</div>
 
 					{isPending && (

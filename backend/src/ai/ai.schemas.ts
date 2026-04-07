@@ -18,6 +18,7 @@ export const QUIZ_RESPONSE_SCHEMA: Schema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
+                    type: { type: Type.STRING },
                     text: { type: Type.STRING },
                     options: {
                         type: Type.ARRAY,
@@ -30,8 +31,11 @@ export const QUIZ_RESPONSE_SCHEMA: Schema = {
                             required: ["text", "isCorrect"],
                         },
                     },
+                    correctText: { type: Type.STRING },
+                    correctNumber: { type: Type.NUMBER },
+                    rangeProximity: { type: Type.NUMBER },
                 },
-                required: ["text", "options"],
+                required: ["text"],
             },
         },
     },

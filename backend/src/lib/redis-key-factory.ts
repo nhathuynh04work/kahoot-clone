@@ -13,7 +13,7 @@ export const lobbyOnlinePlayersKey = (lobbyId: number) =>
 export const lobbyAnsweredKey = (lobbyId: number, questionId: number) =>
     `lobby:${lobbyId}:question:${questionId}:answered`;
 
-// Record<string, string> representing how many answer submitted for optionId of questionId in lobbyId
+// Record<string, string> representing how many answers per MC option index ("0".."n-1") for questionId in lobbyId
 export const questionStatsKey = (lobbyId: number, questionId: number) =>
     `lobby:${lobbyId}:question:${questionId}:stats`;
 

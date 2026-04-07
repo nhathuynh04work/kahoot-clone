@@ -9,7 +9,12 @@ interface OptionsGridProps {
 }
 
 export function OptionsGrid({ questionIndex }: OptionsGridProps) {
-	const { control, getValues, setValue } = useFormContext<QuizFullDetails>();
+	const { control, getValues, setValue, watch } =
+		useFormContext<QuizFullDetails>();
+	const qType =
+		(watch(`questions.${questionIndex}.type`) as string | undefined) ??
+		"MULTIPLE_CHOICE";
+	const isTrueFalse = qType === "TRUE_FALSE";
 
 	const { fields, append, remove } = useFieldArray({
 		control,
@@ -17,6 +22,7 @@ export function OptionsGrid({ questionIndex }: OptionsGridProps) {
 	});
 
 	const handleAddOption = () => {
+		if (isTrueFalse) return;
 		append({
 			id: Date.now() * -1,
 			questionId: 0,
@@ -27,6 +33,7 @@ export function OptionsGrid({ questionIndex }: OptionsGridProps) {
 	};
 
 	const handleRemoveOption = (index: number) => {
+		if (isTrueFalse) return;
 		if (fields.length <= 2) return;
 
 		const currentOptions = getValues(`questions.${questionIndex}.options`);
@@ -53,11 +60,12 @@ export function OptionsGrid({ questionIndex }: OptionsGridProps) {
 						questionIndex={questionIndex}
 						optionIndex={index}
 						onDelete={() => handleRemoveOption(index)}
+						isTrueFalse={isTrueFalse}
 					/>
 				</div>
 			))}
 
-			{fields.length < 4 && (
+			{!isTrueFalse && fields.length < 4 && (
 				<PlaceholderOptionCard
 					index={fields.length}
 					onAdd={handleAddOption}

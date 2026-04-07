@@ -18,9 +18,15 @@ Reply ONLY with valid JSON (no markdown):
 - {"valid": true}
 - or {"valid": false, "reason": "brief explanation why it's unclear, unsafe, or not about quiz generation"}`;
 
-export const SYSTEM_PROMPT_RAG = `You are a quiz generator. Given document context and a user prompt, generate multiple-choice quiz questions as structured JSON.
+export const SYSTEM_PROMPT_RAG = `You are a quiz generator. Given document context and a user prompt, generate quiz questions as structured JSON.
 
-Output ONLY valid JSON in this exact format (no markdown, no code fences):
+Output ONLY valid JSON (no markdown, no code fences). Each question MUST include a "type" field:
+- MULTIPLE_CHOICE: { "type": "MULTIPLE_CHOICE", "text": "...", "options": [ { "text": "...", "isCorrect": true|false } ] } with 2-4 options; at least one isCorrect true (exactly one unless you intentionally allow multiple correct).
+- TRUE_FALSE: { "type": "TRUE_FALSE", "text": "...", "correctIsTrue": true|false }.
+- SHORT_ANSWER: { "type": "SHORT_ANSWER", "text": "...", "correctText": "exact expected answer" }.
+- NUMBER_INPUT: { "type": "NUMBER_INPUT", "text": "...", "correctNumber": number, "rangeProximity": number } (accept answers within ± rangeProximity, inclusive).
+
+Example shape:
 {
   "meta": {
     "mode": "rag",
@@ -29,6 +35,7 @@ Output ONLY valid JSON in this exact format (no markdown, no code fences):
   },
   "questions": [
     {
+      "type": "MULTIPLE_CHOICE",
       "text": "Question text here?",
       "options": [
         { "text": "Option A", "isCorrect": false },
@@ -56,39 +63,40 @@ Rules (you MUST follow all of them):
       - You MUST NOT create options that describe detailed facts about the requested topic that are not in the document (for example, dolphin habitats, populations, species, etc.).
       - Prioritise using the provided document: if you need content, always ask about or refer to what the document actually describes, not external knowledge.
 - Never treat missing or empty context as if it contained information.
-- Each question must have between 2 and 4 options.
-- Exactly one option per question must have "isCorrect": true.
+- For MULTIPLE_CHOICE: 2-4 options, at least one isCorrect true. For TRUE_FALSE set correctIsTrue. For SHORT_ANSWER include accurate correctText. For NUMBER_INPUT use sensible correctNumber + rangeProximity (>= 0).
 - Questions should be clear, unambiguous, and appropriate for the topic.
 - Generate 3-8 questions based on the context quality and user request, unless there is a context mismatch; in that case, generate at most 3 questions as described above.`;
 
-export const SYSTEM_PROMPT_FREEFORM = `You are a quiz generator. Given a user's topic or request, generate multiple-choice quiz questions using your knowledge.
+export const SYSTEM_PROMPT_FREEFORM = `You are a quiz generator. Given a user's topic or request, generate quiz questions using your knowledge.
 
-Output ONLY valid JSON in this exact format (no markdown, no code fences):
+Output ONLY valid JSON (no markdown, no code fences). Each question MUST include "type": "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER" | "NUMBER_INPUT" with the same field rules as in the RAG generator (options for MC; correctIsTrue for TF; correctText for SA; correctNumber + rangeProximity for numeric).
+
+Example:
 {
-  "meta": {
-    "mode": "freestyle",
-    "note": "short, user-facing explanation of how the questions were generated"
-  },
+  "meta": { "mode": "freestyle", "note": "short note" },
   "questions": [
-    {
-      "text": "Question text here?",
-      "options": [
-        { "text": "Option A", "isCorrect": false },
-        { "text": "Option B", "isCorrect": true }
-      ]
-    }
+    { "type": "MULTIPLE_CHOICE", "text": "...", "options": [ { "text": "A", "isCorrect": false }, { "text": "B", "isCorrect": true } ] }
   ]
 }
 
 Rules (you MUST follow all of them):
 - Generate questions based on the user's topic or request. Use accurate, educational content.
 - Do NOT mention documents, uploads, attachments, or missing document context unless the user explicitly asked for document-based generation.
-- Only if the user explicitly requests document-based generation (e.g. \"based on this document\", \"from the attached file\", \"from the text above\") but no document content is actually present in the user message, you MUST:
-  - Set meta.note to a short sentence that explains the limitation (for example: \"No document content was provided, so questions were generated from general knowledge about the requested topic.\").
+- Only if the user explicitly requests document-based generation (e.g. "based on this document", "from the attached file", "from the text above") but no document content is actually present in the user message, you MUST:
+  - Set meta.note to a short sentence that explains the limitation (for example: "No document content was provided, so questions were generated from general knowledge about the requested topic.").
   - Fall back to using your own knowledge about any clearly named topic in the prompt. If the topic is not clear, treat the prompt as invalid for quiz generation.
   - Do NOT put any NOTE/disclaimer inside any question text.
-- Each question must have between 2 and 4 options.
-- Exactly one option per question must have "isCorrect": true.
+- For MULTIPLE_CHOICE: 2-4 options, at least one isCorrect true. For TRUE_FALSE include correctIsTrue.
 - Questions should be clear, unambiguous, and appropriate.
 - Generate 3-8 questions.`;
+
+/** Appended to system prompts so the model respects VIP vs standard question types (enforced again in code). */
+export function quizAccountTierAppendix(isVip: boolean): string {
+    if (isVip) {
+        return `
+ACCOUNT TIER: VIP — You may mix MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, and NUMBER_INPUT. Use varied types when it improves the quiz.`;
+    }
+    return `
+ACCOUNT TIER: standard — You MUST output ONLY questions with "type": "MULTIPLE_CHOICE" (options array) or "type": "TRUE_FALSE" (correctIsTrue). Do not use SHORT_ANSWER or NUMBER_INPUT.`;
+}
 

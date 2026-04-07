@@ -1,12 +1,18 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { LoginForm } from "@/features/auth/components/login-form";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+	title: "Sign in",
+	description: "Sign in to Quiztopia to create quizzes, host live games, and manage your library.",
+};
 
 export default async function LoginPage() {
 	const user = await getCurrentUser();
 
 	if (user) {
-		redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/library/quizzes");
+		redirect(user.role === "ADMIN" ? "/admin" : "/library/quizzes");
 	}
 
 	return (

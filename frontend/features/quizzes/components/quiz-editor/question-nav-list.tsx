@@ -62,7 +62,7 @@ export function QuestionNavList({
 	};
 
 	const listContent = (
-		<div className="grow overflow-y-auto py-2 space-y-1">
+		<div className="grow overflow-y-auto py-3 space-y-3">
 			{canDrag ? (
 				<DndContext
 					sensors={sensors}
