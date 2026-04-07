@@ -131,17 +131,6 @@ export function QuestionPreview({
 
 	const isRevealed = revealCorrect;
 
-	const typeHint =
-		variant === "compact" && (qType === "SHORT_ANSWER" || qType === "NUMBER_INPUT")
-			? null
-			: qType === "SHORT_ANSWER"
-				? "Short answer"
-				: qType === "NUMBER_INPUT"
-					? "Number input"
-					: qType === "TRUE_FALSE"
-						? "True / false"
-						: null;
-
 	const compactTypedBlock =
 		variant === "compact"
 			? "w-full rounded-lg border border-gray-700/80 bg-gray-900/40 px-4 py-4"
@@ -154,10 +143,6 @@ export function QuestionPreview({
 					{question?.text?.trim() || "-"}
 				</p>
 			)}
-
-			{typeHint && !isRevealed ? (
-				<p className="text-xs text-indigo-300">{typeHint}</p>
-			) : null}
 
 			{isMcLike(qType) && sortedOptions.length > 0 ? (
 				variant === "compact" ? (

@@ -200,7 +200,6 @@ export type AdminRevenueSubscriptionItem = {
 	id: number;
 	userEmail: string;
 	status: string;
-	stripePriceId: string;
 	currentPeriodEnd: string;
 	cancelAtPeriodEnd: boolean;
 	createdAt: string;
@@ -241,11 +240,9 @@ export type AdminUserDetailResponse = {
 	role: "USER" | "ADMIN";
 	isBlocked: boolean;
 	createdAt: string;
-	lifetimeVip: boolean;
 	stripeCustomerId: string | null;
 	subscription: null | {
 		status: string;
-		stripePriceId: string;
 		currentPeriodEnd: string;
 		cancelAtPeriodEnd: boolean;
 		updatedAt: string;

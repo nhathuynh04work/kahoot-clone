@@ -44,12 +44,17 @@ export default async function AdminUserDetailPage({
 						{ label: "Role", value: user.role },
 						{ label: "Status", value: user.isBlocked ? "BLOCKED" : "ACTIVE" },
 						{ label: "Created", value: formatDateTime(user.createdAt) },
-						{ label: "Lifetime VIP", value: user.lifetimeVip ? "Yes" : "No" },
 						{ label: "Stripe customer", value: user.stripeCustomerId ?? "—" },
 						{
 							label: "Subscription",
 							value: user.subscription
-								? `${user.subscription.status} (${user.subscription.stripePriceId})`
+								? `${user.subscription.status}`
+								: "—",
+						},
+						{
+							label: "Subscription cancel scheduled",
+							value: user.subscription
+								? (user.subscription.cancelAtPeriodEnd ? "YES" : "NO")
 								: "—",
 						},
 						{

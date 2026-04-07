@@ -21,7 +21,7 @@ export function AdminKeyValueGrid({
 				{items.map((it) => (
 					<div key={it.label} className="min-w-0">
 						<dt className="text-xs text-gray-400">{it.label}</dt>
-						<dd className="mt-1 text-sm text-gray-200 break-words">
+						<dd className="mt-1 text-sm text-gray-200 wrap-break-word">
 							{it.value}
 						</dd>
 					</div>

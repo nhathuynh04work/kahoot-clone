@@ -13,18 +13,11 @@ export default async function AdminRevenuePage({
 	searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
 	const sp = (await searchParams) ?? {};
-	const q = typeof sp.q === "string" ? sp.q : undefined;
 
 	const pageRaw = typeof sp.page === "string" ? parseInt(sp.page, 10) : 1;
 	const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
 
-	const pageSizeRaw =
-		typeof sp.pageSize === "string" ? parseInt(sp.pageSize, 10) : 50;
-	const pageSize = Number.isFinite(pageSizeRaw)
-		? Math.min(100, Math.max(1, pageSizeRaw))
-		: 50;
-
-	const revenuePage = await getAdminRevenuePage({ page, pageSize, q });
+	const revenuePage = await getAdminRevenuePage({ page, pageSize: 50 });
 
 	return (
 		<AdminManagementShell

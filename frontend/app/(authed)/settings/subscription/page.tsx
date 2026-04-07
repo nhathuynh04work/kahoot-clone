@@ -14,18 +14,26 @@ export default async function SubscriptionPage() {
 	if (!user) redirect("/auth/login?returnTo=/settings/subscription");
 
 	let initialBilling = null;
+	let initialHistory = null;
 	try {
 		const api = await apiServer();
 		const { data } = await api.get("/billing/status");
 		initialBilling = data;
+		const historyRes = await api.get("/billing/history");
+		initialHistory = historyRes.data;
 	} catch {
 		initialBilling = null;
+		initialHistory = null;
 	}
 
 	return (
 		<div className="p-4 md:p-8">
 			<div className="max-w-6xl mx-auto">
-				<SubscriptionManager user={user} initialBilling={initialBilling} />
+				<SubscriptionManager
+					user={user}
+					initialBilling={initialBilling}
+					initialHistory={initialHistory}
+				/>
 			</div>
 		</div>
 	);

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { UserRole } from "../generated/prisma/client.js";
+import { SubscriptionStatus } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import {
     MAX_DOCUMENTS_FREE,
@@ -12,11 +13,9 @@ import {
 
 export type VipStatus = {
     isVip: boolean;
-    source: "none" | "admin" | "lifetime" | "subscription";
+    source: "none" | "admin" | "subscription";
     currentPeriodEnd?: Date | null;
     cancelAtPeriodEnd?: boolean;
-    stripePriceId?: string | null;
-    planKey?: string | null;
 };
 
 export type EntitlementLimits = {
@@ -28,7 +27,9 @@ export type EntitlementLimits = {
 
 @Injectable()
 export class EntitlementService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+    ) {}
 
     async getVipStatus(userId: number): Promise<VipStatus> {
         const user = await this.prisma.user.findUnique({
@@ -41,14 +42,12 @@ export class EntitlementService {
         if (user.role === UserRole.ADMIN) {
             return { isVip: true, source: "admin" };
         }
-        if (user.lifetimeVip) {
-            return { isVip: true, source: "lifetime" };
-        }
         const sub = user.subscription;
         const now = new Date();
         if (
             sub &&
-            (sub.status === "active" || sub.status === "trialing") &&
+            (sub.status === SubscriptionStatus.active || sub.status === SubscriptionStatus.trialing) &&
+            (!sub.endedAt || sub.endedAt > now) &&
             sub.currentPeriodEnd > now
         ) {
             return {
@@ -56,8 +55,6 @@ export class EntitlementService {
                 source: "subscription",
                 currentPeriodEnd: sub.currentPeriodEnd,
                 cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
-                stripePriceId: sub.stripePriceId,
-                planKey: null,
             };
         }
         return { isVip: false, source: "none" };

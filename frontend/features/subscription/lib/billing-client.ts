@@ -2,12 +2,9 @@
 
 import { apiClient } from "@/lib/apiClient";
 
-export type PriceKey = "monthly" | "quarterly" | "yearly" | "lifetime";
-
-export async function startCheckoutSession(priceKey: PriceKey) {
+export async function startCheckoutSession() {
 	const { data } = await apiClient.post<{ url: string }>(
 		"/billing/checkout-session",
-		{ priceKey },
 	);
 	if (data?.url) window.location.href = data.url;
 }
