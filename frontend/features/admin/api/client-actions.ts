@@ -5,7 +5,7 @@ export async function updateAdminUser(
 	payload: { role?: "USER" | "ADMIN"; isBlocked?: boolean },
 ) {
 	const { data } = await apiClient.patch(
-		`/admin/dashboard/users/${userId}`,
+		`/admin/users/${userId}`,
 		payload,
 	);
 	return data as {

@@ -17,7 +17,7 @@ export default async function AuthedLayout({
 	const user = await getCurrentUser();
 
 	if (!user) redirect("/auth/login");
-	if (user.role === "ADMIN") redirect("/admin/dashboard");
+	if (user.role === "ADMIN") redirect("/admin");
 
 	return (
 		<div

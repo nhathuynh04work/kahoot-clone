@@ -47,7 +47,7 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 	const userId = parseInt((await params).userId, 10);
 	const viewer = await getCurrentUser();
 	const isOwner = !!viewer && viewer.id === userId;
-	if (viewer?.role === "ADMIN") redirect("/admin/dashboard");
+	if (viewer?.role === "ADMIN") redirect("/admin");
 
 	const api = await apiServer();
 	const { data: profile } = await api.get(`/users/${userId}`);
