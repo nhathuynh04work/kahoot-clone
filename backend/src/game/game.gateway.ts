@@ -76,44 +76,36 @@ export class GameGateway
     }
 
     @UseGuards(JwtWsGuard)
-    @SubscribeMessage("hostJoin")
-    async handleHostJoin(
+    @SubscribeMessage("hostCreateLobby")
+    async handleHostCreateLobby(
         @User() user: JwtUser,
-        @MessageBody() payload: { lobbyId: number },
+        @MessageBody() payload: { quizId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        const { lobbyId } = payload;
+        const { quizId } = payload;
 
-        if (client.data.lobbyId === lobbyId) {
-            this.logger.debug(
-                `Duplicate join request for ${lobbyId} blocked (Strict Mode).`,
-            );
-            return { success: true };
-        }
-
-        client.data.isHost = true;
-        client.data.lobbyId = lobbyId;
-
-        let lobby;
         try {
-            lobby = await this.lobbyService.findLobbyById(lobbyId);
+            const lobby = await this.lobbyService.createLobby({
+                quizId,
+                hostId: user.id,
+            });
+
+            client.data.isHost = true;
+            client.data.lobbyId = lobby.id;
+
+            await this.lobbyService.updateLobbyStatus(
+                lobby.id,
+                LobbyStatus.WAITING,
+            );
+
+            await client.join(`${lobby.id}`);
+            this.logger.log(`Host created & joined lobby ${lobby.id}`);
+
+            return { success: true, lobbyId: lobby.id, pin: lobby.pin };
         } catch (error) {
+            this.logger.error(error?.message ?? error);
             return { success: false };
         }
-
-        if (lobby.hostId !== user.id) {
-            return { success: false };
-        }
-
-        if (lobby.status !== LobbyStatus.CREATED) {
-            return { success: false };
-        }
-
-        await this.lobbyService.updateLobbyStatus(lobbyId, LobbyStatus.WAITING);
-
-        await client.join(`${lobbyId}`);
-        this.logger.log(`Host joined lobby ${lobbyId}`);
-        return { success: true, pin: lobby.pin };
     }
 
     @SubscribeMessage("playerJoin")

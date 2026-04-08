@@ -47,7 +47,7 @@ export function GeneratedQuestionsCanvas({
 				className,
 			)}
 		>
-			<div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-700 shrink-0">
+			<div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-700 shrink-0">
 				<div className="flex items-center gap-2 min-w-0">
 					<PanelRight className="w-5 h-5 text-indigo-400 shrink-0" />
 					<h3 className="font-semibold text-white truncate">Generated questions</h3>
@@ -63,7 +63,7 @@ export function GeneratedQuestionsCanvas({
 					</button>
 				)}
 			</div>
-			<div className="flex-1 overflow-y-auto p-3 space-y-3">
+			<div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3">
 				{questions.map((q) => {
 					const added = addedIds.has(q.id);
 					const isEditing = editingQuestionId === q.id;
@@ -73,7 +73,7 @@ export function GeneratedQuestionsCanvas({
 							key={q.id}
 							className="rounded-md border border-gray-700 bg-gray-800 overflow-hidden shadow-sm"
 						>
-							<div className="p-3 border-b border-gray-700 flex items-start justify-between gap-2">
+							<div className="p-2.5 sm:p-3 border-b border-gray-700 flex items-start justify-between gap-2">
 								<div className="min-w-0 flex-1 space-y-1">
 									<p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">
 										{q.type.replace(/_/g, " ")}

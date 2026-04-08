@@ -21,7 +21,7 @@ export function ReportPageEmptyView({
 	return (
 		<>
 			{toolbar}
-			<div className="text-center bg-gray-800/50 p-10 rounded-lg border border-gray-700">
+			<div className="text-center bg-gray-800/50 p-6 sm:p-10 rounded-lg border border-gray-700">
 				<div className="mx-auto w-12 h-12 rounded-xl bg-gray-700/60 border border-gray-700 flex items-center justify-center">
 					<Clock3 className="w-6 h-6 text-indigo-300" />
 				</div>

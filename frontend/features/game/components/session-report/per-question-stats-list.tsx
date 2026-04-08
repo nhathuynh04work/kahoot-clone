@@ -134,7 +134,12 @@ export function PerQuestionStatsList({
 											{r.accuracy}%
 										</p>
 									</div>
-									<p className="mt-0.5 text-sm text-white truncate">{r.text}</p>
+									<p
+										className="mt-0.5 text-sm text-white truncate"
+										title={r.text}
+									>
+										{r.text}
+									</p>
 								</div>
 
 								<div className="shrink-0 text-right tabular-nums">

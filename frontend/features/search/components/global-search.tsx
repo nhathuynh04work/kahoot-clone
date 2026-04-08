@@ -261,3 +261,257 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 	);
 }
 
+export function MobileSearchDialog({
+	isAuthed,
+	open,
+	onOpenChange,
+}: {
+	isAuthed: boolean;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
+	const router = useRouter();
+	const [q, setQ] = useState("");
+	const [debouncedQ] = useDebounce(q, 250);
+	const [selectedQuiz, setSelectedQuiz] = useState<QuizWithQuestions | null>(null);
+
+	const trimmed = debouncedQ.trim();
+	const enabled = open && trimmed.length >= 1;
+
+	const { data, isFetching } = useQuery({
+		queryKey: ["globalSearch", trimmed],
+		queryFn: () => globalSearch({ q: trimmed, limit: 8 }),
+		enabled,
+		staleTime: 20_000,
+	});
+
+	const hasResults = useMemo(() => {
+		if (!enabled) return false;
+		return (
+			(data?.quizzes?.length ?? 0) +
+				(data?.documents?.length ?? 0) +
+				(data?.users?.length ?? 0) >
+			0
+		);
+	}, [data?.documents?.length, data?.quizzes?.length, data?.users?.length, enabled]);
+
+	useEffect(() => {
+		if (!open) return;
+		function onKeyDown(e: KeyboardEvent) {
+			if (e.key === "Escape") onOpenChange(false);
+		}
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [onOpenChange, open]);
+
+	const openQuiz = (quiz: {
+		id: number;
+		title: string | null;
+		coverUrl: string | null;
+		userId: number;
+		authorName: string | null;
+	}) => {
+		onOpenChange(false);
+		setSelectedQuiz(
+			({
+				id: quiz.id,
+				title: quiz.title,
+				coverUrl: quiz.coverUrl,
+				userId: quiz.userId,
+				authorName: quiz.authorName,
+				questions: [],
+			} as unknown) as QuizWithQuestions,
+		);
+	};
+
+	const goToDocumentsSearch = (fileName: string) => {
+		onOpenChange(false);
+		router.push("/library/files");
+	};
+
+	if (!open) {
+		return selectedQuiz ? (
+			<QuizDetailsDrawerContainer
+				quiz={selectedQuiz}
+				onClose={() => setSelectedQuiz(null)}
+				variant={isAuthed ? "default" : "public"}
+				viewerId={undefined}
+			/>
+		) : null;
+	}
+
+	return (
+		<div
+			className="fixed inset-0 z-60 bg-gray-950/70 backdrop-blur-sm"
+			role="dialog"
+			aria-modal="true"
+			aria-label="Search"
+		>
+			<div className="absolute inset-0" onClick={() => onOpenChange(false)} />
+			<div className="relative mx-auto h-dvh w-full max-w-2xl bg-gray-900 border-x border-gray-800 flex flex-col">
+				<div className="px-4 pt-4 pb-3 border-b border-gray-800">
+					<div className="flex items-center gap-3">
+						<div className="relative flex-1">
+							<Search
+								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+								aria-hidden
+							/>
+							<input
+								autoFocus
+								type="search"
+								value={q}
+								onChange={(e) => setQ(e.target.value)}
+								placeholder="Search quizzes, documents, users…"
+								className={cn(
+									"w-full pl-9 pr-10 py-2.5 rounded-xl text-sm text-white placeholder-gray-500",
+									"bg-gray-800/60 border border-gray-700",
+									"focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-transparent",
+									"[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
+								)}
+								aria-label="Search"
+								autoComplete="off"
+							/>
+							{q.trim().length > 0 && (
+								<button
+									type="button"
+									onClick={() => setQ("")}
+									className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors"
+									aria-label="Clear search"
+								>
+									<X className="w-4 h-4" aria-hidden />
+								</button>
+							)}
+						</div>
+						<button
+							type="button"
+							onClick={() => onOpenChange(false)}
+							className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-200 hover:bg-gray-800/70 transition-colors"
+						>
+							Close
+						</button>
+					</div>
+				</div>
+
+				<div className="flex-1 overflow-auto">
+					{!trimmed ? (
+						<div className="px-4 py-10 text-center text-sm text-gray-400">
+							Type to search.
+						</div>
+					) : isFetching ? (
+						<div className="px-4 py-6 text-sm text-gray-400">Searching…</div>
+					) : !hasResults ? (
+						<div className="px-4 py-6 text-sm text-gray-400">No results.</div>
+					) : (
+						<div className="py-2">
+							{(data?.quizzes?.length ?? 0) > 0 && (
+								<div className="py-2">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+										Quizzes
+									</p>
+									<div className="space-y-1">
+										{data!.quizzes.map((quiz) => (
+											<button
+												key={`quiz-${quiz.id}`}
+												type="button"
+												className={cn(
+													"w-full text-left px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"flex items-start gap-3",
+												)}
+												onClick={() => openQuiz(quiz)}
+											>
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
+													<Video className="w-4 h-4 text-emerald-300" aria-hidden />
+												</div>
+												<div className="min-w-0 flex-1">
+													<p className="text-sm text-white truncate">
+														{quiz.title || "Untitled Quiz"}
+													</p>
+													<p className="text-xs text-gray-400 truncate">
+														{quiz.authorName ?? "Unknown"} • {quiz.questionCount}{" "}
+														{quiz.questionCount === 1 ? "question" : "questions"}
+													</p>
+												</div>
+											</button>
+										))}
+									</div>
+								</div>
+							)}
+
+							{(data?.documents?.length ?? 0) > 0 && (
+								<div className="py-2 border-t border-gray-800">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+										Documents
+									</p>
+									<div className="space-y-1">
+										{data!.documents.map((doc) => (
+											<button
+												key={`doc-${doc.id}`}
+												type="button"
+												className={cn(
+													"w-full text-left px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"flex items-start gap-3",
+												)}
+												onClick={() => goToDocumentsSearch(doc.fileName)}
+											>
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
+													<FileText className="w-4 h-4 text-indigo-300" aria-hidden />
+												</div>
+												<div className="min-w-0 flex-1">
+													<p className="text-sm text-white truncate">{doc.fileName}</p>
+													<p className="text-xs text-gray-400 truncate">
+														{formatBytes(doc.fileSize)} • {doc.authorName ?? "Unknown"}
+													</p>
+												</div>
+											</button>
+										))}
+									</div>
+								</div>
+							)}
+
+							{(data?.users?.length ?? 0) > 0 && (
+								<div className="py-2 border-t border-gray-800">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+										Users
+									</p>
+									<div className="space-y-1">
+										{data!.users.map((u) => (
+											<Link
+												key={`user-${u.id}`}
+												href={`/users/${u.id}`}
+												onClick={() => onOpenChange(false)}
+												className={cn(
+													"block px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"flex items-start gap-3",
+												)}
+											>
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
+													<UserIcon className="w-4 h-4 text-gray-200" aria-hidden />
+												</div>
+												<div className="min-w-0 flex-1">
+													<p className="text-sm text-white truncate">
+														{u.name ?? "Unknown user"}
+													</p>
+													<p className="text-xs text-gray-400 truncate">View profile</p>
+												</div>
+											</Link>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+				</div>
+
+				{selectedQuiz ? (
+					<QuizDetailsDrawerContainer
+						quiz={selectedQuiz}
+						onClose={() => setSelectedQuiz(null)}
+						variant={isAuthed ? "default" : "public"}
+						viewerId={undefined}
+					/>
+				) : null}
+			</div>
+		</div>
+	);
+}
+

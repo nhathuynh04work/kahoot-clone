@@ -1,8 +1,15 @@
 "use client";
 
-import HostGamePage from "@/features/game/pages/host-game-page";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function GameHostPage() {
-	return <HostGamePage />;
+	const router = useRouter();
+
+	useEffect(() => {
+		router.replace("/");
+	}, [router]);
+
+	return null;
 }
 

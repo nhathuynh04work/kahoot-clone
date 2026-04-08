@@ -50,9 +50,9 @@ export function ReportToolbar({
 				) : null}
 			</div>
 
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-3 w-full sm:w-auto">
 				<label className="text-xs text-gray-400 hidden sm:block">Sort</label>
-				<div className="w-44">
+				<div className="w-full sm:w-44">
 					<Select
 						value={sort}
 						onValueChange={(v) => onChangeSort(v as ReportSort)}

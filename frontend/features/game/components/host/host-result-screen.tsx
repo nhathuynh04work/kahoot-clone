@@ -63,7 +63,7 @@ export const HostResultScreen = ({
 		const maxCount = Math.max(...values, 1);
 
 		return (
-			<div className="flex flex-col min-h-screen bg-gray-900 p-8">
+			<div className="flex flex-col min-h-dvh bg-gray-900 p-4 sm:p-6 md:p-8">
 				<div className="flex justify-between items-center mb-4">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-gray-800 rounded-lg border border-gray-700">
@@ -79,7 +79,7 @@ export const HostResultScreen = ({
 					</button>
 				</div>
 
-				<div className="flex-1 min-h-[400px] flex items-end justify-center gap-4 md:gap-8 pb-12 px-4 max-w-5xl mx-auto w-full">
+				<div className="flex-1 min-h-[320px] flex items-end justify-center gap-3 sm:gap-4 md:gap-8 pb-10 sm:pb-12 px-0 sm:px-2 md:px-4 max-w-5xl mx-auto w-full">
 					{sortedStats.map(([idxKey, countStr], index) => {
 						const count = parseInt(countStr, 10) || 0;
 						const isCorrect = correctSet.has(parseInt(idxKey, 10));
@@ -89,7 +89,7 @@ export const HostResultScreen = ({
 						return (
 							<div
 								key={idxKey}
-								className="flex flex-col items-center justify-end w-full max-w-[120px] h-[60vh] group">
+								className="flex flex-col items-center justify-end w-full max-w-[72px] sm:max-w-[96px] md:max-w-[120px] h-[min(45vh,420px)] group">
 								<div
 									className={`w-full relative transition-all duration-1000 ease-out rounded-t-sm ${getBarColor(
 										index
@@ -164,7 +164,7 @@ export const HostResultScreen = ({
 	}
 
 	return (
-		<div className="flex flex-col min-h-screen bg-gray-900 p-8">
+		<div className="flex flex-col min-h-dvh bg-gray-900 p-4 sm:p-6 md:p-8">
 			<div className="flex justify-between items-start gap-4 mb-6">
 				<div className="flex items-center gap-3 min-w-0">
 					<div className="p-2 bg-gray-800 rounded-lg border border-gray-700 shrink-0">

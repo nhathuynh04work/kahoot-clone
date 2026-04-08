@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CloudCheck, Loader2, Sparkles } from "lucide-react";
+import { CloudCheck, Loader2, Settings, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { QuizFullDetails } from "@/features/quizzes/types";
@@ -12,9 +12,10 @@ import { AppLogo } from "@/components/layout/app-logo";
 
 interface HeaderProps {
 	isSaving: boolean;
+	onAiPanelOpenChange?: (open: boolean) => void;
 }
 
-export function Header({ isSaving }: HeaderProps) {
+export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 	const { watch, control } = useFormContext<QuizFullDetails>();
 	const title = watch("title");
 	const questions = watch("questions") ?? [];
@@ -108,7 +109,7 @@ export function Header({ isSaving }: HeaderProps) {
 					<AppLogo />
 				</Link>
 
-				<div className="flex-1 min-w-0 flex justify-center">
+				<div className="hidden md:flex flex-1 min-w-0 justify-center">
 					<div className="w-full max-w-md border border-gray-700 bg-gray-900 rounded-lg px-4 py-2 flex items-center gap-3 hover:border-gray-500 transition-colors">
 						<button
 							onClick={openTitleModal}
@@ -128,14 +129,26 @@ export function Header({ isSaving }: HeaderProps) {
 
 				<div className="ml-auto flex items-center gap-2 shrink-0">
 					<button
-						onClick={() => setIsAiPanelOpen(true)}
+						type="button"
+						onClick={() => setIsModalOpen(true)}
+						className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700/70 transition-colors md:hidden"
+						aria-label="Quiz settings"
+					>
+						<Settings className="w-5 h-5" aria-hidden />
+					</button>
+
+					<button
+						onClick={() => {
+							setIsAiPanelOpen(true);
+							onAiPanelOpenChange?.(true);
+						}}
 						className="p-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-gray-700/70 transition-colors"
 						aria-label="Generate with AI">
 						<Sparkles className="w-5 h-5" />
 					</button>
 
 					<div
-						className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400"
+						className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-gray-400"
 						aria-label={isSaving ? "Saving" : "Saved"}>
 						{isSaving ? (
 							<Loader2 className="w-4 h-4 animate-spin" />
@@ -158,7 +171,10 @@ export function Header({ isSaving }: HeaderProps) {
 
 			{isAiPanelOpen && (
 				<AiChatbotPanel
-					onClose={() => setIsAiPanelOpen(false)}
+					onClose={() => {
+						setIsAiPanelOpen(false);
+						onAiPanelOpenChange?.(false);
+					}}
 					quizId={watch("id")}
 					onAddQuestion={handleAddQuestion}
 				/>

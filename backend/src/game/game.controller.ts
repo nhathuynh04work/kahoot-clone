@@ -84,15 +84,6 @@ export class GameController {
         return lobby;
     }
 
-    @Post("lobby")
-    @UseGuards(JwtHttpGuard)
-    async createLobby(@User() user: JwtUser, @Body() body: { quizId: number }) {
-        return this.lobbyService.createLobby({
-            quizId: body.quizId,
-            hostId: user.id,
-        });
-    }
-
     @Post("player")
     async registerPlayer(@Body() body: { pin: string; nickname: string }) {
         const { pin, nickname } = body;

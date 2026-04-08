@@ -1,6 +1,5 @@
 "use client";
 
-import { apiClient } from "@/lib/apiClient";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -10,14 +9,10 @@ export function useCreateLobby(quizId: number) {
 
 	return useMutation({
 		mutationFn: async () => {
-			const { data } = await apiClient.post("/game/lobby", {
-				quizId,
-			});
-
-			return data;
+			return { quizId };
 		},
-		onSuccess: (lobby) => {
-			router.push(`/game/host/${lobby.id}`);
+		onSuccess: () => {
+			router.push(`/game/host?quizId=${quizId}`);
 		},
 		onError: (error) => {
 			toast.error(error.message);

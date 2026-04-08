@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ReportsPage() {
 	return (
-		<div className="p-4 md:p-8">
+		<div className="p-4 sm:p-6 md:p-8">
 			<div className="max-w-6xl mx-auto">
 				<ReportPageClient />
 			</div>

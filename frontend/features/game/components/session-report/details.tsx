@@ -69,7 +69,7 @@ export function SessionReportDetails({
 			)}
 
 			<div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
-				<div className="flex items-start justify-between gap-4">
+				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0">
 						<div className="flex items-center gap-2">
 							<StatusIcon className={cn("w-5 h-5", statusTone)} />
@@ -136,7 +136,7 @@ export function SessionReportDetails({
 
 			<SessionStatTiles report={report} />
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
 				<PerQuestionAccuracyChart report={report} limit={10} />
 				<LeaderboardList report={report} limit={10} />
 			</div>

@@ -94,7 +94,7 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 						onUpdateQuestion={handleUpdateQuestion}
 						addedIds={currentAddedIds}
 						onClose={() => setOpenCanvasMessageId(null)}
-						className="w-[380px] shrink-0"
+						className="fixed inset-0 z-50 md:static md:inset-auto md:z-auto md:w-[380px] md:shrink-0 shadow-2xl md:shadow-none"
 					/>
 				)}
 			</div>

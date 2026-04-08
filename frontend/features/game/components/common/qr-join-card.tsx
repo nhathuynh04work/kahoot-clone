@@ -24,7 +24,7 @@ export function QrJoinCard({
 	overlay?: boolean;
 	expanded?: boolean;
 	onExpandedChange?: (expanded: boolean) => void;
-	size?: number;
+	size?: number | "responsive";
 	className?: string;
 }) {
 	const joinUrl = useMemo(() => {
@@ -45,7 +45,8 @@ export function QrJoinCard({
 		let cancelled = false;
 		async function run() {
 			if (!joinUrl) return;
-			const qrWidth = Math.max(360, Math.round(size * 3));
+			const baseSize = typeof size === "number" ? size : 360;
+			const qrWidth = Math.max(360, Math.round(baseSize * 3));
 			const url = await QRCode.toDataURL(joinUrl, {
 				margin: 1,
 				width: qrWidth,
@@ -95,7 +96,7 @@ export function QrJoinCard({
 						<button
 							type="button"
 							onClick={() => setExpanded(true)}
-							className="absolute top-2 right-2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-md border border-white/10 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+							className="absolute top-2 right-2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-md border border-white/10 bg-black/60 text-white transition-opacity hover:bg-black/70 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 							aria-label="Expand QR and PIN"
 						>
 							<Expand className="h-4 w-4" aria-hidden />
@@ -105,13 +106,29 @@ export function QrJoinCard({
 						<img
 							src={dataUrl}
 							alt="QR code to join"
-							className="bg-white"
-							style={{ width: size, height: size }}
+							className={
+								typeof size === "number"
+									? "bg-white"
+									: "bg-white w-[min(80vw,360px)] h-[min(80vw,360px)]"
+							}
+							style={
+								typeof size === "number"
+									? { width: size, height: size }
+									: undefined
+							}
 						/>
 					) : (
 						<div
-							className="rounded-lg bg-white/5 animate-pulse"
-							style={{ width: size, height: size }}
+							className={
+								typeof size === "number"
+									? "rounded-lg bg-white/5 animate-pulse"
+									: "rounded-lg bg-white/5 animate-pulse w-[min(80vw,360px)] h-[min(80vw,360px)]"
+							}
+							style={
+								typeof size === "number"
+									? { width: size, height: size }
+									: undefined
+							}
 						/>
 					)}
 				</div>
@@ -167,10 +184,10 @@ export function QrJoinCard({
 									<img
 										src={dataUrl}
 										alt="QR code to join"
-										className="h-[280px] w-[280px] md:h-[360px] md:w-[360px] bg-white"
+										className="bg-white w-[min(80vw,360px)] h-[min(80vw,360px)]"
 									/>
 								) : (
-									<div className="h-[280px] w-[280px] md:h-[360px] md:w-[360px] bg-white/10 animate-pulse" />
+									<div className="bg-white/10 animate-pulse w-[min(80vw,360px)] h-[min(80vw,360px)]" />
 								)}
 							</div>
 						</div>

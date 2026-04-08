@@ -14,27 +14,27 @@ export const HostFinishedScreen = ({
 	const top3 = leaderboard.slice(0, 3);
 
 	return (
-		<div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 overflow-hidden">
-			<div className="text-center mb-12 animate-in fade-in slide-in-from-top-10 duration-700">
-				<h1 className="text-5xl font-black text-white mb-4 tracking-tight">
+		<div className="min-h-dvh bg-gray-900 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
+			<div className="text-center mb-8 sm:mb-12 animate-in fade-in slide-in-from-top-10 duration-700">
+				<h1 className="text-4xl sm:text-5xl font-black text-white mb-3 sm:mb-4 tracking-tight">
 					Podium
 				</h1>
-				<p className="text-gray-400 text-lg">
+				<p className="text-gray-400 text-base sm:text-lg">
 					Congratulations to the winners!
 				</p>
 			</div>
 
 			{/* Podium Container */}
-			<div className="flex items-end justify-center gap-4 md:gap-8 h-[50vh] w-full max-w-4xl px-4 border-b border-gray-700 pb-px">
+			<div className="flex items-end justify-center gap-3 sm:gap-4 md:gap-8 h-[min(45vh,420px)] w-full max-w-4xl px-2 sm:px-4 border-b border-gray-700 pb-px">
 				{/* 2nd Place */}
 				<div className="flex flex-col items-center w-1/3 h-2/3 animate-in slide-in-from-bottom-full duration-1000 delay-300 fill-mode-forwards ease-out">
 					{top3[1] && (
 						<>
 							<div className="mb-4 text-center animate-in fade-in duration-500 delay-1000">
-								<div className="font-bold text-white text-xl md:text-2xl truncate max-w-[150px]">
+								<div className="font-bold text-white text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
 									{top3[1].nickname}
 								</div>
-								<div className="text-gray-400 font-mono">
+								<div className="text-gray-400 font-mono text-sm sm:text-base">
 									{top3[1].points} pts
 								</div>
 							</div>
@@ -53,11 +53,11 @@ export const HostFinishedScreen = ({
 					{top3[0] && (
 						<>
 							<div className="mb-4 text-center animate-in fade-in zoom-in duration-500 delay-1000">
-								<Trophy className="text-yellow-400 w-16 h-16 mx-auto mb-2 drop-shadow-lg animate-bounce" />
-								<div className="font-black text-yellow-400 text-2xl md:text-4xl truncate max-w-[200px]">
+								<Trophy className="text-yellow-400 w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-2 drop-shadow-lg animate-bounce" />
+								<div className="font-black text-yellow-400 text-xl sm:text-2xl md:text-4xl truncate max-w-[160px] sm:max-w-[200px]">
 									{top3[0].nickname}
 								</div>
-								<div className="text-yellow-500/80 font-mono text-lg font-bold">
+								<div className="text-yellow-500/80 font-mono text-base sm:text-lg font-bold">
 									{top3[0].points} pts
 								</div>
 							</div>
@@ -75,10 +75,10 @@ export const HostFinishedScreen = ({
 					{top3[2] && (
 						<>
 							<div className="mb-4 text-center animate-in fade-in duration-500 delay-1000">
-								<div className="font-bold text-white text-xl md:text-2xl truncate max-w-[150px]">
+								<div className="font-bold text-white text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
 									{top3[2].nickname}
 								</div>
-								<div className="text-gray-400 font-mono">
+								<div className="text-gray-400 font-mono text-sm sm:text-base">
 									{top3[2].points} pts
 								</div>
 							</div>

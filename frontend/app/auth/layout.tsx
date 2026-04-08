@@ -15,8 +15,8 @@ export default function AuthLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="min-h-screen bg-gray-950 text-white">
-			<div className="grid min-h-screen grid-cols-1 items-stretch gap-0 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-gray-800/70">
+		<div className="min-h-dvh bg-gray-950 text-white">
+			<div className="grid min-h-dvh grid-cols-1 items-stretch gap-0 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-gray-800/70">
 				{/* Left panel */}
 				<div className="relative hidden p-10 lg:flex lg:flex-col lg:bg-gray-800/30">
 					<div className="relative">
@@ -55,7 +55,7 @@ export default function AuthLayout({
 				</div>
 
 				{/* Right panel */}
-				<div className="flex items-center justify-center p-10 lg:bg-gray-900/20">
+				<div className="flex items-center justify-center p-6 sm:p-10 lg:bg-gray-900/20">
 					<div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
 						{children}
 						<p className="mt-6 text-center text-xs text-gray-500">

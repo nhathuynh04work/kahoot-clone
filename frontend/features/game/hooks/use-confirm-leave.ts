@@ -10,6 +10,8 @@ export function useConfirmLeave() {
 			}
 
 			e.preventDefault();
+			e.returnValue = "";
+			return "";
 		};
 
 		const handlePopState = () => {

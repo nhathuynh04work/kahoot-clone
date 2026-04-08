@@ -29,7 +29,7 @@ export default async function ReportDetailPage({ params }: ReportDetailParams) {
 
 	if (!Number.isFinite(id)) {
 		return (
-			<div className="p-4 md:p-8">
+			<div className="p-4 sm:p-6 md:p-8">
 				<div className="max-w-6xl mx-auto">
 					<p className="text-red-400">Invalid session id.</p>
 				</div>
@@ -40,7 +40,7 @@ export default async function ReportDetailPage({ params }: ReportDetailParams) {
 	const report = await getSessionReport(id).catch(() => null);
 	if (!report) {
 		return (
-			<div className="p-4 md:p-8">
+			<div className="p-4 sm:p-6 md:p-8">
 				<div className="max-w-6xl mx-auto">
 					<p className="text-red-400">Failed to load session.</p>
 				</div>
@@ -49,7 +49,7 @@ export default async function ReportDetailPage({ params }: ReportDetailParams) {
 	}
 
 	return (
-		<div className="p-4 md:p-8">
+		<div className="p-4 sm:p-6 md:p-8">
 			<div className="max-w-6xl mx-auto">
 				<SessionReportDetails report={report} />
 			</div>

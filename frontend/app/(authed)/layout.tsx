@@ -1,4 +1,5 @@
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { getCurrentUser } from "@/features/auth/api/server-actions";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -21,14 +22,17 @@ export default async function AuthedLayout({
 
 	return (
 		<div
-			className="h-dvh overflow-hidden bg-gray-900 flex flex-col"
+			className="min-h-dvh overflow-hidden bg-gray-900 flex flex-col"
 			style={{ ["--app-header-height" as string]: "58px" }}
 		>
 			<TopBar user={user} />
 			<div className="flex flex-1 min-h-0">
 				<DashboardSidebar user={user} />
-				<main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+				<main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
+					{children}
+				</main>
 			</div>
+			<MobileNav user={user} />
 		</div>
 	);
 }

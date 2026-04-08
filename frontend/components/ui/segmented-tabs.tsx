@@ -23,7 +23,7 @@ export function SegmentedTabs<T extends string>({
 	return (
 		<div
 			className={cn(
-				"inline-flex rounded-xl border border-gray-700 bg-gray-900/40",
+				"max-w-full overflow-x-auto inline-flex rounded-xl border border-gray-700 bg-gray-900/40",
 				stretch && "flex w-full",
 				className,
 			)}
@@ -42,7 +42,7 @@ export function SegmentedTabs<T extends string>({
 						aria-selected={isActive}
 						onClick={() => onChange(tab.id)}
 						className={cn(
-							"relative min-w-[88px] px-3 py-2 text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap",
+							"relative min-w-[72px] sm:min-w-[88px] px-3 py-2 text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap",
 							idx !== 0 && "border-l border-gray-700",
 							isFirst && "rounded-l-xl",
 							isLast && "rounded-r-xl",

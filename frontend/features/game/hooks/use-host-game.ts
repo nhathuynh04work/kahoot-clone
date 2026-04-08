@@ -8,7 +8,7 @@ import {
 } from "../types";
 import { useConfirmLeave } from "./use-confirm-leave";
 import { useSocketEvent } from "../context/socket-context";
-import { useHostJoin } from "./use-join-lobby";
+import { useHostCreateLobby } from "./use-host-create-lobby";
 import { socket } from "../lib/socket";
 import { toast } from "sonner";
 
@@ -130,12 +130,12 @@ const hostReducer = (
 	}
 };
 
-export const useHostGame = (lobbyId: number) => {
+export const useHostGame = (quizId: number) => {
 	const [state, dispatch] = useReducer(hostReducer, initialState);
 
 	useConfirmLeave();
 
-	useHostJoin(lobbyId, (pin: string) => {
+	useHostCreateLobby(quizId, ({ pin }) => {
 		dispatch({ type: "SET_PIN", payload: pin });
 	});
 

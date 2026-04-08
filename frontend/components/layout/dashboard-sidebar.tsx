@@ -29,7 +29,7 @@ export function DashboardSidebar({ user }: { user: User }) {
 	const router = useRouter();
 
 	return (
-		<aside className="w-[76px] shrink-0 border-r border-gray-700 bg-gray-800/50 flex flex-col sticky top-[58px] z-40 self-stretch">
+		<aside className="hidden md:flex w-[76px] shrink-0 border-r border-gray-700 bg-gray-800/50 flex-col sticky top-[58px] z-40 self-stretch">
 			<nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-1" aria-label="Main navigation">
 				{navItems.map(({ href, label, icon: Icon }) => {
 					const isActive =

@@ -98,13 +98,13 @@ export function QuizCard({
 					</div>
 				)}
 
-				{/* Hover overlay actions */}
 				<div
 					className={[
-						"absolute inset-0 z-10 p-4 flex flex-col justify-center items-stretch gap-2",
+						"hidden sm:flex absolute inset-0 z-10 p-4 flex-col justify-center items-stretch gap-2",
 						"bg-gray-950/50 backdrop-blur-sm",
 						"opacity-0 pointer-events-none transition-opacity duration-150",
 						"group-hover:opacity-100 group-hover:pointer-events-auto",
+						"group-focus-within:opacity-100 group-focus-within:pointer-events-auto",
 					].join(" ")}>
 					<button
 						type="button"
@@ -113,7 +113,7 @@ export function QuizCard({
 							e.stopPropagation();
 							createLobby();
 						}}
-						className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-md shadow-indigo-600/10 ${
+						className={`w-full min-h-11 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-md shadow-indigo-600/10 ${
 							isPending
 								? "opacity-50 cursor-not-allowed"
 								: "bg-indigo-600 hover:bg-indigo-500 text-white"
@@ -134,7 +134,7 @@ export function QuizCard({
 							onClick={(e) => {
 								e.stopPropagation();
 							}}
-							className="w-full flex items-center justify-center px-3 py-2 rounded-lg border border-gray-600 bg-gray-900/20 hover:bg-gray-900/40 text-sm font-semibold transition-colors text-gray-200 hover:text-white">
+							className="w-full min-h-11 flex items-center justify-center px-3 py-2 rounded-lg border border-gray-600 bg-gray-900/20 hover:bg-gray-900/40 text-sm font-semibold transition-colors text-gray-200 hover:text-white">
 							Edit
 						</Link>
 					)}
@@ -148,7 +148,7 @@ export function QuizCard({
 								toggleSave();
 							}}
 							className={[
-								"w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors border",
+								"w-full min-h-11 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors border",
 								isSaved
 									? "bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-500/30"
 									: "bg-gray-900/20 hover:bg-gray-900/40 text-gray-200 border-gray-700",

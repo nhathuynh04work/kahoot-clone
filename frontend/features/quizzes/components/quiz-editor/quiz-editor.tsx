@@ -15,6 +15,7 @@ import { QuestionSettingsSidebar } from "./question-settings-sidebar";
 import { Header } from "./header";
 import { useUpdateQuiz } from "@/features/quizzes/hooks/use-quiz-mutations";
 import { toast } from "sonner";
+import { MobileQuestionBar } from "./mobile-question-bar";
 
 interface QuizEditorProps {
 	quiz: QuizFullDetails;
@@ -66,6 +67,7 @@ export function QuizEditor({
 		quiz.questions[0]?.id
 	);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(true);
+	const [isMobileAiPanelOpen, setIsMobileAiPanelOpen] = useState(false);
 
 	const questions = useWatch({ control, name: "questions" }) || [];
 
@@ -189,11 +191,14 @@ export function QuizEditor({
 
 	return (
 		<FormProvider {...methods}>
-			<div className="flex flex-col h-screen bg-gray-900 text-white">
-				<Header isSaving={isSaving} />
+			<div className="flex flex-col h-dvh bg-gray-900 text-white">
+				<Header
+					isSaving={isSaving}
+					onAiPanelOpenChange={setIsMobileAiPanelOpen}
+				/>
 
 				<div className="flex-1 grid grid-cols-6 grid-rows-1 overflow-hidden">
-					<div className="col-span-1 flex flex-col border-r border-gray-700 bg-gray-800/50">
+					<div className="hidden md:flex col-span-1 flex-col border-r border-gray-700 bg-gray-800/50">
 						<QuestionNavList
 							questions={questions}
 							activeQuestionId={activeQuestionId}
@@ -203,28 +208,46 @@ export function QuizEditor({
 						/>
 					</div>
 
-					<div className="col-span-5 flex overflow-hidden">
-						<div className="flex-1 min-h-0 overflow-y-auto">
+					<div className="col-span-6 md:col-span-5 flex overflow-hidden">
+						<div className="flex-1 min-h-0 overflow-y-auto pb-24 md:pb-0">
 							{activeQuestion && (
-								<QuestionEditor questionIndex={activeIndex} />
+								<QuestionEditor
+									questionIndex={activeIndex}
+									canDelete={questions.length > 1}
+									onDelete={handleDeleteQuestion}
+									onDuplicate={handleDuplicateQuestion}
+									canUseVipQuestionTypes={canUseVipQuestionTypes}
+								/>
 							)}
 						</div>
 
 						{activeQuestion && (
-							<QuestionSettingsSidebar
-								key={activeIndex}
-								questionIndex={activeIndex}
-								isOpen={isSettingsOpen}
-								onToggle={() =>
-									setIsSettingsOpen(!isSettingsOpen)
-								}
-								onDelete={handleDeleteQuestion}
-								onDuplicate={handleDuplicateQuestion}
-								canDelete={questions.length > 1}
-								canUseVipQuestionTypes={canUseVipQuestionTypes}
-							/>
+							<div className="hidden md:block">
+								<QuestionSettingsSidebar
+									key={activeIndex}
+									questionIndex={activeIndex}
+									isOpen={isSettingsOpen}
+									onToggle={() => setIsSettingsOpen(!isSettingsOpen)}
+									onDelete={handleDeleteQuestion}
+									onDuplicate={handleDuplicateQuestion}
+									canDelete={questions.length > 1}
+									canUseVipQuestionTypes={canUseVipQuestionTypes}
+									variant="desktopSidebar"
+								/>
+							</div>
 						)}
 					</div>
+				</div>
+
+				{/* Mobile: bottom sticky question bar */}
+				<div className="md:hidden">
+					<MobileQuestionBar
+						questions={questions}
+						activeQuestionId={activeQuestionId}
+						onSelectQuestion={setActiveQuestionId}
+						onAddQuestion={handleAddQuestion}
+						hidden={isMobileAiPanelOpen}
+					/>
 				</div>
 			</div>
 		</FormProvider>
