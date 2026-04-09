@@ -82,13 +82,10 @@ model AiQuizChatSession {
   lastActivityAt DateTime @default(now())
 
   quizId   Int
-  userId   Int
   quiz     Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages AiQuizChatMessage[]
 
-  @@unique([quizId, userId])
-  @@index([userId])
+  @@unique([quizId])
   @@index([lastActivityAt])
 }
 
@@ -134,7 +131,6 @@ model GameLobby {
   host            User                      @relation(fields: [hostId], references: [id])
   quiz            Quiz                      @relation(fields: [quizId], references: [id])
   report          GameLobbyReport?
-  questionReports GameLobbyQuestionReport[]
 }
 
 model GameLobbyQuestionReport {
@@ -145,14 +141,11 @@ model GameLobbyQuestionReport {
   correctRate    Float
   breakdownJson  Json?
 
-  lobbyId    Int
   reportId   Int
   questionId Int
   report     GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  lobby      GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
 
   @@unique([reportId, questionId])
-  @@index([lobbyId])
 }
 
 model GameLobbyReport {
@@ -247,25 +240,20 @@ model Save {
   @@index([userId, targetType, createdAt])
 }
 
-model StripeInvoice {
-  id               Int       @id @default(autoincrement())
-  stripeInvoiceId  String    @unique
-  status           String?
-  totalCents       Int?
-  amountPaidCents  Int?
-  currency         String    @default("usd")
-  hostedInvoiceUrl String?
-  invoicePdfUrl    String?
-  paidAt           DateTime?
-  occurredAt       DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+model Invoice {
+  id          Int      @id @default(autoincrement())
+  externalId  String   @unique
+  externalUrl String?
+  amountCents Int
+  currency    String   @default("usd")
+  occurredAt  DateTime
+  createdAt   DateTime @default(now())
 
   userId Int?
   user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([userId])
-  @@index([paidAt])
+  @@index([userId, occurredAt])
+  @@index([occurredAt])
 }
 
 model Subscription {
@@ -293,11 +281,10 @@ model User {
   stripeCustomerId String?  @unique
   createdAt        DateTime @default(now())
 
-  aiQuizChatSessions AiQuizChatSession[]
   documents          Document[]
   lobbies            GameLobby[]
   quizzes            Quiz[]
   saves              Save[]
-  stripeInvoices     StripeInvoice[]
+  invoices           Invoice[]
   subscription       Subscription?
 }

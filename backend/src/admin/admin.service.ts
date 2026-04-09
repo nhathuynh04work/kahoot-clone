@@ -243,18 +243,16 @@ export class AdminService {
             `,
             this.prisma.$queryRaw<{ day: Date; amountCents: bigint }[]>`
                 SELECT
-                    date_trunc('day', COALESCE("occurredAt", "paidAt", "createdAt")) AS day,
-                    SUM(COALESCE("amountPaidCents", 0))::bigint AS "amountCents"
-                FROM "StripeInvoice"
+                    date_trunc('day', "occurredAt") AS day,
+                    SUM("amountCents")::bigint AS "amountCents"
+                FROM "Invoice"
                 WHERE
-                    COALESCE("occurredAt", "paidAt") >= NOW() - (${rangeDays} * INTERVAL '1 day')
-                    AND "amountPaidCents" IS NOT NULL
+                    "occurredAt" >= NOW() - (${rangeDays} * INTERVAL '1 day')
                 GROUP BY day
                 ORDER BY day ASC
             `,
-            this.prisma.stripeInvoice.aggregate({
-                where: { amountPaidCents: { not: null } } as any,
-                _sum: { amountPaidCents: true },
+            this.prisma.invoice.aggregate({
+                _sum: { amountCents: true },
             }),
             this.prisma.subscription.count({
                 where: {
@@ -329,7 +327,7 @@ export class AdminService {
                 users: usersTotal,
                 quizzes: quizzesTotal,
                 documents: documentsTotal,
-                revenueCentsAllTime: revenueSumRow._sum.amountPaidCents ?? 0,
+                revenueCentsAllTime: revenueSumRow._sum.amountCents ?? 0,
                 activeSubscriptions,
             },
             charts,
@@ -895,29 +893,29 @@ export class AdminService {
         const { page, pageSize } = options;
         const q = options.q?.trim();
 
-        const where: Prisma.StripeInvoiceWhereInput = q
+        const where: Prisma.InvoiceWhereInput = q
             ? {
                   OR: [
-                      { stripeInvoiceId: { contains: q, mode: "insensitive" } },
+                      { externalId: { contains: q, mode: "insensitive" } },
                       { user: { email: { contains: q, mode: "insensitive" } } },
                   ],
               }
             : {};
 
-        const totalItems = await this.prisma.stripeInvoice.count({ where });
+        const totalItems = await this.prisma.invoice.count({ where });
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-        const ledger = await this.prisma.stripeInvoice.findMany({
+        const ledger = await this.prisma.invoice.findMany({
             where,
             select: {
                 id: true,
-                stripeInvoiceId: true,
-                amountPaidCents: true,
+                externalId: true,
+                amountCents: true,
                 currency: true,
                 occurredAt: true,
                 user: { select: { email: true } },
             } as any,
-            orderBy: [{ occurredAt: "desc" }, { paidAt: "desc" }, { createdAt: "desc" }] as any,
+            orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }] as any,
             skip: (page - 1) * pageSize,
             take: pageSize,
         });
@@ -940,10 +938,10 @@ export class AdminService {
             ledger: {
                 items: (ledger as any[]).map((e) => ({
                     id: e.id,
-                    stripeInvoiceId: e.stripeInvoiceId ?? "—",
-                    amountCents: e.amountPaidCents ?? 0,
+                    stripeInvoiceId: e.externalId ?? "—",
+                    amountCents: e.amountCents ?? 0,
                     currency: e.currency,
-                    occurredAt: (e.occurredAt ?? e.paidAt ?? e.createdAt).toISOString(),
+                    occurredAt: (e.occurredAt ?? e.createdAt).toISOString(),
                     userEmail: e.user?.email ?? null,
                 })),
                 page,

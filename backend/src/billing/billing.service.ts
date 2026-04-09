@@ -176,34 +176,26 @@ export class BillingService {
     async getBillingHistory(userId: number) {
         await this.syncSubscriptionFromStripeForUser(userId);
 
-        const invoices = await this.prisma.stripeInvoice.findMany({
+        const invoices = await this.prisma.invoice.findMany({
             where: { userId },
             orderBy: { occurredAt: "desc" },
             take: 50,
             select: {
-                stripeInvoiceId: true,
-                status: true,
-                totalCents: true,
-                amountPaidCents: true,
+                externalId: true,
+                externalUrl: true,
+                amountCents: true,
                 currency: true,
-                hostedInvoiceUrl: true,
-                invoicePdfUrl: true,
-                paidAt: true,
                 occurredAt: true,
             } as any,
         });
 
         return {
             invoices: (invoices as any[]).map((i) => ({
-                stripeInvoiceId: i.stripeInvoiceId,
-                status: i.status ?? null,
-                totalCents: i.totalCents ?? null,
-                amountPaidCents: i.amountPaidCents ?? null,
+                externalId: i.externalId,
+                amountCents: i.amountCents,
                 currency: i.currency,
-                hostedInvoiceUrl: i.hostedInvoiceUrl ?? null,
-                invoicePdfUrl: i.invoicePdfUrl ?? null,
-                paidAt: i.paidAt ? i.paidAt.toISOString() : null,
-                occurredAt: i.occurredAt ? i.occurredAt.toISOString() : null,
+                externalUrl: i.externalUrl ?? null,
+                occurredAt: i.occurredAt.toISOString(),
             })),
             // Kept for backwards-compat with older clients; ledger has been removed.
             ledger: [],
@@ -372,33 +364,24 @@ export class BillingService {
             ? new Date(invoice.status_transitions.paid_at * 1000)
             : new Date();
 
-        const stripeChargeId =
-            typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id;
+        const externalUrl = invoice.hosted_invoice_url ?? invoice.invoice_pdf ?? null;
 
-        await this.prisma.stripeInvoice.upsert({
-            where: { stripeInvoiceId: invoice.id },
+        await this.prisma.invoice.upsert({
+            where: { externalId: invoice.id },
             create: {
-                stripeInvoiceId: invoice.id,
+                externalId: invoice.id,
                 userId,
-                status: invoice.status ?? null,
-                totalCents: invoice.total ?? null,
-                amountPaidCents: invoice.amount_paid ?? null,
                 currency: invoice.currency || "usd",
-                hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
-                invoicePdfUrl: invoice.invoice_pdf ?? null,
-                paidAt,
+                amountCents: invoice.amount_paid,
                 occurredAt: paidAt,
+                externalUrl,
             },
             update: {
                 userId,
-                status: invoice.status ?? null,
-                totalCents: invoice.total ?? null,
-                amountPaidCents: invoice.amount_paid ?? null,
                 currency: invoice.currency || "usd",
-                hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
-                invoicePdfUrl: invoice.invoice_pdf ?? null,
-                paidAt,
+                amountCents: invoice.amount_paid,
                 occurredAt: paidAt,
+                externalUrl,
             },
         });
     }

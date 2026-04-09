@@ -25,7 +25,7 @@ export class AiQuizChatService {
         await this.assertQuizOwnedByUser(userId, quizId);
 
         const session = await this.prisma.aiQuizChatSession.findUnique({
-            where: { quizId_userId: { quizId, userId } },
+            where: { quizId },
         });
         if (!session) return [];
 
@@ -73,9 +73,9 @@ export class AiQuizChatService {
 
         await this.prisma.$transaction(async (tx) => {
             const session = await tx.aiQuizChatSession.upsert({
-                where: { quizId_userId: { quizId, userId } },
+                where: { quizId },
                 update: { lastActivityAt: new Date() },
-                create: { quizId, userId },
+                create: { quizId },
                 select: { id: true },
             });
 

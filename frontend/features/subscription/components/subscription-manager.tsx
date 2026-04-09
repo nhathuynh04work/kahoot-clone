@@ -30,15 +30,11 @@ export type BillingStatus = {
 
 export type BillingHistory = {
 	invoices: Array<{
-		stripeInvoiceId: string;
-		status: string | null;
-		totalCents: number | null;
-		amountPaidCents: number | null;
+		externalId: string;
+		amountCents: number;
 		currency: string;
-		hostedInvoiceUrl: string | null;
-		invoicePdfUrl: string | null;
-		paidAt: string | null;
-		occurredAt: string | null;
+		externalUrl: string | null;
+		occurredAt: string;
 	}>;
 };
 
@@ -368,11 +364,10 @@ export function SubscriptionManager({
 							<tbody className="text-gray-200">
 								{/* Invoices */}
 								{invoices.slice(0, 10).map((i) => {
-									const when = i.paidAt ?? i.occurredAt;
-									const date = when ? new Date(when) : null;
-									const amount = i.amountPaidCents ?? i.totalCents;
+									const date = i.occurredAt ? new Date(i.occurredAt) : null;
+									const amount = i.amountCents;
 									return (
-										<tr key={`inv:${i.stripeInvoiceId}`} className="border-t border-gray-800">
+										<tr key={`inv:${i.externalId}`} className="border-t border-gray-800">
 											<td className="py-3 pr-4 whitespace-nowrap">
 												{date ? date.toLocaleDateString() : "—"}
 											</td>
@@ -380,26 +375,17 @@ export function SubscriptionManager({
 												{amount != null ? `$${(amount / 100).toFixed(2)}` : "—"}
 											</td>
 											<td className="py-3 pr-4 whitespace-nowrap">
-												{i.status ?? "—"}
+												{"paid"}
 											</td>
 											<td className="py-3 pr-4 whitespace-nowrap">
-												{i.hostedInvoiceUrl ? (
+												{i.externalUrl ? (
 													<a
-														href={i.hostedInvoiceUrl}
+														href={i.externalUrl}
 														target="_blank"
 														rel="noreferrer"
 														className="text-indigo-300 hover:text-indigo-200 font-semibold"
 													>
 														View
-													</a>
-												) : i.invoicePdfUrl ? (
-													<a
-														href={i.invoicePdfUrl}
-														target="_blank"
-														rel="noreferrer"
-														className="text-indigo-300 hover:text-indigo-200 font-semibold"
-													>
-														PDF
 													</a>
 												) : (
 													"—"

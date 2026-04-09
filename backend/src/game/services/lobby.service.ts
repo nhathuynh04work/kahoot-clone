@@ -231,7 +231,6 @@ export class LobbyService {
             }
 
             return {
-                lobbyId,
                 questionId: q.id,
                 sortIndex,
                 correctCount,
