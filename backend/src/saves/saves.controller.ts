@@ -2,12 +2,14 @@ import {
     Controller,
     Get,
     Param,
+    ParseEnumPipe,
     ParseIntPipe,
     Post,
     UseGuards,
 } from "@nestjs/common";
 import { JwtHttpGuard } from "../auth/guard/jwt-http.guard.js";
 import { type JwtUser, User } from "../auth/user.decorator.js";
+import { SaveTargetType } from "../generated/prisma/client.js";
 import { SavesService } from "./saves.service.js";
 
 @Controller("saves")
@@ -15,42 +17,30 @@ import { SavesService } from "./saves.service.js";
 export class SavesController {
     constructor(private savesService: SavesService) {}
 
-    @Post("quizzes/:quizId")
-    toggleQuizSave(
-        @Param("quizId", ParseIntPipe) quizId: number,
+    @Post(":targetType/:targetId")
+    toggleSave(
+        @Param("targetType", new ParseEnumPipe(SaveTargetType)) targetType: SaveTargetType,
+        @Param("targetId", ParseIntPipe) targetId: number,
         @User() user: JwtUser,
     ) {
-        return this.savesService.toggleQuizSave(user.id, quizId);
+        return this.savesService.toggleSave(user.id, targetType, targetId);
     }
 
-    @Post("documents/:documentId")
-    toggleDocumentSave(
-        @Param("documentId", ParseIntPipe) documentId: number,
+    @Get(":targetType")
+    async getMySavedTargetIds(
+        @Param("targetType", new ParseEnumPipe(SaveTargetType)) targetType: SaveTargetType,
         @User() user: JwtUser,
     ) {
-        return this.savesService.toggleDocumentSave(user.id, documentId);
+        const ids = await this.savesService.getMySavedTargetIds(user.id, targetType);
+        return { ids };
     }
 
-    @Get("quizzes")
-    async getMySavedQuizzes(@User() user: JwtUser) {
-        const quizIds = await this.savesService.getMySavedQuizIds(user.id);
-        return { quizIds };
-    }
-
-    @Get("documents")
-    async getMySavedDocuments(@User() user: JwtUser) {
-        const documentIds = await this.savesService.getMySavedDocumentIds(user.id);
-        return { documentIds };
-    }
-
-    @Get("quizzes/public")
-    getMySavedPublicQuizzes(@User() user: JwtUser) {
-        return this.savesService.getMySavedPublicQuizzes(user.id);
-    }
-
-    @Get("documents/public")
-    getMySavedPublicDocuments(@User() user: JwtUser) {
-        return this.savesService.getMySavedPublicDocuments(user.id);
+    @Get(":targetType/public")
+    getMySavedPublicTargets(
+        @Param("targetType", new ParseEnumPipe(SaveTargetType)) targetType: SaveTargetType,
+        @User() user: JwtUser,
+    ) {
+        return this.savesService.getMySavedPublicTargets(user.id, targetType);
     }
 }
 

@@ -44,7 +44,7 @@ export async function searchPublicDocumentsByUserId(
 
 export async function toggleDocumentSaveServer(documentId: number) {
 	const api = await apiServer();
-	const { data } = await api.post(`/saves/documents/${documentId}`);
-	return data as { saved: boolean; documentId: number };
+	const { data } = await api.post(`/saves/DOCUMENT/${documentId}`);
+	return data as { saved: boolean; targetType: "DOCUMENT"; targetId: number };
 }
 

@@ -71,8 +71,8 @@ export default async function AuthedDiscoverPage({
 			: Promise.resolve(null),
 		viewer
 			? api
-					.get<{ documentIds: number[] }>("/saves/documents")
-					.then((r) => r.data.documentIds ?? [])
+					.get<{ ids: number[] }>("/saves/DOCUMENT")
+					.then((r) => r.data.ids ?? [])
 					.catch(() => [])
 			: Promise.resolve([] as number[]),
 	]);

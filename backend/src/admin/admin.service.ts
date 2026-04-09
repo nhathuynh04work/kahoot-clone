@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
-import { Prisma, UserRole } from "../generated/prisma/client.js";
+import { Prisma, SaveTargetType, UserRole } from "../generated/prisma/client.js";
 import { BillingService } from "../billing/billing.service.js";
 
 type DashboardTotals = {
@@ -222,8 +222,9 @@ export class AdminService {
                     q."id" AS "quizId",
                     q."title" AS "title",
                     COUNT(s."id")::bigint AS saves
-                FROM "QuizSave" s
-                JOIN "Quiz" q ON q."id" = s."quizId"
+                FROM "Save" s
+                JOIN "Quiz" q ON q."id" = s."targetId"
+                WHERE s."targetType" = 'QUIZ'
                 GROUP BY q."id", q."title"
                 ORDER BY saves DESC
                 LIMIT 10
@@ -233,8 +234,9 @@ export class AdminService {
                     d."id" AS "documentId",
                     d."fileName" AS "fileName",
                     COUNT(s."id")::bigint AS saves
-                FROM "DocumentSave" s
-                JOIN "Document" d ON d."id" = s."documentId"
+                FROM "Save" s
+                JOIN "Document" d ON d."id" = s."targetId"
+                WHERE s."targetType" = 'DOCUMENT'
                 GROUP BY d."id", d."fileName"
                 ORDER BY saves DESC
                 LIMIT 10
@@ -421,8 +423,6 @@ export class AdminService {
                     select: {
                         quizzes: true,
                         documents: true,
-                        quizSaves: true,
-                        documentSaves: true,
                         lobbies: true,
                     },
                 },
@@ -430,6 +430,17 @@ export class AdminService {
         })) as any;
 
         if (!user) throw new BadRequestException("User not found");
+
+        const [quizSavesCount, documentSavesCount] = await Promise.all([
+            this.prisma.save.count({ where: { userId, targetType: SaveTargetType.QUIZ } }),
+            this.prisma.save.count({ where: { userId, targetType: SaveTargetType.DOCUMENT } }),
+        ]);
+
+        user._count = {
+            ...(user._count ?? {}),
+            quizSaves: quizSavesCount,
+            documentSaves: documentSavesCount,
+        };
 
         return {
             ...user,
@@ -486,7 +497,7 @@ export class AdminService {
                     COUNT(s."id")::bigint as "savesCount"
                 FROM "Quiz" q
                 JOIN "User" u ON u."id" = q."userId"
-                LEFT JOIN "QuizSave" s ON s."quizId" = q."id"
+                LEFT JOIN "Save" s ON s."targetType" = 'QUIZ' AND s."targetId" = q."id"
                 WHERE (${q ? Prisma.sql`q."title" ILIKE ${"%" + q + "%"}` : Prisma.sql`TRUE`})
                 GROUP BY q."id", u."email"
                 ORDER BY "savesCount" DESC, q."createdAt" DESC
@@ -522,12 +533,14 @@ export class AdminService {
                 visibility: true,
                 createdAt: true,
                 user: { select: { email: true } },
-                _count: { select: { saves: true } },
             } as any,
             orderBy,
             skip: (page - 1) * pageSize,
             take: pageSize,
         });
+
+        const quizIds = (quizzes as any[]).map((qz) => qz.id);
+        const saveCounts = await this.getSaveCounts(SaveTargetType.QUIZ, quizIds);
 
         return {
             items: (quizzes as any[]).map((qz) => ({
@@ -536,7 +549,7 @@ export class AdminService {
                 visibility: qz.visibility,
                 createdAt: qz.createdAt.toISOString(),
                 authorEmail: qz.user?.email ?? "—",
-                savesCount: qz._count?.saves ?? 0,
+                savesCount: saveCounts.get(qz.id) ?? 0,
             })),
             page,
             pageSize,
@@ -556,7 +569,7 @@ export class AdminService {
                 visibility: true,
                 createdAt: true,
                 user: { select: { id: true, email: true } },
-                _count: { select: { questions: true, saves: true, lobby: true } },
+                _count: { select: { questions: true, lobby: true } },
             } as any,
         })) as any;
         if (!quiz) throw new BadRequestException("Quiz not found");
@@ -582,7 +595,7 @@ export class AdminService {
             author: quiz.user,
             counts: {
                 questions: quiz._count?.questions ?? 0,
-                saves: quiz._count?.saves ?? 0,
+                saves: await this.getSaveCount(SaveTargetType.QUIZ, quizId),
                 sessions: quiz._count?.lobby ?? 0,
             },
             recentSessions: (recentSessions).map((s) => ({
@@ -645,7 +658,7 @@ export class AdminService {
                     COUNT(s."id")::bigint as "savesCount"
                 FROM "Document" d
                 JOIN "User" u ON u."id" = d."userId"
-                LEFT JOIN "DocumentSave" s ON s."documentId" = d."id"
+                LEFT JOIN "Save" s ON s."targetType" = 'DOCUMENT' AND s."targetId" = d."id"
                 WHERE
                     (${q ? Prisma.sql`d."fileName" ILIKE ${"%" + q + "%"}` : Prisma.sql`TRUE`})
                     AND (${status ? Prisma.sql`d."status" = ${status}` : Prisma.sql`TRUE`})
@@ -687,12 +700,14 @@ export class AdminService {
                 fileSize: true,
                 createdAt: true,
                 user: { select: { email: true } },
-                _count: { select: { saves: true } },
             } as any,
             orderBy,
             skip: (page - 1) * pageSize,
             take: pageSize,
         });
+
+        const documentIds = (documents as any[]).map((d) => d.id);
+        const saveCounts = await this.getSaveCounts(SaveTargetType.DOCUMENT, documentIds);
 
         return {
             items: (documents as any[]).map((d) => ({
@@ -703,7 +718,7 @@ export class AdminService {
                 fileSize: d.fileSize,
                 createdAt: d.createdAt.toISOString(),
                 authorEmail: d.user?.email ?? "—",
-                savesCount: d._count?.saves ?? 0,
+                savesCount: saveCounts.get(d.id) ?? 0,
             })),
             page,
             pageSize,
@@ -726,7 +741,7 @@ export class AdminService {
                 visibility: true,
                 createdAt: true,
                 user: { select: { id: true, email: true } },
-                _count: { select: { chunks: true, saves: true } },
+                _count: { select: { chunks: true } },
             } as any,
         })) as any;
         if (!doc) throw new BadRequestException("Document not found");
@@ -737,9 +752,26 @@ export class AdminService {
             author: doc.user,
             counts: {
                 chunks: doc._count?.chunks ?? 0,
-                saves: doc._count?.saves ?? 0,
+                saves: await this.getSaveCount(SaveTargetType.DOCUMENT, documentId),
             },
         };
+    }
+
+    private async getSaveCounts(
+        targetType: SaveTargetType,
+        targetIds: number[],
+    ): Promise<Map<number, number>> {
+        if (targetIds.length === 0) return new Map();
+        const rows = await this.prisma.save.groupBy({
+            by: ["targetId"],
+            where: { targetType, targetId: { in: targetIds } },
+            _count: { _all: true },
+        });
+        return new Map(rows.map((r) => [r.targetId, r._count._all]));
+    }
+
+    private async getSaveCount(targetType: SaveTargetType, targetId: number): Promise<number> {
+        return this.prisma.save.count({ where: { targetType, targetId } });
     }
 
     async getSessionsPage(options: {

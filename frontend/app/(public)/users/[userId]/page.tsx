@@ -54,10 +54,10 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 
 	const [, mySavedDocumentIds] = viewer
 		? await Promise.all([
-				api.get<{ quizIds: number[] }>("/saves/quizzes").then((r) => r.data.quizIds),
+				api.get<{ ids: number[] }>("/saves/QUIZ").then((r) => r.data.ids),
 				api
-					.get<{ documentIds: number[] }>("/saves/documents")
-					.then((r) => r.data.documentIds),
+					.get<{ ids: number[] }>("/saves/DOCUMENT")
+					.then((r) => r.data.ids),
 			])
 		: [[], []];
 

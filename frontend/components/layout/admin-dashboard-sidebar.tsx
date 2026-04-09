@@ -32,7 +32,7 @@ export function AdminDashboardSidebar({ user }: { user: User }) {
 	const router = useRouter();
 
 	return (
-		<aside className="w-[76px] shrink-0 border-r border-gray-800 bg-gray-950/40 flex flex-col sticky top-0 z-40 self-stretch">
+		<aside className="w-[76px] shrink-0 border-r border-gray-800 bg-gray-950/40 flex flex-col sticky top-0 z-40 h-dvh">
 			<div className="h-[58px] shrink-0 flex items-center justify-center border-b border-gray-800">
 				<Link
 					href="/admin"

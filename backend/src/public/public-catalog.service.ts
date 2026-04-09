@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Prisma, LobbyStatus } from "../generated/prisma/client.js";
+import { Prisma, LobbyStatus, SaveTargetType } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { attachClientOptions } from "../quiz/question-payload.js";
 
@@ -256,9 +256,9 @@ export class PublicCatalogService {
         if (!quiz) throw new NotFoundException("Quiz not found");
 
         const [saveCountRows, playCountRows] = await Promise.all([
-            this.prisma.quizSave.groupBy({
-                by: ["quizId"],
-                where: { quizId: quizId },
+            this.prisma.save.groupBy({
+                by: ["targetId"],
+                where: { targetType: SaveTargetType.QUIZ, targetId: quizId },
                 _count: { _all: true },
             }),
             this.prisma.gameLobby.groupBy({
@@ -453,23 +453,23 @@ export class PublicCatalogService {
     private async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {
         if (quizIds.length === 0) return new Map();
 
-        const rows = await this.prisma.quizSave.groupBy({
-            by: ["quizId"],
-            where: { quizId: { in: quizIds } },
+        const rows = await this.prisma.save.groupBy({
+            by: ["targetId"],
+            where: { targetType: SaveTargetType.QUIZ, targetId: { in: quizIds } },
             _count: { _all: true },
         });
-        return new Map(rows.map((r) => [r.quizId, r._count._all]));
+        return new Map(rows.map((r) => [r.targetId, r._count._all]));
     }
 
     private async getDocumentSaveCounts(documentIds: number[]): Promise<Map<number, number>> {
         if (documentIds.length === 0) return new Map();
 
-        const rows = await this.prisma.documentSave.groupBy({
-            by: ["documentId"],
-            where: { documentId: { in: documentIds } },
+        const rows = await this.prisma.save.groupBy({
+            by: ["targetId"],
+            where: { targetType: SaveTargetType.DOCUMENT, targetId: { in: documentIds } },
             _count: { _all: true },
         });
-        return new Map(rows.map((r) => [r.documentId, r._count._all]));
+        return new Map(rows.map((r) => [r.targetId, r._count._all]));
     }
 
     private async getQuizPlayCounts(quizIds: number[]): Promise<Map<number, number>> {

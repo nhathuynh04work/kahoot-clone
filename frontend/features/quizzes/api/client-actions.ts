@@ -107,11 +107,11 @@ export const updateQuiz = async (payload: QuizFullDetails) => {
 };
 
 export const toggleQuizSave = async (quizId: number) => {
-	const { data } = await api.post(`/saves/quizzes/${quizId}`);
-	return data as { saved: boolean; quizId: number };
+	const { data } = await api.post(`/saves/QUIZ/${quizId}`);
+	return data as { saved: boolean; targetType: "QUIZ"; targetId: number };
 };
 
 export const getMySavedQuizIds = async (): Promise<number[]> => {
-	const { data } = await api.get<{ quizIds: number[] }>("/saves/quizzes");
-	return data.quizIds;
+	const { data } = await api.get<{ ids: number[] }>("/saves/QUIZ");
+	return data.ids;
 };

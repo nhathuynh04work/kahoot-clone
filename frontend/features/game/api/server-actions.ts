@@ -86,8 +86,7 @@ export type SessionReport = {
 		correctCount: number;
 		incorrectCount: number;
 		correctRate: number;
-		optionCounts: Record<string, number>;
-		answerSummary?: Record<string, unknown> | null;
+		breakdown?: Record<string, unknown> | null;
 		question?: {
 			id: number;
 			text: string | null;

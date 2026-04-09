@@ -128,7 +128,7 @@ export function QuizCard({
 						)}
 					</button>
 
-					{canEdit && (
+					{canEdit && isOwner && (
 						<Link
 							href={editHref}
 							onClick={(e) => {

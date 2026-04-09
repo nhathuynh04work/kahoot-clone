@@ -177,33 +177,44 @@ export class LobbyService {
                     ? correctCount / answersForQuestion.length
                     : 0;
 
-            const optionCounts: Record<string, number> = {};
-            if (q.type === QuestionType.MULTIPLE_CHOICE) {
-                const mc = parseQuestionData(q.type, q.data) as MultipleChoiceData;
-                const n = sortMcOptions(mc.options).length;
-                for (let i = 0; i < n; i++) {
-                    optionCounts[i.toString()] = 0;
-                }
-            } else if (q.type === QuestionType.TRUE_FALSE) {
-                optionCounts["0"] = 0;
-                optionCounts["1"] = 0;
-            }
-            answersForQuestion.forEach((a) => {
-                if (a.mcSelectedIndex != null) {
-                    const key = a.mcSelectedIndex.toString();
-                    optionCounts[key] = (optionCounts[key] ?? 0) + 1;
-                }
-            });
+            let breakdownJson: Prisma.JsonObject | undefined;
+            if (
+                q.type === QuestionType.MULTIPLE_CHOICE ||
+                q.type === QuestionType.TRUE_FALSE
+            ) {
+                const optionCounts: Record<string, number> = {};
 
-            let answerSummaryJson: Prisma.JsonObject | undefined;
-            if (q.type === QuestionType.SHORT_ANSWER) {
+                if (q.type === QuestionType.MULTIPLE_CHOICE) {
+                    const mc = parseQuestionData(q.type, q.data) as MultipleChoiceData;
+                    const n = sortMcOptions(mc.options).length;
+                    for (let i = 0; i < n; i++) {
+                        optionCounts[i.toString()] = 0;
+                    }
+                } else {
+                    // TRUE_FALSE
+                    optionCounts["0"] = 0;
+                    optionCounts["1"] = 0;
+                }
+
+                for (const a of answersForQuestion) {
+                    if (a.mcSelectedIndex != null) {
+                        const key = a.mcSelectedIndex.toString();
+                        optionCounts[key] = (optionCounts[key] ?? 0) + 1;
+                    }
+                }
+
+                breakdownJson = {
+                    kind: "choice",
+                    optionCounts,
+                } as unknown as Prisma.JsonObject;
+            } else if (q.type === QuestionType.SHORT_ANSWER) {
                 const counts: Record<string, number> = {};
                 for (const a of answersForQuestion) {
                     const t = (a.textAnswer ?? "").trim().toLowerCase();
                     const k = t || "(empty)";
                     counts[k] = (counts[k] ?? 0) + 1;
                 }
-                answerSummaryJson = {
+                breakdownJson = {
                     kind: "short_answer",
                     counts,
                 } as unknown as Prisma.JsonObject;
@@ -213,7 +224,7 @@ export class LobbyService {
                         a.numericAnswer != null ? Number(a.numericAnswer) : null,
                     )
                     .filter((n): n is number => n != null && Number.isFinite(n));
-                answerSummaryJson = {
+                breakdownJson = {
                     kind: "number_input",
                     values,
                 } as unknown as Prisma.JsonObject;
@@ -226,24 +237,7 @@ export class LobbyService {
                 correctCount,
                 incorrectCount,
                 correctRate,
-                optionCountsJson: optionCounts as unknown as Prisma.JsonObject,
-                answerSummaryJson,
-            };
-        });
-
-        const playerReports = lobby.players.map((p) => {
-            const answered = p.answers.length;
-            const correct = p.answers.filter((a) => a.isCorrect).length;
-            const accuracy = answered > 0 ? correct / answered : 0;
-
-            return {
-                lobbyId,
-                playerId: p.id,
-                nickname: p.nickname,
-                answeredCount: answered,
-                correctCount: correct,
-                accuracy,
-                finalScore: p.points,
+                breakdownJson,
             };
         });
 
@@ -272,13 +266,6 @@ export class LobbyService {
             await tx.gameLobbyQuestionReport.createMany({
                 data: questionReports.map((qr) => ({
                     ...qr,
-                    reportId: report.id,
-                })),
-            });
-
-            await tx.gameLobbyPlayerReport.createMany({
-                data: playerReports.map((pr) => ({
-                    ...pr,
                     reportId: report.id,
                 })),
             });
@@ -431,10 +418,10 @@ export class LobbyService {
             where: { id: lobbyId },
             include: {
                 quiz: { include: { questions: { orderBy: { sortOrder: "asc" } } } },
+                players: { include: { answers: true } },
                 report: {
                     include: {
                         questionReports: { orderBy: { sortIndex: "asc" } },
-                        playerReports: true,
                     },
                 },
             },
@@ -479,24 +466,26 @@ export class LobbyService {
                 correctCount: qr.correctCount,
                 incorrectCount: qr.incorrectCount,
                 correctRate: qr.correctRate,
-                optionCounts: qr.optionCountsJson as Record<string, number>,
-                answerSummary: qr.answerSummaryJson as Record<
-                    string,
-                    unknown
-                > | null,
+                breakdown: qr.breakdownJson as Record<string, unknown> | null,
                 question: (() => {
                     const raw = lobby.quiz.questions.find((qq) => qq.id === qr.questionId);
                     return raw ? attachClientOptions(raw) : undefined;
                 })(),
             })),
-            players: lobby.report.playerReports.map((pr) => ({
-                playerId: pr.playerId,
-                nickname: pr.nickname,
-                answeredCount: pr.answeredCount,
-                correctCount: pr.correctCount,
-                accuracy: pr.accuracy,
-                finalScore: pr.finalScore,
-            })),
+            players: lobby.players.map((p) => {
+                const answeredCount = p.answers.length;
+                const correctCount = p.answers.filter((a) => a.isCorrect).length;
+                const accuracy = answeredCount > 0 ? correctCount / answeredCount : 0;
+
+                return {
+                    playerId: p.id,
+                    nickname: p.nickname,
+                    answeredCount,
+                    correctCount,
+                    accuracy,
+                    finalScore: p.points,
+                };
+            }),
             leaderboard,
         };
     }

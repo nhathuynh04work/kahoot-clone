@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { v2 as cloudinary } from "cloudinary";
-import { Prisma, DocumentStatus } from "../generated/prisma/client";
+import { Prisma, DocumentStatus, SaveTargetType } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateDocumentDto } from "./dto/create-document.dto";
 import { EntitlementService } from "../entitlements/entitlement.service";
@@ -193,6 +193,9 @@ export class DocumentService {
             await this.deleteFromCloudinary(doc.cloudinaryPublicId);
         }
 
+        await this.prisma.save.deleteMany({
+            where: { targetType: SaveTargetType.DOCUMENT, targetId: id },
+        });
         await this.prisma.document.delete({ where: { id } });
         return { success: true };
     }

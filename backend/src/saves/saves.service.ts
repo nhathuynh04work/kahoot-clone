@@ -1,149 +1,111 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
-import { LobbyStatus } from "../generated/prisma/client.js";
+import { LobbyStatus, SaveTargetType } from "../generated/prisma/client.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 @Injectable()
 export class SavesService {
     constructor(private prisma: PrismaService) {}
 
-    async toggleQuizSave(userId: number, quizId: number) {
-        // Ensure the quiz exists to avoid returning “saved” for invalid ids.
-        const quiz = await this.prisma.quiz.findUnique({ where: { id: quizId } });
-        if (!quiz) throw new ForbiddenException("Quiz not found");
+    async toggleSave(userId: number, targetType: SaveTargetType, targetId: number) {
+        await this.assertTargetExists(targetType, targetId);
 
-        const where = { userId_quizId: { userId, quizId } };
-        const existing = await this.prisma.quizSave.findUnique({ where });
+        const where = { userId_targetType_targetId: { userId, targetType, targetId } };
+        const existing = await this.prisma.save.findUnique({ where });
 
         if (existing) {
-            await this.prisma.quizSave.delete({ where });
-            return { saved: false, quizId };
+            await this.prisma.save.delete({ where });
+            return { saved: false, targetType, targetId };
         }
 
-        await this.prisma.quizSave.create({
-            data: { userId, quizId },
+        await this.prisma.save.create({
+            data: { userId, targetType, targetId },
         });
-        return { saved: true, quizId };
+        return { saved: true, targetType, targetId };
     }
 
-    async toggleDocumentSave(userId: number, documentId: number) {
-        const doc = await this.prisma.document.findUnique({
-            where: { id: documentId },
+    async getMySavedTargetIds(userId: number, targetType: SaveTargetType): Promise<number[]> {
+        const rows = await this.prisma.save.findMany({
+            where: { userId, targetType },
+            select: { targetId: true },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         });
-        if (!doc) throw new ForbiddenException("Document not found");
+        return rows.map((r) => r.targetId);
+    }
 
-        const where = { userId_documentId: { userId, documentId } };
-        const existing = await this.prisma.documentSave.findUnique({ where });
+    async getMySavedPublicTargets(userId: number, targetType: SaveTargetType) {
+        const saves = await this.prisma.save.findMany({
+            where: { userId, targetType },
+            select: { targetId: true, createdAt: true },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        });
 
-        if (existing) {
-            await this.prisma.documentSave.delete({ where });
-            return { saved: false, documentId };
+        const ids = saves.map((s) => s.targetId);
+        if (ids.length === 0) return [];
+
+        if (targetType === SaveTargetType.QUIZ) {
+            const quizzes = await this.prisma.quiz.findMany({
+                where: { id: { in: ids }, visibility: "PUBLIC" },
+                include: { questions: true, user: { select: { name: true, email: true } } },
+            });
+            const quizById = new Map(quizzes.map((q) => [q.id, q]));
+            const quizIds = quizzes.map((q) => q.id);
+            const [saveCounts, playCounts] = await Promise.all([
+                this.getSaveCounts(SaveTargetType.QUIZ, quizIds),
+                this.getQuizPlayCounts(quizIds),
+            ]);
+
+            return ids
+                .map((id) => {
+                    const quiz = quizById.get(id);
+                    if (!quiz) return null;
+                    const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
+                    const { user: _user, ...rest } = quiz;
+                    return {
+                        ...rest,
+                        authorName,
+                        saveCount: saveCounts.get(id) ?? 0,
+                        playCount: playCounts.get(id) ?? 0,
+                    };
+                })
+                .filter((x): x is NonNullable<typeof x> => x !== null);
         }
 
-        await this.prisma.documentSave.create({
-            data: { userId, documentId },
+        const documents = await this.prisma.document.findMany({
+            where: { id: { in: ids }, visibility: "PUBLIC" },
+            include: { user: { select: { name: true, email: true } } },
         });
-        return { saved: true, documentId };
+        const docById = new Map(documents.map((d) => [d.id, d]));
+        const docIds = documents.map((d) => d.id);
+        const saveCounts = await this.getSaveCounts(SaveTargetType.DOCUMENT, docIds);
+
+        return ids
+            .map((id) => {
+                const doc = docById.get(id);
+                if (!doc) return null;
+                const authorName = doc.user?.name ?? doc.user?.email ?? null;
+                const { user: _user, ...rest } = doc as any;
+                return {
+                    ...rest,
+                    authorName,
+                    saveCount: saveCounts.get(id) ?? 0,
+                };
+            })
+            .filter((x): x is NonNullable<typeof x> => x !== null);
     }
 
-    async getMySavedQuizIds(userId: number): Promise<number[]> {
-        const rows = await this.prisma.quizSave.findMany({
-            where: { userId },
-            select: { quizId: true },
-        });
-        return rows.map((r) => r.quizId);
-    }
+    async getSaveCounts(
+        targetType: SaveTargetType,
+        targetIds: number[],
+    ): Promise<Map<number, number>> {
+        if (targetIds.length === 0) return new Map();
 
-    async getMySavedDocumentIds(userId: number): Promise<number[]> {
-        const rows = await this.prisma.documentSave.findMany({
-            where: { userId },
-            select: { documentId: true },
-        });
-        return rows.map((r) => r.documentId);
-    }
-
-    async getMySavedPublicQuizzes(userId: number) {
-        const rows = await this.prisma.quizSave.findMany({
-            where: { userId, quiz: { visibility: "PUBLIC" } },
-            select: {
-                quiz: {
-                    include: {
-                        questions: true,
-                        user: { select: { name: true, email: true } },
-                    },
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        });
-
-        const quizzes = rows.map((r) => r.quiz);
-        const quizIds = quizzes.map((q) => q.id);
-        const [saveCounts, playCounts] = await Promise.all([
-            this.getQuizSaveCounts(quizIds),
-            this.getQuizPlayCounts(quizIds),
-        ]);
-
-        return quizzes.map((quiz) => {
-            const authorName = quiz.user?.name ?? quiz.user?.email ?? null;
-            const { user: _user, ...rest } = quiz;
-            return {
-                ...rest,
-                authorName,
-                saveCount: saveCounts.get(quiz.id) ?? 0,
-                playCount: playCounts.get(quiz.id) ?? 0,
-            };
-        });
-    }
-
-    async getMySavedPublicDocuments(userId: number) {
-        const rows = await this.prisma.documentSave.findMany({
-            where: { userId, document: { visibility: "PUBLIC" } },
-            select: {
-                document: {
-                    include: {
-                        user: { select: { name: true, email: true } },
-                    },
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        });
-
-        const docs = rows.map((r) => r.document);
-        const documentIds = docs.map((d) => d.id);
-        const saveCounts = await this.getDocumentSaveCounts(documentIds);
-
-        return docs.map((doc) => {
-            const authorName = doc.user?.name ?? doc.user?.email ?? null;
-            const { user: _user, ...rest } = doc as any;
-            return {
-                ...rest,
-                authorName,
-                saveCount: saveCounts.get(doc.id) ?? 0,
-            };
-        });
-    }
-
-    async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {
-        if (quizIds.length === 0) return new Map();
-
-        const rows = await this.prisma.quizSave.groupBy({
-            by: ["quizId"],
-            where: { quizId: { in: quizIds } },
+        const rows = await this.prisma.save.groupBy({
+            by: ["targetId"],
+            where: { targetType, targetId: { in: targetIds } },
             _count: { _all: true },
         });
 
-        return new Map(rows.map((r) => [r.quizId, r._count._all]));
-    }
-
-    async getDocumentSaveCounts(documentIds: number[]): Promise<Map<number, number>> {
-        if (documentIds.length === 0) return new Map();
-
-        const rows = await this.prisma.documentSave.groupBy({
-            by: ["documentId"],
-            where: { documentId: { in: documentIds } },
-            _count: { _all: true },
-        });
-
-        return new Map(rows.map((r) => [r.documentId, r._count._all]));
+        return new Map(rows.map((r) => [r.targetId, r._count._all]));
     }
 
     private async getQuizPlayCounts(quizIds: number[]): Promise<Map<number, number>> {
@@ -160,6 +122,23 @@ export class SavesService {
         });
 
         return new Map(rows.map((r) => [r.quizId, r._count._all]));
+    }
+
+    private async assertTargetExists(targetType: SaveTargetType, targetId: number) {
+        if (targetType === SaveTargetType.QUIZ) {
+            const quiz = await this.prisma.quiz.findUnique({ where: { id: targetId } });
+            if (!quiz) throw new ForbiddenException("Quiz not found");
+            return;
+        }
+
+        if (targetType === SaveTargetType.DOCUMENT) {
+            const doc = await this.prisma.document.findUnique({ where: { id: targetId } });
+            if (!doc) throw new ForbiddenException("Document not found");
+            return;
+        }
+
+        // Exhaustive check (should be unreachable with ParseEnumPipe).
+        throw new ForbiddenException("Invalid save target type");
     }
 }
 

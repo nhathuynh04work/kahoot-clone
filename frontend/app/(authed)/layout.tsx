@@ -22,13 +22,13 @@ export default async function AuthedLayout({
 
 	return (
 		<div
-			className="min-h-dvh overflow-hidden bg-gray-900 flex flex-col"
+			className="fixed inset-0 overflow-hidden bg-gray-900 flex flex-col"
 			style={{ ["--app-header-height" as string]: "58px" }}
 		>
 			<TopBar user={user} />
 			<div className="flex flex-1 min-h-0">
 				<DashboardSidebar user={user} />
-				<main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
+				<main className="flex-1 min-w-0 min-h-0 overflow-y-auto pb-20 md:pb-0">
 					{children}
 				</main>
 			</div>

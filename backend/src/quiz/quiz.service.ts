@@ -11,6 +11,7 @@ import {
     Question,
     QuestionType,
     Quiz,
+    SaveTargetType,
 } from "../generated/prisma/client.js";
 import { UserService } from "../user/user.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -357,6 +358,9 @@ export class QuizService {
             throw new ForbiddenException("Cannot delete others' quizzes");
 
         await this.redis.del(quizQuestionsKey(id));
+        await this.prisma.save.deleteMany({
+            where: { targetType: SaveTargetType.QUIZ, targetId: id },
+        });
         await this.prisma.quiz.delete({ where: { id } });
     }
 
@@ -407,13 +411,13 @@ export class QuizService {
     private async getQuizSaveCounts(quizIds: number[]): Promise<Map<number, number>> {
         if (quizIds.length === 0) return new Map();
 
-        const rows = await this.prisma.quizSave.groupBy({
-            by: ["quizId"],
-            where: { quizId: { in: quizIds } },
+        const rows = await this.prisma.save.groupBy({
+            by: ["targetId"],
+            where: { targetType: SaveTargetType.QUIZ, targetId: { in: quizIds } },
             _count: { _all: true },
         });
 
-        return new Map(rows.map((r) => [r.quizId, r._count._all]));
+        return new Map(rows.map((r) => [r.targetId, r._count._all]));
     }
 
     private async getQuizPlayCounts(quizIds: number[]): Promise<Map<number, number>> {

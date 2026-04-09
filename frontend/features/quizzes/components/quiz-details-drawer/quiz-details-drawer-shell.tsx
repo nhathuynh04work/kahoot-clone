@@ -62,16 +62,18 @@ function DrawerActions({
 	return (
 		<div className={className}>
 			<div className="space-y-2">
-				<Link
-					href={`/quiz/${quizId}/edit`}
-					className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition-colors"
-				>
-					<span className="flex items-center gap-2">
-						<Pencil className="w-4 h-4" />
-						Edit
-					</span>
-					<ChevronRight className="w-4 h-4 text-gray-400" />
-				</Link>
+				{isOwner && (
+					<Link
+						href={`/quiz/${quizId}/edit`}
+						className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition-colors"
+					>
+						<span className="flex items-center gap-2">
+							<Pencil className="w-4 h-4" />
+							Edit
+						</span>
+						<ChevronRight className="w-4 h-4 text-gray-400" />
+					</Link>
+				)}
 
 				<button
 					type="button"

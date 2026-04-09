@@ -6,7 +6,7 @@ import {
     HttpStatus,
     Logger,
 } from "@nestjs/common";
-import { DocumentStatus } from "../generated/prisma/client";
+import { DocumentStatus, SaveTargetType } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AiQuizChatService } from "./ai-quiz-chat.service";
 import {
@@ -218,20 +218,26 @@ export class AiService {
         documentId: number,
         userPrompt: string,
     ): Promise<GenerateQuestionsResult> {
-        const doc = await this.prisma.document.findFirst({
-            where: {
-                id: documentId,
-                OR: [
-                    // Owned document
-                    { userId },
-                    // Saved public document
-                    {
-                        visibility: "PUBLIC",
-                        saves: { some: { userId } },
+        const doc = await this.prisma.document.findUnique({ where: { id: documentId } });
+        if (doc && doc.userId !== userId) {
+            if (doc.visibility !== "PUBLIC") {
+                throw new ForbiddenException("Document not found");
+            }
+
+            const saved = await this.prisma.save.findUnique({
+                where: {
+                    userId_targetType_targetId: {
+                        userId,
+                        targetType: SaveTargetType.DOCUMENT,
+                        targetId: documentId,
                     },
-                ],
-            },
-        });
+                },
+                select: { id: true },
+            });
+            if (!saved) {
+                throw new ForbiddenException("Document not found");
+            }
+        }
         if (!doc) {
             this.logger.warn(
                 JSON.stringify({

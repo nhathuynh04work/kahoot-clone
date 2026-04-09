@@ -32,13 +32,19 @@ export function PerQuestionStatsList({
 			const options = (q.question?.options ?? []).sort(
 				(a, b) => a.sortOrder - b.sortOrder,
 			);
+			const breakdown = q.breakdown;
+			const optionCounts =
+				breakdown && breakdown.kind === "choice"
+					? ((breakdown.optionCounts as Record<string, number> | undefined) ??
+						{})
+					: {};
 			const optionRows = options.map((opt) => {
-				const chosen = q.optionCounts[opt.id.toString()] ?? 0;
+				const chosen = optionCounts[opt.id.toString()] ?? 0;
 				return { ...opt, chosen };
 			});
 
 			const qType = q.question?.type ?? "MULTIPLE_CHOICE";
-			const summary = q.answerSummary;
+			const summary = breakdown;
 			let freeTextRows: { label: string; count: number }[] = [];
 			if (qType === "SHORT_ANSWER" && summary && summary.kind === "short_answer") {
 				const counts = summary.counts as Record<string, number> | undefined;

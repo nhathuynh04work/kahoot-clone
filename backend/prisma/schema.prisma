@@ -8,9 +8,35 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  USER
-  ADMIN
+enum AiChatRole {
+  user
+  assistant
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PARSING
+  READY
+  ERROR
+}
+
+enum LobbyStatus {
+  CREATED
+  WAITING
+  IN_PROGRESS
+  CLOSED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  NUMBER_INPUT
+}
+
+enum SaveTargetType {
+  QUIZ
+  DOCUMENT
 }
 
 enum SubscriptionStatus {
@@ -24,132 +50,9 @@ enum SubscriptionStatus {
   paused
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  avatarUrl String?
-  password  String
-  createdAt DateTime @default(now())
-
-  role               UserRole            @default(USER)
-  isBlocked          Boolean             @default(false)
-  stripeCustomerId   String?             @unique
-  quizzes            Quiz[]
-  lobbies            GameLobby[]
-  documents          Document[]
-  quizSaves          QuizSave[]
-  documentSaves      DocumentSave[]
-  aiQuizChatSessions AiQuizChatSession[]
-  subscription       Subscription?
-  stripeInvoices     StripeInvoice[]
-}
-
-model Subscription {
-  id                   Int                @id @default(autoincrement())
-  userId               Int                @unique
-  stripeSubscriptionId String             @unique
-  status               SubscriptionStatus
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime
-  cancelAtPeriodEnd    Boolean            @default(false)
-  cancelAt             DateTime?
-  canceledAt           DateTime?
-  endedAt              DateTime?
-  trialEnd             DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stripeInvoices StripeInvoice[]
-}
-
-model StripeInvoice {
-  id                   Int       @id @default(autoincrement())
-  stripeInvoiceId      String    @unique
-  userId               Int?
-  subscriptionId       Int?
-  stripeSubscriptionId String?
-  status               String?
-  totalCents           Int?
-  amountPaidCents      Int?
-  currency             String    @default("usd")
-  hostedInvoiceUrl     String?
-  invoicePdfUrl        String?
-  paidAt               DateTime?
-  occurredAt           DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-
-  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([subscriptionId])
-  @@index([paidAt])
-}
-
-model Document {
-  id                 Int            @id @default(autoincrement())
-  userId             Int
-  fileName           String
-  fileUrl            String
-  fileSize           Int
-  mimeType           String         @default("application/pdf")
-  cloudinaryPublicId String?
-  status             DocumentStatus @default(UPLOADED)
-  visibility         Visibility     @default(PRIVATE)
-  createdAt          DateTime       @default(now())
-
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks         DocumentChunk[]
-  aiChatMessages AiQuizChatMessage[]
-  saves          DocumentSave[]
-}
-
-model QuizSave {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  quizId    Int
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, quizId])
-  @@index([quizId])
-}
-
-model DocumentSave {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  documentId Int
-  createdAt  DateTime @default(now())
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, documentId])
-  @@index([documentId])
-}
-
-model DocumentChunk {
-  id         Int                        @id @default(autoincrement())
-  documentId Int
-  content    String                     @db.Text
-  chunkIndex Int
-  embedding  Unsupported("vector(768)")
-
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@index([documentId])
-}
-
-enum DocumentStatus {
-  UPLOADED
-  PARSING
-  READY
-  ERROR
+enum UserRole {
+  USER
+  ADMIN
 }
 
 enum Visibility {
@@ -157,52 +60,29 @@ enum Visibility {
   PRIVATE
 }
 
-enum QuestionType {
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-  SHORT_ANSWER
-  NUMBER_INPUT
-}
+model AiQuizChatMessage {
+  id                 Int        @id @default(autoincrement())
+  role               AiChatRole
+  content            String     @db.Text
+  generatedCount     Int?
+  generatedQuestions Json?
+  createdAt          DateTime   @default(now())
 
-model Quiz {
-  id          Int                 @id @default(autoincrement())
-  userId      Int
-  title       String
-  description String?
-  coverUrl    String?
-  visibility  Visibility          @default(PRIVATE)
-  createdAt   DateTime            @default(now())
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questions   Question[]
-  lobby       GameLobby[]
-  aiChat      AiQuizChatSession[]
-  saves       QuizSave[]
-}
+  sessionId  Int
+  documentId Int?
+  session    AiQuizChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  document   Document?         @relation(fields: [documentId], references: [id], onDelete: SetNull)
 
-model Question {
-  id        Int          @id @default(autoincrement())
-  quizId    Int
-  text      String?
-  timeLimit Int          @default(20000)
-  points    Int          @default(1000)
-  imageUrl  String?
-  sortOrder Int
-  type      QuestionType @default(MULTIPLE_CHOICE)
-  data      Json
-
-  quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers PlayerAnswer[]
-
-  @@unique([quizId, sortOrder])
+  @@index([sessionId, createdAt])
 }
 
 model AiQuizChatSession {
   id             Int      @id @default(autoincrement())
-  quizId         Int
-  userId         Int
   createdAt      DateTime @default(now())
   lastActivityAt DateTime @default(now())
 
+  quizId   Int
+  userId   Int
   quiz     Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
   user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages AiQuizChatMessage[]
@@ -212,83 +92,71 @@ model AiQuizChatSession {
   @@index([lastActivityAt])
 }
 
-model AiQuizChatMessage {
-  id                 Int        @id @default(autoincrement())
-  sessionId          Int
-  role               AiChatRole
-  content            String     @db.Text
-  documentId         Int?
-  generatedCount     Int?
-  generatedQuestions Json?
-  createdAt          DateTime   @default(now())
+model Document {
+  id                 Int            @id @default(autoincrement())
+  fileName           String
+  fileUrl            String
+  fileSize           Int
+  mimeType           String         @default("application/pdf")
+  cloudinaryPublicId String?
+  status             DocumentStatus @default(UPLOADED)
+  visibility         Visibility     @default(PRIVATE)
+  createdAt          DateTime       @default(now())
 
-  session  AiQuizChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  document Document?         @relation(fields: [documentId], references: [id], onDelete: SetNull)
-
-  @@index([sessionId, createdAt])
+  userId         Int
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks         DocumentChunk[]
+  aiChatMessages AiQuizChatMessage[]
 }
 
-enum AiChatRole {
-  user
-  assistant
+model DocumentChunk {
+  id         Int                        @id @default(autoincrement())
+  content    String                     @db.Text
+  chunkIndex Int
+  embedding  Unsupported("vector(768)")
+
+  documentId Int
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
 }
 
 model GameLobby {
   id        Int         @id @default(autoincrement())
   pin       String      @db.Char(6)
-  quizId    Int
-  hostId    Int
   status    LobbyStatus @default(CREATED)
   createdAt DateTime    @default(now())
   endedAt   DateTime?
 
+  quizId          Int
+  hostId          Int
   players         GamePlayer[]
   host            User                      @relation(fields: [hostId], references: [id])
   quiz            Quiz                      @relation(fields: [quizId], references: [id])
   report          GameLobbyReport?
   questionReports GameLobbyQuestionReport[]
-  playerReports   GameLobbyPlayerReport[]
 }
 
-enum LobbyStatus {
-  CREATED
-  WAITING
-  IN_PROGRESS
-  CLOSED
-}
+model GameLobbyQuestionReport {
+  id             Int   @id @default(autoincrement())
+  sortIndex      Int
+  correctCount   Int
+  incorrectCount Int
+  correctRate    Float
+  breakdownJson  Json?
 
-model GamePlayer {
-  id       Int    @id @default(autoincrement())
-  nickname String
-  points   Int    @default(0)
-  lobbyId  Int
+  lobbyId    Int
+  reportId   Int
+  questionId Int
+  report     GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  lobby      GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
 
-  lobby         GameLobby               @relation(fields: [lobbyId], references: [id])
-  answers       PlayerAnswer[]
-  playerReports GameLobbyPlayerReport[]
-
-  @@unique([lobbyId, nickname])
-}
-
-model PlayerAnswer {
-  id              Int      @id @default(autoincrement())
-  playerId        Int
-  questionId      Int
-  mcSelectedIndex Int?
-  textAnswer      String?
-  numericAnswer   Decimal? @db.Decimal(18, 6)
-  isCorrect       Boolean
-  points          Int      @default(0)
-
-  player   GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@unique([playerId, questionId])
+  @@unique([reportId, questionId])
+  @@index([lobbyId])
 }
 
 model GameLobbyReport {
   id              Int      @id @default(autoincrement())
-  lobbyId         Int      @unique
   totalPlayers    Int
   totalQuestions  Int
   totalAnswers    Int
@@ -298,47 +166,142 @@ model GameLobbyReport {
   leaderboardJson Json
   createdAt       DateTime @default(now())
 
+  lobbyId         Int                       @unique
   lobby           GameLobby                 @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
   questionReports GameLobbyQuestionReport[]
-  playerReports   GameLobbyPlayerReport[]
 
   @@index([lobbyId])
 }
 
-model GameLobbyQuestionReport {
-  id                Int   @id @default(autoincrement())
-  lobbyId           Int
-  reportId          Int
-  questionId        Int
-  sortIndex         Int
-  correctCount      Int
-  incorrectCount    Int
-  correctRate       Float
-  optionCountsJson  Json
-  answerSummaryJson Json?
+model GamePlayer {
+  id       Int    @id @default(autoincrement())
+  nickname String
+  points   Int    @default(0)
 
-  report GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  lobby  GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+  lobbyId Int
+  lobby   GameLobby      @relation(fields: [lobbyId], references: [id])
+  answers PlayerAnswer[]
 
-  @@unique([reportId, questionId])
-  @@index([lobbyId])
+  @@unique([lobbyId, nickname])
 }
 
-model GameLobbyPlayerReport {
-  id            Int    @id @default(autoincrement())
-  lobbyId       Int
-  reportId      Int
-  playerId      Int
-  nickname      String
-  answeredCount Int
-  correctCount  Int
-  accuracy      Float
-  finalScore    Int
+model PlayerAnswer {
+  id              Int      @id @default(autoincrement())
+  mcSelectedIndex Int?
+  textAnswer      String?
+  numericAnswer   Decimal? @db.Decimal(18, 6)
+  isCorrect       Boolean
+  points          Int      @default(0)
 
-  report GameLobbyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  lobby  GameLobby       @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
-  player GamePlayer      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId   Int
+  questionId Int
+  player     GamePlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@unique([reportId, playerId])
-  @@index([lobbyId])
+  @@unique([playerId, questionId])
+}
+
+model Quiz {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  coverUrl    String?
+  visibility  Visibility @default(PRIVATE)
+  createdAt   DateTime   @default(now())
+
+  userId    Int
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions Question[]
+  lobby     GameLobby[]
+  aiChat    AiQuizChatSession[]
+}
+
+model Question {
+  id        Int          @id @default(autoincrement())
+  text      String?
+  timeLimit Int          @default(20000)
+  points    Int          @default(1000)
+  imageUrl  String?
+  sortOrder Int
+  type      QuestionType @default(MULTIPLE_CHOICE)
+  data      Json
+
+  quizId  Int
+  quiz    Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers PlayerAnswer[]
+
+  @@unique([quizId, sortOrder])
+}
+
+model Save {
+  id         Int            @id @default(autoincrement())
+  targetType SaveTargetType
+  targetId   Int
+  createdAt  DateTime       @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@index([userId, targetType, createdAt])
+}
+
+model StripeInvoice {
+  id               Int       @id @default(autoincrement())
+  stripeInvoiceId  String    @unique
+  status           String?
+  totalCents       Int?
+  amountPaidCents  Int?
+  currency         String    @default("usd")
+  hostedInvoiceUrl String?
+  invoicePdfUrl    String?
+  paidAt           DateTime?
+  occurredAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  userId         Int?
+  subscriptionId Int?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([paidAt])
+}
+
+model Subscription {
+  id                   Int                @id @default(autoincrement())
+  stripeSubscriptionId String             @unique
+  status               SubscriptionStatus
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  endedAt              DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  userId         Int             @unique
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeInvoices StripeInvoice[]
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  name             String?
+  avatarUrl        String?
+  password         String
+  role             UserRole @default(USER)
+  isBlocked        Boolean  @default(false)
+  stripeCustomerId String?  @unique
+  createdAt        DateTime @default(now())
+
+  aiQuizChatSessions AiQuizChatSession[]
+  documents          Document[]
+  lobbies            GameLobby[]
+  quizzes            Quiz[]
+  saves              Save[]
+  stripeInvoices     StripeInvoice[]
+  subscription       Subscription?
 }

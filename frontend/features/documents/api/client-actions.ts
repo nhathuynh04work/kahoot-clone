@@ -110,20 +110,18 @@ export const updateDocumentVisibility = async (
 
 export const toggleDocumentSave = async (documentId: number) => {
 	const { data } = await apiClient.post(
-		`/saves/documents/${documentId}`,
+		`/saves/DOCUMENT/${documentId}`,
 	);
-	return data as { saved: boolean; documentId: number };
+	return data as { saved: boolean; targetType: "DOCUMENT"; targetId: number };
 };
 
 export const getMySavedDocumentIds = async (): Promise<number[]> => {
-	const { data } = await apiClient.get<{ documentIds: number[] }>(
-		"/saves/documents",
-	);
-	return data.documentIds;
+	const { data } = await apiClient.get<{ ids: number[] }>("/saves/DOCUMENT");
+	return data.ids;
 };
 
 export const getMySavedPublicDocuments = async (): Promise<Document[]> => {
-	const { data } = await apiClient.get<Document[]>("/saves/documents/public");
+	const { data } = await apiClient.get<Document[]>("/saves/DOCUMENT/public");
 	return data;
 };
 

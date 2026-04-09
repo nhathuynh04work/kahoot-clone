@@ -321,14 +321,8 @@ export class BillingService {
             data: {
                 status: this.mapStripeSubscriptionStatus(sub.status),
                 cancelAtPeriodEnd: sub.cancel_at_period_end,
-                currentPeriodStart: sub.current_period_start
-                    ? new Date(sub.current_period_start * 1000)
-                    : undefined,
                 currentPeriodEnd: new Date(sub.current_period_end * 1000),
-                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
-                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
                 endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : new Date(),
-                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
             },
         });
     }
@@ -345,28 +339,16 @@ export class BillingService {
                 userId,
                 stripeSubscriptionId: sub.id,
                 status: this.mapStripeSubscriptionStatus(sub.status),
-                currentPeriodStart: sub.current_period_start
-                    ? new Date(sub.current_period_start * 1000)
-                    : null,
                 currentPeriodEnd: new Date(sub.current_period_end * 1000),
                 cancelAtPeriodEnd: sub.cancel_at_period_end,
-                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
-                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
                 endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : null,
-                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
             },
             update: {
                 stripeSubscriptionId: sub.id,
                 status: this.mapStripeSubscriptionStatus(sub.status),
-                currentPeriodStart: sub.current_period_start
-                    ? new Date(sub.current_period_start * 1000)
-                    : null,
                 currentPeriodEnd: new Date(sub.current_period_end * 1000),
                 cancelAtPeriodEnd: sub.cancel_at_period_end,
-                cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
-                canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
                 endedAt: sub.ended_at ? new Date(sub.ended_at * 1000) : null,
-                trialEnd: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
             },
         });
     }
@@ -388,11 +370,6 @@ export class BillingService {
             ? new Date(invoice.status_transitions.paid_at * 1000)
             : new Date();
 
-        const stripeSubscriptionId =
-            typeof invoice.subscription === "string"
-                ? invoice.subscription
-                : invoice.subscription?.id;
-
         const subscription =
             userId != null
                 ? await this.prisma.subscription.findUnique({
@@ -410,7 +387,6 @@ export class BillingService {
                 stripeInvoiceId: invoice.id,
                 userId,
                 subscriptionId: subscription?.id ?? null,
-                stripeSubscriptionId: stripeSubscriptionId ?? null,
                 status: invoice.status ?? null,
                 totalCents: invoice.total ?? null,
                 amountPaidCents: invoice.amount_paid ?? null,
@@ -423,7 +399,6 @@ export class BillingService {
             update: {
                 userId,
                 subscriptionId: subscription?.id ?? null,
-                stripeSubscriptionId: stripeSubscriptionId ?? null,
                 status: invoice.status ?? null,
                 totalCents: invoice.total ?? null,
                 amountPaidCents: invoice.amount_paid ?? null,

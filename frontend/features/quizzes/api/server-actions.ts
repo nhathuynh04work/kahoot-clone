@@ -81,12 +81,12 @@ export async function searchPublicQuizzesByUserId(
 
 export async function toggleQuizSaveServer(quizId: number) {
 	const api = await apiServer();
-	const { data } = await api.post(`/saves/quizzes/${quizId}`);
-	return data as { saved: boolean; quizId: number };
+	const { data } = await api.post(`/saves/QUIZ/${quizId}`);
+	return data as { saved: boolean; targetType: "QUIZ"; targetId: number };
 }
 
 export async function getMySavedPublicQuizzes() {
 	const api = await apiServer();
-	const { data } = await api.get("/saves/quizzes/public");
+	const { data } = await api.get("/saves/QUIZ/public");
 	return data as Array<QuizWithQuestions & { saveCount?: number; authorName?: string | null }>;
 }
