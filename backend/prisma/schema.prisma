@@ -261,13 +261,10 @@ model StripeInvoice {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  userId         Int?
-  subscriptionId Int?
-  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-  @@index([subscriptionId])
   @@index([paidAt])
 }
 
@@ -283,7 +280,6 @@ model Subscription {
 
   userId         Int             @unique
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stripeInvoices StripeInvoice[]
 }
 
 model User {

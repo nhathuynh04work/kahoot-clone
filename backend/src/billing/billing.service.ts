@@ -69,8 +69,10 @@ export class BillingService {
                 sub = await stripe.subscriptions.retrieve(existingSubId);
             } else {
                 // Pick the most recently created subscription (any status).
+                const customerId = user.stripeCustomerId;
+                if (typeof customerId !== "string" || !customerId) return;
                 const list = await stripe.subscriptions.list({
-                    customer: String(user.stripeCustomerId),
+                    customer: customerId,
                     status: "all",
                     limit: 1,
                 });
@@ -370,14 +372,6 @@ export class BillingService {
             ? new Date(invoice.status_transitions.paid_at * 1000)
             : new Date();
 
-        const subscription =
-            userId != null
-                ? await this.prisma.subscription.findUnique({
-                      where: { userId },
-                      select: { id: true, stripeSubscriptionId: true },
-                  })
-                : null;
-
         const stripeChargeId =
             typeof invoice.charge === "string" ? invoice.charge : invoice.charge?.id;
 
@@ -386,7 +380,6 @@ export class BillingService {
             create: {
                 stripeInvoiceId: invoice.id,
                 userId,
-                subscriptionId: subscription?.id ?? null,
                 status: invoice.status ?? null,
                 totalCents: invoice.total ?? null,
                 amountPaidCents: invoice.amount_paid ?? null,
@@ -398,7 +391,6 @@ export class BillingService {
             },
             update: {
                 userId,
-                subscriptionId: subscription?.id ?? null,
                 status: invoice.status ?? null,
                 totalCents: invoice.total ?? null,
                 amountPaidCents: invoice.amount_paid ?? null,
