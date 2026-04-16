@@ -109,7 +109,7 @@ export default async function AuthedDiscoverPage({
 
 				{tab === "quizzes" ? (
 					(publicQuizzes?.items?.length ?? 0) === 0 ? (
-						<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center text-gray-400">
+						<div className="p-8 rounded-lg bg-(--app-surface-muted)/80 border border-(--app-border) border-dashed text-center text-(--app-fg-muted)">
 							No public quizzes found.
 						</div>
 					) : (
@@ -119,7 +119,7 @@ export default async function AuthedDiscoverPage({
 						/>
 					)
 				) : (publicDocuments?.items?.length ?? 0) === 0 ? (
-					<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center text-gray-400">
+					<div className="p-8 rounded-lg bg-(--app-surface-muted)/80 border border-(--app-border) border-dashed text-center text-(--app-fg-muted)">
 						No public documents found.
 					</div>
 				) : (
@@ -139,7 +139,7 @@ export default async function AuthedDiscoverPage({
 				)}
 
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
-					<p className="text-xs text-gray-400">
+					<p className="text-xs text-(--app-fg-muted)">
 						Page {pageInfo.page} / {pageInfo.totalPages}
 					</p>
 					<div className="flex items-center gap-2">
@@ -148,8 +148,8 @@ export default async function AuthedDiscoverPage({
 							className={[
 								"px-3 py-2 rounded-lg text-sm border transition-colors",
 								pageInfo.page <= 1
-									? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-									: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+									? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+									: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 							].join(" ")}
 							href={buildHref({ page: Math.max(1, pageInfo.page - 1) })}
 						>
@@ -160,8 +160,8 @@ export default async function AuthedDiscoverPage({
 							className={[
 								"px-3 py-2 rounded-lg text-sm border transition-colors",
 								pageInfo.page >= pageInfo.totalPages
-									? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-									: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+									? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+									: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 							].join(" ")}
 							href={buildHref({
 								page: Math.min(pageInfo.totalPages, pageInfo.page + 1),

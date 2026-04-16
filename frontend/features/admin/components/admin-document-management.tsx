@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { AdminDocumentListResponse } from "@/features/admin/api/server-actions";
 import type { AdminDocumentListItem } from "@/features/admin/api/server-actions";
 import { AdminDataTable } from "@/features/admin/components/admin-data-table";
@@ -113,12 +114,12 @@ export function AdminDocumentManagement({
 						<Link
 							href={`/admin/documents/${row.original.id}`}
 							onClick={(e) => e.stopPropagation()}
-							className="text-sm font-semibold text-white truncate hover:text-emerald-100"
+							className="text-sm font-semibold text-(--app-fg) truncate hover:text-emerald-600 dark:hover:text-emerald-300"
 							title={row.original.fileName}
 						>
 							{row.original.fileName}
 						</Link>
-						<div className="text-xs text-gray-400 truncate">{row.original.authorEmail}</div>
+						<div className="text-xs text-(--app-fg-muted) truncate">{row.original.authorEmail}</div>
 					</div>
 				),
 			},
@@ -127,9 +128,9 @@ export function AdminDocumentManagement({
 				header: "Status",
 				meta: { widthClassName: "w-[160px]" },
 				cell: ({ row }) => (
-					<span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold bg-gray-800/70 text-gray-200 border border-gray-700">
+					<Badge tone="neutral" className="text-xs">
 						{row.original.status}
-					</span>
+					</Badge>
 				),
 			},
 			{
@@ -137,7 +138,7 @@ export function AdminDocumentManagement({
 				header: "Size",
 				meta: { widthClassName: "w-[120px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300 tabular-nums">
+					<span className="text-sm text-(--app-fg-muted) tabular-nums">
 						{formatBytes(row.original.fileSize)}
 					</span>
 				),
@@ -147,7 +148,7 @@ export function AdminDocumentManagement({
 				header: "Saved",
 				meta: { widthClassName: "w-[110px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300 tabular-nums">
+					<span className="text-sm text-(--app-fg-muted) tabular-nums">
 						{row.original.savesCount.toLocaleString()}
 					</span>
 				),
@@ -157,7 +158,7 @@ export function AdminDocumentManagement({
 				header: "Created",
 				meta: { widthClassName: "w-[140px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300">{formatDate(row.original.createdAt)}</span>
+					<span className="text-sm text-(--app-fg-muted)">{formatDate(row.original.createdAt)}</span>
 				),
 			},
 		];
@@ -173,7 +174,7 @@ export function AdminDocumentManagement({
 							value={q}
 							onChange={(e) => setQ(e.target.value)}
 							placeholder="Search documents…"
-							className="w-full rounded-xl border border-gray-700 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+							className="w-full rounded-xl border border-(--app-border) bg-(--app-input-bg) px-4 py-2.5 text-sm text-(--app-fg) placeholder:text-(--app-fg-muted)/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
 							aria-label="Search documents"
 						/>
 					</div>
@@ -217,11 +218,11 @@ export function AdminDocumentManagement({
 				/>
 
 				<div className="mt-6 flex items-center justify-between gap-3">
-					<div className="text-sm text-gray-400">
-						Page <span className="text-white font-medium">{page}</span> of{" "}
-						<span className="text-white font-medium">{totalPages}</span>{" "}
-						<span className="text-gray-600">•</span>{" "}
-						<span className="text-gray-300">{totalItems} documents</span>
+					<div className="text-sm text-(--app-fg-muted)">
+						Page <span className="text-(--app-fg) font-medium">{page}</span> of{" "}
+						<span className="text-(--app-fg) font-medium">{totalPages}</span>{" "}
+						<span className="text-(--app-fg-muted)/60">•</span>{" "}
+						<span className="text-(--app-fg-muted)">{totalItems} documents</span>
 					</div>
 					<AdminPagination
 						page={page}

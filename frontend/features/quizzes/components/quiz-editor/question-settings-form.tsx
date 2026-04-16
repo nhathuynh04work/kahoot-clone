@@ -36,14 +36,14 @@ function SettingsSwitch({
 				"w-full flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
 				checked
 					? "border-indigo-500/60 bg-indigo-500/10"
-					: "border-gray-700 bg-gray-900/30 hover:bg-gray-800/40",
-				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+					: "border-(--app-border) bg-(--app-surface) hover:bg-(--app-surface-muted)",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--app-bg)"
 			)}
 		>
 			<span className="min-w-0">
-				<span className="block text-sm font-semibold text-gray-200">{label}</span>
+				<span className="block text-sm font-semibold text-(--app-fg)">{label}</span>
 				{description ? (
-					<span className="block text-xs text-gray-500 mt-0.5">{description}</span>
+					<span className="block text-xs text-(--app-fg-muted)/70 mt-0.5">{description}</span>
 				) : null}
 			</span>
 			<span
@@ -52,7 +52,7 @@ function SettingsSwitch({
 					"relative shrink-0 h-6 w-11 rounded-full border transition-colors",
 					checked
 						? "bg-indigo-500/80 border-indigo-400/60"
-						: "bg-gray-800 border-gray-700"
+						: "bg-(--app-surface-muted) border-(--app-border)"
 				)}
 			>
 				<span
@@ -132,7 +132,7 @@ export function QuestionSettingsForm({
 	return (
 		<div className={cn("space-y-6", className)}>
 			<div>
-				<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+				<label className="text-sm font-semibold text-(--app-fg-muted) flex items-center mb-2">
 					<Shapes className="w-4 h-4 mr-2" aria-hidden />
 					Question type
 				</label>
@@ -156,11 +156,11 @@ export function QuestionSettingsForm({
 						},
 					]}
 					ariaLabel="Question type"
-					buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
-					menuClassName="border-gray-600"
+					buttonClassName="bg-(--app-surface) border-(--app-border) text-(--app-fg) rounded-md p-3 focus:ring-indigo-500"
+					menuClassName="border-(--app-border)"
 				/>
 				{!canUseVipQuestionTypes ? (
-					<p className="mt-2 text-xs text-gray-500">
+					<p className="mt-2 text-xs text-(--app-fg-muted)/70">
 						Short answer and number input are VIP-only.{" "}
 						<Link href="/settings/subscription" className="text-indigo-400 hover:text-indigo-300">
 							View plans
@@ -170,7 +170,7 @@ export function QuestionSettingsForm({
 			</div>
 
 			<div>
-				<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+				<label className="text-sm font-semibold text-(--app-fg-muted) flex items-center mb-2">
 					<Clock className="w-4 h-4 mr-2" />
 					Time limit
 				</label>
@@ -191,13 +191,13 @@ export function QuestionSettingsForm({
 						{ value: "120000", label: "2 minutes" },
 					]}
 					ariaLabel="Time limit"
-					buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
-					menuClassName="border-gray-600"
+					buttonClassName="bg-(--app-surface) border-(--app-border) text-(--app-fg) rounded-md p-3 focus:ring-indigo-500"
+					menuClassName="border-(--app-border)"
 				/>
 			</div>
 
 			<div>
-				<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+				<label className="text-sm font-semibold text-(--app-fg-muted) flex items-center mb-2">
 					<Star className="w-4 h-4 mr-2" />
 					Points
 				</label>
@@ -215,8 +215,8 @@ export function QuestionSettingsForm({
 						{ value: "2000", label: "Double points (2000)" },
 					]}
 					ariaLabel="Points"
-					buttonClassName="bg-gray-700 border-gray-600 rounded-md p-3 focus:ring-indigo-500"
-					menuClassName="border-gray-600"
+					buttonClassName="bg-(--app-surface) border-(--app-border) text-(--app-fg) rounded-md p-3 focus:ring-indigo-500"
+					menuClassName="border-(--app-border)"
 				/>
 			</div>
 
@@ -224,7 +224,7 @@ export function QuestionSettingsForm({
 			questionType === "SHORT_ANSWER" ||
 			questionType === "NUMBER_INPUT" ? (
 				<div>
-					<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+					<label className="text-sm font-semibold text-(--app-fg-muted) flex items-center mb-2">
 						<Shapes className="w-4 h-4 mr-2" aria-hidden />
 						Type-specific settings
 					</label>
@@ -304,17 +304,17 @@ export function QuestionSettingsForm({
 
 							{watch(`${prefix}.allowRange`) === true ? (
 								<div>
-									<label className="text-sm font-semibold text-gray-300 flex items-center mb-2">
+									<label className="text-sm font-semibold text-(--app-fg-muted) flex items-center mb-2">
 										Proximity
 									</label>
 									<input
 										type="number"
 										step="any"
 										{...register(`${prefix}.rangeProximity`, { valueAsNumber: true, min: 0 })}
-										className="w-full rounded-lg bg-gray-700 border border-gray-600 px-3 py-2 text-sm text-white"
+										className="w-full rounded-lg bg-(--app-bg) border border-(--app-border) px-3 py-2 text-sm text-(--app-fg)"
 										placeholder="0"
 									/>
-									<p className="mt-2 text-xs text-gray-500">
+									<p className="mt-2 text-xs text-(--app-fg-muted)/70">
 										Correct = 1, proximity = 500 → accepts -499 to 501.
 									</p>
 								</div>

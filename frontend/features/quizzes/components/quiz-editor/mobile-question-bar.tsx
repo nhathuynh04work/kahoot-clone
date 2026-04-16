@@ -37,7 +37,7 @@ export function MobileQuestionBar({
 	return (
 		<div
 			className={cn(
-				"fixed left-0 right-0 bottom-0 z-50 border-t border-gray-700 bg-gray-900",
+				"fixed left-0 right-0 bottom-0 z-50 border-t border-(--app-border) bg-(--app-surface)",
 				"pb-[env(safe-area-inset-bottom)]",
 				className
 			)}
@@ -63,10 +63,10 @@ export function MobileQuestionBar({
 									onClick={() => onSelectQuestion(q.id)}
 									className={cn(
 										"shrink-0 h-10 min-w-10 px-3 rounded-full border text-sm font-semibold tabular-nums transition-colors",
-										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
+										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--app-surface)",
 										isActive
 											? "bg-indigo-600 border-indigo-500 text-white"
-											: "bg-gray-900/30 border-gray-700 text-gray-200 hover:bg-gray-800/60"
+											: "bg-(--app-surface) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface-muted)"
 									)}
 									aria-current={isActive ? "page" : undefined}
 									aria-label={`Question ${label}${
@@ -82,7 +82,7 @@ export function MobileQuestionBar({
 
 				<div className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-center">
 					<div
-						className="absolute inset-0 bg-gray-900 border-l border-gray-800"
+						className="absolute inset-0 bg-(--app-surface) border-l border-(--app-border)"
 						aria-hidden
 					/>
 					<button
@@ -91,7 +91,7 @@ export function MobileQuestionBar({
 						className={cn(
 							"relative inline-flex items-center justify-center h-11 w-11 rounded-lg",
 							"bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/25 transition-colors",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--app-surface)"
 						)}
 						aria-label="Add question"
 					>

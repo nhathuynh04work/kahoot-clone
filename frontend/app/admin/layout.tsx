@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
 	return (
 		<div
-			className="fixed inset-0 overflow-hidden bg-gray-950 flex flex-col"
+			className="admin-contrast fixed inset-0 overflow-hidden bg-(--app-bg) text-(--app-fg) flex flex-col"
 		>
 			<div className="flex flex-1 min-h-0">
 				<AdminDashboardSidebar user={user} />

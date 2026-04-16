@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
 
-const INDIGO = "#4f46e5";
-
 export function QMarkLogo({ className }: { className?: string }) {
 	return (
 		<svg
@@ -11,24 +9,16 @@ export function QMarkLogo({ className }: { className?: string }) {
 			aria-hidden
 		>
 			<text
-				x="0"
+				x="50%"
 				y="23"
 				fontFamily="Montserrat, Helvetica, sans-serif"
 				fontWeight="900"
 				fontSize="24"
-				fill="currentColor"
+				textAnchor="middle"
+				dominantBaseline="alphabetic"
 			>
-				q
-			</text>
-			<text
-				x="19"
-				y="23"
-				fontFamily="Montserrat, Helvetica, sans-serif"
-				fontWeight="900"
-				fontSize="24"
-				fill={INDIGO}
-			>
-				!
+				<tspan fill="currentColor">q</tspan>
+				<tspan fill="var(--app-accent)">!</tspan>
 			</text>
 		</svg>
 	);

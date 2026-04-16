@@ -39,26 +39,26 @@ export const PlayerQuestionScreen = ({
 
 	const icons = [Triangle, Hexagon, Circle, Square];
 	const styles = [
-		"bg-red-500 hover:bg-red-600 active:bg-red-700",
-		"bg-blue-500 hover:bg-blue-600 active:bg-blue-700",
-		"bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700",
-		"bg-green-500 hover:bg-green-600 active:bg-green-700",
+		"bg-red-400 hover:bg-red-500 active:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 dark:active:bg-red-700",
+		"bg-blue-400 hover:bg-blue-500 active:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 dark:active:bg-blue-700",
+		"bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:active:bg-yellow-600",
+		"bg-green-400 hover:bg-green-500 active:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500 dark:active:bg-green-700",
 	];
 
 	return (
-		<div className="min-h-screen bg-gray-900 p-4 flex flex-col">
-			<div className="bg-gray-800 border-b border-gray-700 p-4 -mx-4 -mt-4 mb-4 text-center">
-				<p className="text-white font-medium text-sm md:text-base line-clamp-4">
+		<div className="min-h-screen bg-(--app-bg) p-4 flex flex-col">
+			<div className="bg-(--app-surface-muted) border-b border-(--app-border) p-4 -mx-4 -mt-4 mb-4 text-center">
+				<p className="text-(--app-fg) font-medium text-sm md:text-base line-clamp-4">
 					{question.text}
 				</p>
 				{qType === "SHORT_ANSWER" ? (
-					<p className="text-xs text-indigo-300 mt-2">Short answer</p>
+					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">Short answer</p>
 				) : null}
 				{qType === "NUMBER_INPUT" ? (
-					<p className="text-xs text-indigo-300 mt-2">Enter a number</p>
+					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">Enter a number</p>
 				) : null}
 				{qType === "TRUE_FALSE" ? (
-					<p className="text-xs text-indigo-300 mt-2">True or false</p>
+					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">True or false</p>
 				) : null}
 			</div>
 
@@ -76,7 +76,7 @@ export const PlayerQuestionScreen = ({
 								} rounded-xl flex flex-col items-center justify-center p-4 transition-transform active:scale-95 shadow-md`}>
 								<Icon
 									size={48}
-									className="text-white/80 mb-2 fill-current"
+									className="text-white/90 mb-2 fill-current drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]"
 								/>
 								<span className="text-white font-bold text-lg leading-tight text-center drop-shadow-sm">
 									{o.text}
@@ -93,7 +93,7 @@ export const PlayerQuestionScreen = ({
 						type="text"
 						value={textDraft}
 						onChange={(e) => setTextDraft(e.target.value)}
-						className="w-full rounded-xl bg-gray-800 border border-gray-600 px-4 py-3 text-white text-lg"
+						className="w-full rounded-xl bg-(--app-input-bg) border border-(--app-border) px-4 py-3 text-(--app-fg) text-lg"
 						placeholder="Your answer"
 						autoComplete="off"
 					/>
@@ -109,11 +109,11 @@ export const PlayerQuestionScreen = ({
 
 			{qType === "NUMBER_INPUT" ? (
 				<div className="flex-1 flex flex-col gap-4 max-w-md mx-auto w-full">
-					<div className="rounded-2xl border border-gray-700 bg-gray-900/40 p-5">
-						<p className="text-center text-gray-400 text-xs uppercase tracking-wider">
+					<div className="rounded-2xl border border-(--app-border) bg-(--app-surface-muted)/70 p-5">
+						<p className="text-center text-(--app-fg-muted) text-xs uppercase tracking-wider">
 							Your answer
 						</p>
-						<p className="text-center text-white font-extrabold text-5xl mt-2 tabular-nums">
+						<p className="text-center text-(--app-fg) font-extrabold text-5xl mt-2 tabular-nums">
 							{numValue}
 						</p>
 
@@ -126,7 +126,7 @@ export const PlayerQuestionScreen = ({
 									setNumDraft(String(next));
 								}}
 								className={cn(
-									"h-12 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-white font-extrabold text-2xl",
+									"h-12 rounded-xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-2xl",
 								)}
 								aria-label="Decrease"
 							>
@@ -147,7 +147,7 @@ export const PlayerQuestionScreen = ({
 									setNumValue(n);
 									setNumDraft(String(n));
 								}}
-								className="h-12 w-full rounded-xl bg-gray-800 border border-gray-600 px-4 text-white text-lg text-center tabular-nums"
+								className="h-12 w-full rounded-xl bg-(--app-input-bg) border border-(--app-border) px-4 text-(--app-fg) text-lg text-center tabular-nums"
 								aria-label="Number input"
 							/>
 
@@ -159,7 +159,7 @@ export const PlayerQuestionScreen = ({
 									setNumDraft(String(next));
 								}}
 								className={cn(
-									"h-12 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-white font-extrabold text-2xl",
+									"h-12 rounded-xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-2xl",
 								)}
 								aria-label="Increase"
 							>
@@ -168,7 +168,7 @@ export const PlayerQuestionScreen = ({
 						</div>
 
 						{allowRange ? (
-							<p className="mt-3 text-xs text-gray-500 text-center">
+							<p className="mt-3 text-xs text-(--app-fg-muted) text-center">
 								Answers within the allowed range are accepted.
 							</p>
 						) : null}

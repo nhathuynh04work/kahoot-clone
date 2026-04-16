@@ -136,21 +136,21 @@ export function PdfUploadZone({
 					className={`
 						flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed
 						transition-colors cursor-pointer
-						${isPending ? "border-indigo-500/50 bg-indigo-500/5 cursor-wait" : "border-gray-600 hover:border-indigo-500/50 hover:bg-gray-800/50"}
+						${isPending ? "border-indigo-500/50 bg-indigo-500/5 cursor-wait" : "border-(--app-border) hover:border-indigo-500/50 hover:bg-(--app-surface-muted)"}
 					`}
 				>
 					{isPending ? (
 						<Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
 					) : (
-						<div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-							<Upload className="w-5 h-5 text-gray-400" />
+						<div className="w-10 h-10 rounded-full bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+							<Upload className="w-5 h-5 text-(--app-fg-muted)" />
 						</div>
 					)}
 				<div className="text-center">
-					<p className="font-medium text-white">
+					<p className="font-medium text-(--app-fg)">
 						{isPending ? "Uploading..." : "Drop PDF/TXT or click to upload"}
 					</p>
-					<p className="text-sm text-gray-400 mt-1">
+					<p className="text-sm text-(--app-fg-muted) mt-1">
 						{formatBytes(MAX_FILE_SIZE_BYTES)} max • {formatBytes(remainingBytes)} free
 					</p>
 				</div>

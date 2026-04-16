@@ -13,6 +13,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { appInputClassName } from "@/components/ui/app-input";
+import { cn } from "@/lib/utils";
 
 const TABS = ["my", "favorites"] as const;
 type DocumentDashboardTab = (typeof TABS)[number];
@@ -133,7 +135,7 @@ export function FileManager({
 
 				<div className="relative w-full sm:max-w-sm sm:ml-auto">
 					<Search
-						className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+						className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--app-fg-muted)"
 						aria-hidden
 					/>
 					<input
@@ -141,7 +143,7 @@ export function FileManager({
 						onChange={(e) => setQ(e.target.value)}
 						type="search"
 						placeholder="Search by name…"
-						className="w-full rounded-xl border border-gray-700 bg-gray-800/50 pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+						className={cn(appInputClassName, "rounded-xl pl-9 pr-4 py-2.5")}
 						aria-label="Search documents by name"
 					/>
 				</div>
@@ -149,15 +151,15 @@ export function FileManager({
 
 			{/* Storage usage bar */}
 			{tab === "my" && (
-				<div className="p-3 rounded-lg bg-gray-800 border border-gray-700">
+				<div className="p-3 rounded-lg bg-(--app-surface-muted) border border-(--app-border)">
 					<div className="flex justify-between text-xs mb-1">
-						<span className="text-gray-400">Storage</span>
-						<span className="text-white font-medium">
+						<span className="text-(--app-fg-muted)">Storage</span>
+						<span className="text-(--app-fg) font-medium">
 							{formatBytes(totalSize)} /{" "}
 							{formatBytes(maxTotalStorageBytes)}
 						</span>
 					</div>
-					<div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+					<div className="h-2 bg-(--app-border) rounded-full overflow-hidden">
 						<div
 							className="h-full bg-indigo-500 rounded-full transition-all duration-500"
 							style={{ width: `${Math.min(100, usagePercent)}%` }}
@@ -177,24 +179,24 @@ export function FileManager({
 
 			{/* Document list */}
 			{tab === "my" && isLoading ? (
-				<div className="flex items-center justify-center py-12 text-gray-400">
+				<div className="flex items-center justify-center py-12 text-(--app-fg-muted)">
 					Loading...
 				</div>
 			) : tab === "my" && error ? (
-				<div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
+				<div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400">
 					Failed to load
 				</div>
 			) : tab === "my" && documents.length === 0 ? (
-				<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center">
-					<p className="text-gray-400">No documents. Upload a PDF above.</p>
+				<div className="p-8 rounded-lg bg-(--app-surface-muted)/80 border border-(--app-border) border-dashed text-center">
+					<p className="text-(--app-fg-muted)">No documents. Upload a PDF above.</p>
 				</div>
 			) : tab === "favorites" && isLoadingFavorites ? (
-				<div className="flex items-center justify-center py-12 text-gray-400">
+				<div className="flex items-center justify-center py-12 text-(--app-fg-muted)">
 					Loading...
 				</div>
 			) : tab === "favorites" && filteredFavorites.length === 0 ? (
-				<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center">
-					<p className="text-gray-400">No favorites to show.</p>
+				<div className="p-8 rounded-lg bg-(--app-surface-muted)/80 border border-(--app-border) border-dashed text-center">
+					<p className="text-(--app-fg-muted)">No favorites to show.</p>
 				</div>
 			) : tab === "favorites" ? (
 				<div className="space-y-3">
@@ -227,7 +229,7 @@ export function FileManager({
 			)}
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
-				<p className="text-xs text-gray-400">
+				<p className="text-xs text-(--app-fg-muted)">
 					Page {pageInfo.page} / {pageInfo.totalPages}
 				</p>
 				<div className="flex items-center gap-2">
@@ -237,8 +239,8 @@ export function FileManager({
 						className={[
 							"px-3 py-2 rounded-lg text-sm border transition-colors",
 							pageInfo.page <= 1
-								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+								? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+								: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 						].join(" ")}
 						onClick={() =>
 							setParams({ page: String(Math.max(1, pageInfo.page - 1)) })
@@ -252,8 +254,8 @@ export function FileManager({
 						className={[
 							"px-3 py-2 rounded-lg text-sm border transition-colors",
 							pageInfo.page >= pageInfo.totalPages
-								? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-								: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+								? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+								: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 						].join(" ")}
 						onClick={() =>
 							setParams({

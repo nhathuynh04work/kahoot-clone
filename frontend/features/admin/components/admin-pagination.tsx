@@ -40,7 +40,7 @@ export function AdminPagination({
 				type="button"
 				disabled={safePage <= 1}
 				onClick={() => onPageChange(safePage - 1)}
-				className="h-9 w-9 rounded-md border border-gray-700 bg-gray-800/50 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800"
+				className="h-9 w-9 rounded-md border border-(--app-border) bg-(--app-control-bg) text-(--app-fg) disabled:opacity-50 disabled:cursor-not-allowed hover:bg-(--app-control-bg-hover)"
 				aria-label="Previous page"
 			>
 				{"<"}
@@ -51,7 +51,7 @@ export function AdminPagination({
 					return (
 						<span
 							key={`e-${idx}`}
-							className="h-9 px-2 inline-flex items-center justify-center text-gray-500"
+							className="h-9 px-2 inline-flex items-center justify-center text-(--app-fg-muted)"
 						>
 							…
 						</span>
@@ -68,8 +68,8 @@ export function AdminPagination({
 						className={[
 							"h-9 min-w-9 px-3 rounded-md border text-sm font-semibold transition-colors",
 							active
-								? "border-emerald-500/30 bg-emerald-500/15 text-emerald-100"
-								: "border-gray-700 bg-gray-800/50 text-gray-200 hover:bg-gray-800",
+								? "border-(--app-control-active-border) bg-(--app-control-active-bg) text-(--app-control-active-fg) ring-1 ring-inset ring-(--app-control-active-border) dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:ring-0"
+								: "border-(--app-border) bg-(--app-control-bg) hover:bg-(--app-control-bg-hover)",
 						].join(" ")}
 					>
 						{p}
@@ -81,7 +81,7 @@ export function AdminPagination({
 				type="button"
 				disabled={safePage >= safeTotalPages}
 				onClick={() => onPageChange(safePage + 1)}
-				className="h-9 w-9 rounded-md border border-gray-700 bg-gray-800/50 text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800"
+				className="h-9 w-9 rounded-md border border-(--app-border) bg-(--app-control-bg) text-(--app-fg) disabled:opacity-50 disabled:cursor-not-allowed hover:bg-(--app-control-bg-hover)"
 				aria-label="Next page"
 			>
 				{">"}

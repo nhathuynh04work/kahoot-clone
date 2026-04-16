@@ -70,8 +70,8 @@ export default async function AdminSessionDetailPage({
 					]}
 				/>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
-					<p className="text-sm font-medium text-white">Report</p>
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted) p-4">
+					<p className="text-sm font-medium text-(--app-fg)">Report</p>
 					<div className="mt-3">
 						{s.report ? (
 							<AdminKeyValueGrid
@@ -86,7 +86,7 @@ export default async function AdminSessionDetailPage({
 								]}
 							/>
 						) : (
-							<p className="text-sm text-gray-400">No report available yet.</p>
+							<p className="text-sm text-(--app-fg-muted)">No report available yet.</p>
 						)}
 					</div>
 				</div>

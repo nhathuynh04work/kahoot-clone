@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { AdminSessionListResponse } from "@/features/admin/api/server-actions";
 import type { AdminSessionListItem } from "@/features/admin/api/server-actions";
 import { AdminDataTable } from "@/features/admin/components/admin-data-table";
@@ -101,9 +102,9 @@ export function AdminSessionManagement({
 				header: "PIN",
 				meta: { widthClassName: "w-[110px]" },
 				cell: ({ row }) => (
-					<span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold bg-gray-800/70 text-gray-200 border border-gray-700 tabular-nums">
+					<Badge tone="neutral" className="text-xs tabular-nums">
 						{row.original.pin}
-					</span>
+					</Badge>
 				),
 			},
 			{
@@ -115,12 +116,12 @@ export function AdminSessionManagement({
 						<Link
 							href={`/admin/sessions/${row.original.id}`}
 							onClick={(e) => e.stopPropagation()}
-							className="text-sm font-semibold text-white truncate hover:text-emerald-100"
+							className="text-sm font-semibold text-(--app-fg) truncate hover:text-emerald-600 dark:hover:text-emerald-300"
 							title={row.original.quizTitle}
 						>
 							{row.original.quizTitle}
 						</Link>
-						<div className="text-xs text-gray-400 truncate">{row.original.hostEmail}</div>
+						<div className="text-xs text-(--app-fg-muted) truncate">{row.original.hostEmail}</div>
 					</div>
 				),
 			},
@@ -129,9 +130,9 @@ export function AdminSessionManagement({
 				header: "Status",
 				meta: { widthClassName: "w-[160px]" },
 				cell: ({ row }) => (
-					<span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold bg-gray-800/70 text-gray-200 border border-gray-700">
+					<Badge tone="neutral" className="text-xs">
 						{row.original.status}
-					</span>
+					</Badge>
 				),
 			},
 			{
@@ -139,7 +140,7 @@ export function AdminSessionManagement({
 				header: "Players",
 				meta: { widthClassName: "w-[120px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300 tabular-nums">
+					<span className="text-sm text-(--app-fg-muted) tabular-nums">
 						{row.original.totalPlayers ?? "—"}
 					</span>
 				),
@@ -149,7 +150,7 @@ export function AdminSessionManagement({
 				header: "Ended",
 				meta: { widthClassName: "w-[220px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300">{formatDateTime(row.original.endedAt)}</span>
+					<span className="text-sm text-(--app-fg-muted)">{formatDateTime(row.original.endedAt)}</span>
 				),
 			},
 		];
@@ -165,7 +166,7 @@ export function AdminSessionManagement({
 							value={q}
 							onChange={(e) => setQ(e.target.value)}
 							placeholder="Search by PIN, quiz title, or host…"
-							className="w-full rounded-xl border border-gray-700 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+							className="w-full rounded-xl border border-(--app-border) bg-(--app-input-bg) px-4 py-2.5 text-sm text-(--app-fg) placeholder:text-(--app-fg-muted)/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
 							aria-label="Search sessions"
 						/>
 					</div>
@@ -209,11 +210,11 @@ export function AdminSessionManagement({
 				/>
 
 				<div className="mt-6 flex items-center justify-between gap-3">
-					<div className="text-sm text-gray-400">
-						Page <span className="text-white font-medium">{page}</span> of{" "}
-						<span className="text-white font-medium">{totalPages}</span>{" "}
-						<span className="text-gray-600">•</span>{" "}
-						<span className="text-gray-300">{totalItems} sessions</span>
+					<div className="text-sm text-(--app-fg-muted)">
+						Page <span className="text-(--app-fg) font-medium">{page}</span> of{" "}
+						<span className="text-(--app-fg) font-medium">{totalPages}</span>{" "}
+						<span className="text-(--app-fg-muted)/60">•</span>{" "}
+						<span className="text-(--app-fg-muted)">{totalItems} sessions</span>
 					</div>
 					<AdminPagination
 						page={page}

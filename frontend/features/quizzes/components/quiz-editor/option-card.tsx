@@ -63,7 +63,7 @@ function McOptionTextarea({
 			}}
 			onInput={adjustHeight}
 			placeholder={`Option ${optionIndex + 1}`}
-			className="grow min-h-6 py-0.5 bg-transparent text-white text-lg font-medium placeholder:text-gray-500 focus:outline-none resize-none overflow-hidden"
+			className="grow min-h-6 py-0.5 bg-transparent text-(--app-fg) text-lg font-medium placeholder:text-(--app-fg-muted)/70 focus:outline-none resize-none overflow-hidden"
 			autoComplete="off"
 		/>
 	);
@@ -118,11 +118,11 @@ export function RealOptionCard({
 	};
 
 	return (
-		<div className="p-4 rounded-md border border-gray-700 bg-gray-900 flex items-start gap-3 shadow-sm group transition-colors focus-within:border-gray-500">
+		<div className="p-4 rounded-md border border-(--app-border) bg-(--app-surface) flex items-start gap-3 shadow-sm group transition-colors focus-within:border-indigo-500/40">
 			<div className={`w-10 h-10 rounded-md shrink-0 mt-0.5 ${colorClass}`} />
 
 			{isTrueFalse ? (
-				<p className="grow min-h-6 py-0.5 text-white text-lg font-medium">
+				<p className="grow min-h-6 py-0.5 text-(--app-fg) text-lg font-medium">
 					{optionIndex === 0 ? "True" : "False"}
 				</p>
 			) : (
@@ -141,7 +141,7 @@ export function RealOptionCard({
 				{isCorrect ? (
 					<CheckCircle className="w-7 h-7 text-green-500" />
 				) : (
-					<Circle className="w-7 h-7 text-gray-600 hover:text-gray-400" />
+					<Circle className="w-7 h-7 text-(--app-fg-muted)/50 hover:text-(--app-fg-muted)" />
 				)}
 			</button>
 		</div>
@@ -162,17 +162,16 @@ export function PlaceholderOptionCard({
 			type="button"
 			onClick={onAdd}
 			disabled={disabled}
-			className="w-full h-full p-4 rounded-md border border-gray-700 bg-gray-900/50 flex items-center gap-3 
-                       opacity-50 hover:opacity-100 hover:bg-gray-800 transition-all cursor-pointer group disabled:cursor-not-allowed">
+			className="w-full h-full p-4 rounded-md border border-(--app-border) bg-(--app-surface-muted) flex items-center gap-3 opacity-50 hover:opacity-100 hover:bg-(--app-surface) transition-all cursor-pointer group disabled:cursor-not-allowed">
 			<div
 				className={`w-10 h-10 rounded-md ${
 					optionColors[index % 4]
 				} opacity-50`}
 			/>
-			<span className="text-gray-500 text-lg font-medium group-hover:text-gray-300">
+			<span className="text-(--app-fg-muted)/70 text-lg font-medium group-hover:text-(--app-fg-muted)">
 				Add option
 			</span>
-			<Plus className="ml-auto w-5 h-5 text-gray-500" />
+			<Plus className="ml-auto w-5 h-5 text-(--app-fg-muted)/70" />
 		</button>
 	);
 }

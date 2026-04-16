@@ -61,7 +61,7 @@ export function PublicQuizFeed({
 	return (
 		<div className="space-y-6">
 			{items.length === 0 ? (
-				<div className="p-8 rounded-lg bg-gray-800/50 border border-gray-700 border-dashed text-center text-gray-400">
+				<div className="p-8 rounded-lg bg-(--app-surface-muted) border border-(--app-border) border-dashed text-center text-(--app-fg-muted)">
 					No public quizzes yet.
 				</div>
 			) : (
@@ -70,7 +70,6 @@ export function PublicQuizFeed({
 						<QuizCard
 							key={quiz.id}
 							quiz={quiz}
-							canEdit={false}
 							viewerId={viewerId}
 							onCardClick={() => setSelectedQuizId(quiz.id)}
 						/>
@@ -83,7 +82,7 @@ export function PublicQuizFeed({
 					type="button"
 					onClick={loadMore}
 					disabled={!canLoadMore || isLoading}
-					className="px-5 py-2.5 rounded-xl border border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+					className="px-5 py-2.5 rounded-xl border border-(--app-border) bg-(--app-surface) hover:bg-(--app-surface-muted) text-sm font-semibold text-(--app-fg) disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
 				>
 					{isLoading ? "Loading…" : canLoadMore ? "Show more" : "No more"}
 				</button>

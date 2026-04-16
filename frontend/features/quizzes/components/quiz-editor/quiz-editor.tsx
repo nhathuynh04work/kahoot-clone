@@ -191,14 +191,14 @@ export function QuizEditor({
 
 	return (
 		<FormProvider {...methods}>
-			<div className="flex flex-col h-dvh bg-gray-900 text-white">
+			<div className="flex flex-col h-dvh bg-(--app-bg) text-(--app-fg)">
 				<Header
 					isSaving={isSaving}
 					onAiPanelOpenChange={setIsMobileAiPanelOpen}
 				/>
 
 				<div className="flex-1 grid grid-cols-6 grid-rows-1 overflow-hidden">
-					<div className="hidden md:flex col-span-1 flex-col border-r border-gray-700 bg-gray-800/50">
+					<div className="hidden md:flex col-span-1 flex-col border-r border-(--app-border) bg-(--app-surface-muted)">
 						<QuestionNavList
 							questions={questions}
 							activeQuestionId={activeQuestionId}
@@ -208,7 +208,7 @@ export function QuizEditor({
 						/>
 					</div>
 
-					<div className="col-span-6 md:col-span-5 flex overflow-hidden">
+					<div className="col-span-6 md:col-span-5 flex min-h-0 overflow-hidden">
 						<div className="flex-1 min-h-0 overflow-y-auto pb-24 md:pb-0">
 							{activeQuestion && (
 								<QuestionEditor
@@ -222,7 +222,7 @@ export function QuizEditor({
 						</div>
 
 						{activeQuestion && (
-							<div className="hidden md:block">
+							<div className="hidden md:block h-full min-h-0 shrink-0">
 								<QuestionSettingsSidebar
 									key={activeIndex}
 									questionIndex={activeIndex}

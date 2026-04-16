@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { Badge } from "@/components/ui/badge";
 import type { AdminRevenuePageResponse } from "@/features/admin/api/server-actions";
 import type {
 	AdminRevenueLedgerItem,
@@ -46,34 +47,9 @@ function truncateId(id: string, keep: number = 12) {
 	return `${id.slice(0, keep)}…`;
 }
 
-function Badge({
-	children,
-	tone = "neutral",
-	title,
-}: {
-	children: string;
-	tone?: "neutral" | "good" | "warn" | "bad";
-	title?: string;
-}) {
-	const cls =
-		tone === "good"
-			? "bg-emerald-500/10 text-emerald-100 border-emerald-500/30"
-			: tone === "warn"
-				? "bg-amber-500/10 text-amber-100 border-amber-500/25"
-				: tone === "bad"
-					? "bg-red-500/10 text-red-100 border-red-500/25"
-					: "bg-gray-800/70 text-gray-200 border-gray-700";
-	return (
-		<span
-			title={title}
-			className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-semibold whitespace-nowrap ${cls}`}
-		>
-			{children}
-		</span>
-	);
-}
+type BadgeTone = "neutral" | "good" | "warn" | "bad";
 
-function toneForSubscriptionStatus(status: string | null | undefined) {
+function toneForSubscriptionStatus(status: string | null | undefined): BadgeTone {
 	const s = (status ?? "").toLowerCase();
 	if (s === "active" || s === "trialing") return "good";
 	if (s === "past_due" || s === "paused") return "warn";
@@ -134,7 +110,7 @@ export function AdminRevenueManagement({
 									{currency}
 								</Badge>
 								<span
-									className="text-sm font-semibold text-white truncate"
+									className="text-sm font-semibold text-(--app-fg) truncate"
 									title={inv}
 								>
 									{inv === "—" ? "—" : truncateId(inv, 18)}
@@ -150,7 +126,7 @@ export function AdminRevenueManagement({
 				meta: { widthClassName: "w-[280px]" },
 				cell: ({ row }: { row: { original: AdminRevenueLedgerItem } }) => (
 					<span
-						className="text-sm text-gray-300 truncate block"
+						className="text-sm text-(--app-fg-muted) truncate block"
 						title={row.original.userEmail ?? undefined}
 					>
 						{row.original.userEmail ?? "—"}
@@ -162,7 +138,7 @@ export function AdminRevenueManagement({
 				header: "Amount",
 				meta: { widthClassName: "w-[160px]" },
 				cell: ({ row }: { row: { original: AdminRevenueLedgerItem } }) => (
-					<span className="text-sm text-gray-300 tabular-nums">
+					<span className="text-sm text-(--app-fg-muted) tabular-nums">
 						{formatMoney(row.original.amountCents, row.original.currency)}
 					</span>
 				),
@@ -172,7 +148,7 @@ export function AdminRevenueManagement({
 				header: "Occurred",
 				meta: { widthClassName: "w-[220px]" },
 				cell: ({ row }: { row: { original: AdminRevenueLedgerItem } }) => (
-					<span className="text-sm text-gray-300 whitespace-nowrap">
+					<span className="text-sm text-(--app-fg-muted) whitespace-nowrap">
 						{formatDateTime(row.original.occurredAt)}
 					</span>
 				),
@@ -187,7 +163,7 @@ export function AdminRevenueManagement({
 				header: "User",
 				meta: { widthClassName: "w-[320px]" },
 				cell: ({ row }: { row: { original: AdminRevenueSubscriptionItem } }) => (
-					<span className="text-sm font-semibold text-white truncate block" title={row.original.userEmail}>
+					<span className="text-sm font-semibold text-(--app-fg) truncate block" title={row.original.userEmail}>
 						{row.original.userEmail}
 					</span>
 				),
@@ -217,7 +193,7 @@ export function AdminRevenueManagement({
 				header: "Period end",
 				meta: { widthClassName: "w-[160px]" },
 				cell: ({ row }: { row: { original: AdminRevenueSubscriptionItem } }) => (
-					<span className="text-sm text-gray-300 whitespace-nowrap">
+					<span className="text-sm text-(--app-fg-muted) whitespace-nowrap">
 						{formatDate(row.original.currentPeriodEnd)}
 					</span>
 				),
@@ -227,7 +203,7 @@ export function AdminRevenueManagement({
 				header: "Updated",
 				meta: { widthClassName: "w-[220px]" },
 				cell: ({ row }: { row: { original: AdminRevenueSubscriptionItem } }) => (
-					<span className="text-sm text-gray-300 whitespace-nowrap">
+					<span className="text-sm text-(--app-fg-muted) whitespace-nowrap">
 						{formatDateTime(row.original.updatedAt)}
 					</span>
 				),
@@ -256,11 +232,11 @@ export function AdminRevenueManagement({
 					/>
 
 					<div className="mt-6 flex items-center justify-between gap-3">
-						<div className="text-sm text-gray-400">
-							Page <span className="text-white font-medium">{page}</span> of{" "}
-							<span className="text-white font-medium">{totalPages}</span>{" "}
-							<span className="text-gray-600">•</span>{" "}
-							<span className="text-gray-300">{totalItems} entries</span>
+						<div className="text-sm text-(--app-fg-muted)">
+							Page <span className="text-(--app-fg) font-medium">{page}</span> of{" "}
+							<span className="text-(--app-fg) font-medium">{totalPages}</span>{" "}
+							<span className="text-(--app-fg-muted)/60">•</span>{" "}
+							<span className="text-(--app-fg-muted)">{totalItems} entries</span>
 						</div>
 						<AdminPagination
 							page={page}

@@ -147,7 +147,7 @@ export function DocumentAttachMenu({
 		},
 		UPLOADED: {
 			label: "Uploaded",
-			badgeClass: "text-gray-400 bg-gray-500/10",
+			badgeClass: "text-(--app-fg-muted) bg-(--app-fg-muted)/10",
 			icon: FileText,
 		},
 		ERROR: {
@@ -163,7 +163,7 @@ export function DocumentAttachMenu({
 				menuRef.current = node;
 				floatingRefs.setFloating(node);
 			}}
-			className="w-[440px] h-[520px] rounded-xl border border-gray-700 bg-gray-900 shadow-xl flex flex-col overflow-hidden"
+			className="w-[440px] h-[520px] rounded-xl border border-(--app-border) bg-(--app-elevated) text-(--app-fg) shadow-xl flex flex-col overflow-hidden"
 			role="menu"
 			style={{
 				position: strategy,
@@ -194,9 +194,9 @@ export function DocumentAttachMenu({
 			<div className="flex-1 min-h-0 overflow-y-auto">
 				{(uploadPending || parsingStageText) && (
 					<div className="px-3 pb-2">
-						<div className="rounded-lg border border-gray-700 bg-gray-800/40 px-3 py-2.5">
+						<div className="rounded-lg border border-(--app-border) bg-(--app-surface-muted)/70 px-3 py-2.5">
 							<div className="flex items-center justify-between gap-3 text-xs">
-								<span className="text-gray-300">
+								<span className="text-(--app-fg)">
 									{uploadPending
 										? "Uploading..."
 										: parsingStageText ?? "Processing..."}
@@ -207,7 +207,7 @@ export function DocumentAttachMenu({
 									</span>
 								)}
 							</div>
-							<div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mt-2">
+							<div className="h-1.5 bg-(--app-border) rounded-full overflow-hidden mt-2">
 								<div
 									className="h-full bg-indigo-500 rounded-full transition-all duration-300 ease-out"
 									style={{
@@ -235,7 +235,7 @@ export function DocumentAttachMenu({
 										? "w-5 h-5 text-emerald-400"
 										: doc.status === "ERROR"
 											? "w-5 h-5 text-red-400"
-											: "w-5 h-5 text-gray-400";
+											: "w-5 h-5 text-(--app-fg-muted)";
 							return (
 								<button
 									key={doc.id}
@@ -253,16 +253,16 @@ export function DocumentAttachMenu({
 											: isActive
 												? "ring-1 ring-indigo-500/30 bg-indigo-500/10 text-indigo-200"
 												: selectable
-													? "text-gray-200 hover:bg-gray-700/80"
-													: "text-gray-400",
+													? "text-(--app-fg) hover:bg-(--app-surface-muted)"
+													: "text-(--app-fg-muted)",
 									)}
 								>
-									<div className="shrink-0 w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center border border-gray-700/80">
+									<div className="shrink-0 w-9 h-9 rounded-lg bg-(--app-surface) flex items-center justify-center border border-(--app-border)">
 										<Icon className={iconClass} />
 									</div>
 									<div className="flex-1 min-w-0">
-										<p className="font-medium text-white truncate">{doc.fileName}</p>
-										<p className="text-xs text-gray-400">
+										<p className="font-medium text-(--app-fg) truncate">{doc.fileName}</p>
+										<p className="text-xs text-(--app-fg-muted)">
 											{formatBytes(doc.fileSize)}
 										</p>
 									</div>
@@ -279,7 +279,7 @@ export function DocumentAttachMenu({
 						})}
 					</div>
 				) : (
-					<div className="h-full flex items-center justify-center px-6 text-center text-sm text-gray-500">
+					<div className="h-full flex items-center justify-center px-6 text-center text-sm text-(--app-fg-muted)">
 						{tab === "owned"
 							? "No documents yet. Upload a PDF below."
 							: "No saved documents yet."}
@@ -287,9 +287,9 @@ export function DocumentAttachMenu({
 				)}
 			</div>
 
-			<div className="shrink-0 border-t border-gray-700 bg-gray-900/60 px-3 py-3 space-y-2">
+			<div className="shrink-0 border-t border-(--app-border) bg-(--app-surface-muted)/80 px-3 py-3 space-y-2">
 				{limitBytes != null && (
-					<div className="flex items-center justify-between gap-3 text-xs text-gray-400">
+					<div className="flex items-center justify-between gap-3 text-xs text-(--app-fg-muted)">
 						<span>
 							{formatBytes(usedBytes)} / {formatBytes(limitBytes)} used
 						</span>
@@ -298,7 +298,7 @@ export function DocumentAttachMenu({
 				)}
 
 				<div className="flex items-center justify-between gap-3">
-					<p className="text-[11px] text-gray-500">
+					<p className="text-[11px] text-(--app-fg-muted)/80">
 						{formatBytes(MAX_FILE_SIZE_BYTES)} max • PDF only
 					</p>
 					<button
@@ -306,11 +306,11 @@ export function DocumentAttachMenu({
 						onClick={handleUploadClick}
 						disabled={!onUpload || tab !== "owned" || isBusy}
 						role="menuitem"
-						className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm font-medium text-white disabled:opacity-60 disabled:pointer-events-none transition-colors"
+						className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-sm font-medium text-(--app-fg) disabled:opacity-60 disabled:pointer-events-none transition-colors"
 						aria-label="Upload PDF"
 						title={tab !== "owned" ? "Switch to My docs to upload" : "Upload PDF"}
 					>
-						<Upload className="w-4 h-4 text-gray-300 shrink-0" />
+						<Upload className="w-4 h-4 text-(--app-fg-muted) shrink-0" />
 						<span>
 							{uploadPending
 								? "Uploading..."

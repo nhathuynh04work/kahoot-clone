@@ -98,7 +98,7 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 							<h1 className="text-2xl font-bold truncate">
 								{profile.name ?? profile.email ?? "Unknown user"}
 							</h1>
-							<p className="text-sm text-gray-400 mt-1">
+							<p className="text-sm text-(--app-fg-muted) mt-1">
 								{isOwner ? "This is your profile." : "Public profile"}
 							</p>
 						</div>
@@ -116,13 +116,13 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 				<section className="space-y-3">
 					<div className="flex items-baseline justify-between gap-4">
 						<h2 className="text-lg font-semibold">Quizzes</h2>
-						<p className="text-sm text-gray-400">
+						<p className="text-sm text-(--app-fg-muted)">
 							{quizzes.length} {quizzes.length === 1 ? "quiz" : "quizzes"}
 						</p>
 					</div>
 
 					{quizzes.length === 0 ? (
-						<div className="p-6 rounded-lg bg-gray-800/50 border border-gray-700 text-center text-gray-400">
+						<div className="p-6 rounded-lg bg-(--app-surface-muted) border border-(--app-border) text-center text-(--app-fg-muted)">
 							No quizzes to show.
 						</div>
 					) : (
@@ -131,7 +131,6 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 								<QuizCard
 									key={quiz.id}
 									quiz={quiz}
-									canEdit={isOwner}
 									viewerId={viewer?.id}
 								/>
 							))}
@@ -142,14 +141,14 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 				<section className="space-y-3">
 					<div className="flex items-baseline justify-between gap-4">
 						<h2 className="text-lg font-semibold">Documents</h2>
-						<p className="text-sm text-gray-400">
+						<p className="text-sm text-(--app-fg-muted)">
 							{documents.length}{" "}
 							{documents.length === 1 ? "document" : "documents"}
 						</p>
 					</div>
 
 					{documents.length === 0 ? (
-						<div className="p-6 rounded-lg bg-gray-800/50 border border-gray-700 text-center text-gray-400">
+						<div className="p-6 rounded-lg bg-(--app-surface-muted) border border-(--app-border) text-center text-(--app-fg-muted)">
 							No documents to show.
 						</div>
 					) : (
@@ -175,7 +174,7 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 	if (viewer) {
 		return (
 			<div
-				className="h-dvh overflow-hidden bg-gray-900 flex flex-col text-white"
+				className="h-dvh overflow-hidden bg-(--app-bg) text-(--app-fg) flex flex-col"
 				style={{ ["--app-header-height" as string]: "58px" }}
 			>
 				<TopBar user={viewer} />
@@ -188,7 +187,7 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
 	}
 
 	return (
-		<div className="min-h-dvh bg-gray-900 text-white flex flex-col">
+		<div className="min-h-dvh bg-(--app-bg) text-(--app-fg) flex flex-col">
 			<LandingTopBar />
 			<main className="flex-1">{content}</main>
 		</div>

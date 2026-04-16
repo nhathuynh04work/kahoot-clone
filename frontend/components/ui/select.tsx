@@ -22,7 +22,7 @@ function optionInner(opt: SelectOption) {
 		<span className="flex min-w-0 items-center gap-2">
 			{opt.icon ? (
 				<span
-					className="shrink-0 text-gray-400 [&_svg]:size-4"
+					className="shrink-0 text-(--app-fg-muted) [&_svg]:size-4"
 					aria-hidden
 				>
 					{opt.icon}
@@ -139,14 +139,14 @@ export function Select({
 					}
 				}}
 				className={cn(
-					"w-full flex items-center justify-between gap-3 rounded-xl border border-gray-700 bg-gray-800/50 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/70",
+					"w-full flex items-center justify-between gap-3 rounded-xl border border-(--app-border) bg-(--app-input-bg) px-3 py-2.5 text-sm text-(--app-fg) focus:outline-none focus:ring-2 focus:ring-(--app-ring)/70",
 					buttonClassName,
 				)}
 			>
 				<span
 					className={cn(
 						"min-w-0 flex-1 text-left",
-						!selected && "text-gray-400",
+						!selected && "text-(--app-fg-muted)",
 					)}
 				>
 					{selected ? (
@@ -157,7 +157,7 @@ export function Select({
 				</span>
 				<ChevronDown
 					className={cn(
-						"h-4 w-4 shrink-0 text-gray-400 transition-transform",
+						"h-4 w-4 shrink-0 text-(--app-fg-muted) transition-transform",
 						open && "rotate-180",
 					)}
 					aria-hidden
@@ -192,7 +192,7 @@ export function Select({
 						}
 					}}
 					className={cn(
-						"absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl",
+						"absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-(--app-border) bg-(--app-elevated) shadow-xl",
 						menuClassName,
 					)}
 				>
@@ -212,12 +212,12 @@ export function Select({
 										className={cn(
 											"w-full px-3 py-2 text-left text-sm transition-colors",
 											opt.disabled
-												? "text-gray-600 cursor-not-allowed"
-												: "text-gray-200 hover:bg-gray-800",
-											isSelected && "text-white",
+												? "text-(--app-fg-muted)/50 cursor-not-allowed"
+												: "text-(--app-fg) hover:bg-(--app-surface-muted)",
+											isSelected && "text-(--app-fg) font-medium",
 											isActive &&
 												!opt.disabled &&
-												"bg-gray-800",
+												"bg-(--app-surface-muted)",
 										)}
 									>
 										{optionInner(opt)}

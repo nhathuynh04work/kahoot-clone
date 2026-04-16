@@ -59,19 +59,19 @@ export function ReportQuizFilter({
 								setQuery("");
 							}
 						}}
-						className="flex-1 min-w-0 flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-800/50 px-3 py-2 text-left hover:bg-gray-800 text-sm"
+						className="flex-1 min-w-0 flex items-center justify-between gap-3 rounded-lg border border-(--app-border) bg-(--app-input-bg) px-3 py-2 text-left hover:bg-(--app-surface-muted) text-sm"
 						aria-label="Filter by quiz"
 					>
-						<div className="min-w-0 truncate text-white font-medium">
+						<div className="min-w-0 truncate text-(--app-fg) font-medium">
 							{selectedLabel}
 						</div>
-						<span className="shrink-0 text-gray-400 text-sm">{open ? "▲" : "▼"}</span>
+						<span className="shrink-0 text-(--app-fg-muted) text-sm">{open ? "▲" : "▼"}</span>
 					</button>
 					{quizId ? (
 						<button
 							type="button"
 							onClick={() => onChangeQuizId(undefined)}
-							className="shrink-0 text-xs px-2 py-2 rounded-lg border border-gray-700 bg-gray-900/40 text-gray-300 hover:text-white hover:border-gray-600"
+							className="shrink-0 text-xs px-2 py-2 rounded-lg border border-(--app-border) bg-(--app-surface-muted) text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface)"
 							aria-label="Clear quiz filter"
 						>
 							Clear
@@ -80,13 +80,13 @@ export function ReportQuizFilter({
 				</div>
 
 				{open ? (
-					<div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 shadow-xl overflow-hidden">
-						<div className="p-3 border-b border-gray-700">
+					<div className="absolute z-20 mt-2 w-full rounded-lg border border-(--app-border) bg-(--app-elevated) shadow-xl overflow-hidden">
+						<div className="p-3 border-b border-(--app-border)">
 							<input
 								value={query}
 								onChange={(e) => setQuery(e.target.value)}
 								placeholder="Search quizzes…"
-								className="w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+								className="w-full rounded-md border border-(--app-border) bg-(--app-input-bg) px-3 py-2 text-sm text-(--app-fg) placeholder:text-(--app-fg-muted)/60 focus:outline-none focus:ring-2 focus:ring-(--app-ring)/70"
 							/>
 						</div>
 						<div className="max-h-72 overflow-auto">
@@ -96,7 +96,7 @@ export function ReportQuizFilter({
 									onChangeQuizId(undefined);
 									setOpen(false);
 								}}
-								className="w-full px-3 py-2 text-left text-sm hover:bg-gray-800 text-gray-200"
+								className="w-full px-3 py-2 text-left text-sm hover:bg-(--app-surface-muted) text-(--app-fg)"
 							>
 								All quizzes
 							</button>
@@ -113,8 +113,8 @@ export function ReportQuizFilter({
 											setOpen(false);
 										}}
 										className={[
-											"w-full px-3 py-2 text-left text-sm hover:bg-gray-800",
-											active ? "bg-gray-800 text-white" : "text-gray-200",
+											"w-full px-3 py-2 text-left text-sm hover:bg-(--app-surface-muted)",
+											active ? "bg-(--app-surface-muted) text-(--app-fg) font-medium" : "text-(--app-fg-muted)",
 										].join(" ")}
 									>
 										<div className="truncate">{title}</div>
@@ -123,7 +123,7 @@ export function ReportQuizFilter({
 							})}
 
 							<div className="p-3 flex items-center justify-between gap-2">
-								<div className="text-xs text-gray-500">
+								<div className="text-xs text-(--app-fg-muted)">
 									{quizSearch.data?.pages?.[0]
 										? `${quizSearch.data.pages[0].totalItems} quizzes`
 										: "—"}
@@ -136,7 +136,7 @@ export function ReportQuizFilter({
 										quizSearch.isLoading
 									}
 									onClick={() => quizSearch.fetchNextPage()}
-									className="text-xs px-2 py-1 rounded-md border border-gray-700 bg-gray-900/40 text-gray-300 hover:text-white hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="text-xs px-2 py-1 rounded-md border border-(--app-border) bg-(--app-surface-muted) text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface) disabled:opacity-50 disabled:cursor-not-allowed"
 								>
 									{quizSearch.isFetchingNextPage
 										? "Loading…"

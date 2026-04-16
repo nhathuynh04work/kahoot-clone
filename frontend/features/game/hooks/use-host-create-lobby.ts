@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 import { socket } from "../lib/socket";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type HostCreateLobbyResponse =
 	| { success: true; lobbyId: number; pin: string }
-	| { success: false };
+	| { success: false; message?: string };
 
 export function useHostCreateLobby(
 	quizId: number,
@@ -28,7 +29,8 @@ export function useHostCreateLobby(
 			{ quizId },
 			(response: HostCreateLobbyResponse) => {
 				if (!response?.success) {
-					router.push("/");
+					toast.error(response?.message || "Could not start hosting this quiz");
+					router.push("/library/quizzes");
 					return;
 				}
 

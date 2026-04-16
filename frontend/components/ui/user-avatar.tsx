@@ -25,7 +25,7 @@ export function UserAvatar({
 		<div
 			{...rest}
 			className={cn(
-				"rounded-full bg-gray-700 text-gray-200 flex items-center justify-center font-semibold shrink-0 select-none",
+				"rounded-full bg-(--app-surface-muted) text-(--app-fg) border border-(--app-border) flex items-center justify-center font-semibold shrink-0 select-none",
 				className,
 			)}
 			style={{

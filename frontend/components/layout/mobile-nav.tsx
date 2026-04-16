@@ -19,7 +19,7 @@ export function MobileNav({ user }: { user: User }) {
 
 	return (
 		<nav
-			className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-gray-700 bg-gray-900/90 backdrop-blur"
+			className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-(--app-border) bg-(--app-surface)/95 backdrop-blur-md text-(--app-fg)"
 			aria-label="Primary navigation"
 		>
 			<div className="mx-auto w-full max-w-2xl px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
@@ -41,10 +41,10 @@ export function MobileNav({ user }: { user: User }) {
 								className={cn(
 									"flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors",
 									isActive
-										? "text-white bg-indigo-600/15"
+										? "text-(--app-fg) bg-indigo-600/15"
 										: isVipNav && !isVipUser
-											? "text-amber-200/80 hover:text-amber-200 hover:bg-amber-500/10"
-											: "text-gray-300/80 hover:text-white hover:bg-gray-800/70",
+											? "text-amber-700 hover:text-amber-900 hover:bg-amber-500/10"
+											: "text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted)",
 								)}
 							>
 								<Icon className="h-5 w-5" aria-hidden />

@@ -13,7 +13,7 @@ function QuestionOptionsCompact({
 	isRevealed: boolean;
 }) {
 	return (
-		<div className="w-full divide-y divide-gray-700/60">
+		<div className="w-full divide-y divide-(--app-border)/60">
 			{options.map((opt, idx) => {
 				const colorClass = optionColors[idx % 4];
 				const isCorrect = opt.isCorrect;
@@ -25,7 +25,7 @@ function QuestionOptionsCompact({
 							isRevealed
 								? isCorrect
 									? "bg-emerald-500/10"
-									: "bg-gray-900/50 opacity-60"
+									: "bg-(--app-surface-muted)/80 opacity-60"
 								: "bg-transparent"
 						}`}
 					>
@@ -37,7 +37,7 @@ function QuestionOptionsCompact({
 									<CheckCircle2 className="absolute inset-0 m-auto w-4 h-4 text-white" />
 								) : null}
 							</div>
-							<p className="text-sm text-white truncate min-w-0 flex-1">
+							<p className="text-sm text-(--app-fg) truncate min-w-0 flex-1">
 								{opt.text?.trim() || "-"}
 							</p>
 						</div>
@@ -69,8 +69,8 @@ function QuestionOptionsGrid({
 							isRevealed
 								? isCorrect
 									? "border-emerald-500/60 bg-emerald-500/10"
-									: "border-gray-700 bg-gray-900/50 opacity-60"
-								: "border-gray-700 bg-gray-900"
+									: "border-(--app-border) bg-(--app-surface-muted)/80 opacity-60"
+								: "border-(--app-border) bg-(--app-surface)"
 						}`}
 					>
 						<div
@@ -78,7 +78,7 @@ function QuestionOptionsGrid({
 						/>
 
 						<div className="min-w-0 flex-1">
-							<p className="text-white text-base font-medium wrap-break-word">
+							<p className="text-(--app-fg) text-base font-medium wrap-break-word">
 								{opt.text?.trim() || "-"}
 							</p>
 						</div>
@@ -133,13 +133,13 @@ export function QuestionPreview({
 
 	const compactTypedBlock =
 		variant === "compact"
-			? "w-full rounded-lg border border-gray-700/80 bg-gray-900/40 px-4 py-4"
+			? "w-full rounded-lg border border-(--app-border) bg-(--app-surface-muted)/60 px-4 py-4"
 			: "w-full max-w-xl text-center space-y-2";
 
 	return (
 		<div className="flex flex-col items-center gap-6">
 			{showQuestionText && (
-				<p className="text-white text-center text-lg font-semibold leading-snug max-w-xl">
+				<p className="text-(--app-fg) text-center text-lg font-semibold leading-snug max-w-xl">
 					{question?.text?.trim() || "-"}
 				</p>
 			)}
@@ -159,25 +159,25 @@ export function QuestionPreview({
 			) : null}
 
 			{isMcLike(qType) && sortedOptions.length === 0 ? (
-				<p className="text-gray-400 text-sm text-center">No options.</p>
+				<p className="text-(--app-fg-muted) text-sm text-center">No options.</p>
 			) : null}
 
 			{qType === "SHORT_ANSWER" ? (
 				<div className={compactTypedBlock}>
 					{isRevealed ? (
-						<p className="text-sm text-gray-300">
-							<span className="text-gray-500">Correct answer: </span>
-							<span className="text-emerald-300 font-medium">
+						<p className="text-sm text-(--app-fg-muted)">
+							<span className="text-(--app-fg-muted)/80">Correct answer: </span>
+							<span className="text-emerald-600 dark:text-emerald-400 font-medium">
 								{(question?.correctText ?? "").trim() || "—"}
 							</span>
 							{question?.caseSensitive ? (
-								<span className="block text-xs text-gray-500 mt-1">
+								<span className="block text-xs text-(--app-fg-muted)/70 mt-1">
 									(case-sensitive)
 								</span>
 							) : null}
 						</p>
 					) : (
-						<p className="text-sm text-gray-500">Answers are not shown.</p>
+						<p className="text-sm text-(--app-fg-muted)/80">Answers are not shown.</p>
 					)}
 				</div>
 			) : null}
@@ -186,9 +186,9 @@ export function QuestionPreview({
 				<div className={compactTypedBlock}>
 					{isRevealed ? (
 						question?.allowRange ? (
-							<p className="text-sm text-gray-300">
-								<span className="text-gray-500">Accepted range: </span>
-								<span className="text-emerald-300 font-medium">
+							<p className="text-sm text-(--app-fg-muted)">
+								<span className="text-(--app-fg-muted)/80">Accepted range: </span>
+								<span className="text-emerald-600 dark:text-emerald-400 font-medium">
 									{typeof question?.correctNumber === "number" &&
 									Number.isFinite(question.correctNumber) &&
 									typeof question?.rangeProximity === "number" &&
@@ -200,15 +200,15 @@ export function QuestionPreview({
 								</span>
 							</p>
 						) : (
-							<p className="text-sm text-gray-300">
-								<span className="text-gray-500">Correct number: </span>
-								<span className="text-emerald-300 font-medium">
+							<p className="text-sm text-(--app-fg-muted)">
+								<span className="text-(--app-fg-muted)/80">Correct number: </span>
+								<span className="text-emerald-600 dark:text-emerald-400 font-medium">
 									{question?.correctNumber ?? "—"}
 								</span>
 							</p>
 						)
 					) : (
-						<p className="text-sm text-gray-500">Answers are not shown.</p>
+						<p className="text-sm text-(--app-fg-muted)/80">Answers are not shown.</p>
 					)}
 				</div>
 			) : null}

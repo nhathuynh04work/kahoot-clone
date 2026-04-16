@@ -33,7 +33,7 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 
 	if (reportQuery.isError) {
 		return (
-			<p className="text-sm text-red-400">
+			<p className="text-sm text-red-600 dark:text-red-400">
 				{reportQuery.error instanceof Error
 					? reportQuery.error.message
 					: "Failed to load report"}
@@ -59,12 +59,12 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 				/>
 			</div>
 
-			<div className="rounded-lg border border-gray-700 bg-gray-900/30 p-3">
+			<div className="rounded-lg border border-(--app-border) bg-(--app-surface-muted)/60 p-3">
 				<div className="flex items-center justify-between gap-3">
-					<p className="text-sm font-medium text-white">
+					<p className="text-sm font-medium text-(--app-fg)">
 						Per-question accuracy
 					</p>
-					<p className="text-xs text-gray-400">
+					<p className="text-xs text-(--app-fg-muted)">
 						First {perQuestion.length} questions
 					</p>
 				</div>
@@ -73,14 +73,14 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 						<BarChart data={perQuestion} margin={{ left: 8, right: 8 }}>
 							<XAxis
 								dataKey="name"
-								tick={{ fill: "#9ca3af", fontSize: 12 }}
-								axisLine={{ stroke: "rgba(55, 65, 81, 0.8)" }}
+								tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								axisLine={{ stroke: "var(--app-border)" }}
 								tickLine={false}
 							/>
 							<YAxis
 								domain={[0, 100]}
-								tick={{ fill: "#9ca3af", fontSize: 12 }}
-								axisLine={{ stroke: "rgba(55, 65, 81, 0.8)" }}
+								tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								axisLine={{ stroke: "var(--app-border)" }}
 								tickLine={false}
 								width={32}
 								tickFormatter={(v) => `${v}%`}
@@ -88,12 +88,12 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 							<Tooltip
 								cursor={{ fill: "rgba(99, 102, 241, 0.08)" }}
 								contentStyle={{
-									background: "rgba(17, 24, 39, 0.95)",
-									border: "1px solid rgba(55, 65, 81, 0.9)",
-									color: "#fff",
+									background: "var(--app-elevated)",
+									border: "1px solid var(--app-border)",
+									color: "var(--app-fg)",
 									borderRadius: 10,
 								}}
-								labelStyle={{ color: "#e5e7eb" }}
+								labelStyle={{ color: "var(--app-fg-muted)" }}
 								formatter={(v) => [`${v}%`, "Accuracy"]}
 							/>
 							<Bar
@@ -104,7 +104,7 @@ export function ReportSessionExpanded({ lobbyId }: ReportSessionExpandedProps) {
 						</BarChart>
 					</ResponsiveContainer>
 				</div>
-				<p className="mt-2 text-xs text-gray-500">
+				<p className="mt-2 text-xs text-(--app-fg-muted)">
 					Tip: open &quot;View report&quot; for full details (leaderboard, per-question
 					breakdown).
 				</p>

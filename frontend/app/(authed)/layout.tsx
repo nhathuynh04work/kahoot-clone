@@ -22,7 +22,7 @@ export default async function AuthedLayout({
 
 	return (
 		<div
-			className="fixed inset-0 overflow-hidden bg-gray-900 flex flex-col"
+			className="fixed inset-0 overflow-hidden bg-(--app-bg) text-(--app-fg) flex flex-col"
 			style={{ ["--app-header-height" as string]: "58px" }}
 		>
 			<TopBar user={user} />

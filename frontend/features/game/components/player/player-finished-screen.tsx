@@ -17,8 +17,8 @@ export const PlayerFinishedScreen = ({
 
 	// Determine Icon & Color based on rank
 	let Icon = Star;
-	let colorClass = "text-gray-400";
-	let bgClass = "bg-gray-700";
+	let colorClass = "text-(--app-fg-muted)";
+	let bgClass = "bg-(--app-surface-muted)";
 
 	if (actualRank === 1) {
 		Icon = Trophy;
@@ -26,8 +26,8 @@ export const PlayerFinishedScreen = ({
 		bgClass = "bg-yellow-500/20";
 	} else if (actualRank === 2) {
 		Icon = Medal;
-		colorClass = "text-gray-300";
-		bgClass = "bg-gray-400/20";
+		colorClass = "text-(--app-fg-muted)";
+		bgClass = "bg-(--app-surface-muted)/80";
 	} else if (actualRank === 3) {
 		Icon = Award;
 		colorClass = "text-orange-400";
@@ -35,10 +35,10 @@ export const PlayerFinishedScreen = ({
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6">
-			<div className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl overflow-hidden shadow-2xl">
+		<div className="min-h-screen bg-(--app-bg) flex flex-col items-center justify-center p-6">
+			<div className="w-full max-w-md bg-(--app-elevated) border border-(--app-border) rounded-xl overflow-hidden shadow-2xl">
 				{/* Header Section */}
-				<div className="bg-gray-900 p-8 flex flex-col items-center border-b border-gray-700">
+				<div className="bg-(--app-surface-muted) p-8 flex flex-col items-center border-b border-(--app-border)">
 					<div
 						className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 ${bgClass}`}>
 						<Icon
@@ -47,30 +47,30 @@ export const PlayerFinishedScreen = ({
 							fill={actualRank === 1 ? "currentColor" : "none"}
 						/>
 					</div>
-					<h1 className="text-2xl font-bold text-white">Game Over</h1>
-					<p className="text-gray-400">Thanks for playing!</p>
+					<h1 className="text-2xl font-bold text-(--app-fg)">Game Over</h1>
+					<p className="text-(--app-fg-muted)">Thanks for playing!</p>
 				</div>
 
 				{/* Stats Section */}
 				<div className="p-6 space-y-4">
-					<div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg border border-gray-700">
-						<span className="text-gray-400 font-medium">Rank</span>
+					<div className="flex items-center justify-between p-4 bg-(--app-surface-muted) rounded-lg border border-(--app-border)">
+						<span className="text-(--app-fg-muted) font-medium">Rank</span>
 						<span className={`text-2xl font-bold ${colorClass}`}>
 							#{actualRank}
 						</span>
 					</div>
 
-					<div className="flex items-center justify-between p-4 bg-gray-900 rounded-lg border border-gray-700">
-						<span className="text-gray-400 font-medium">
+					<div className="flex items-center justify-between p-4 bg-(--app-surface-muted) rounded-lg border border-(--app-border)">
+						<span className="text-(--app-fg-muted) font-medium">
 							Final Score
 						</span>
-						<span className="text-2xl font-mono font-bold text-white">
+						<span className="text-2xl font-mono font-bold text-(--app-fg)">
 							{points}
 						</span>
 					</div>
 
 					<div className="flex items-center justify-center mt-6 pt-4">
-						<div className="px-4 py-1 bg-gray-700 rounded-full text-sm text-gray-300 font-medium">
+						<div className="px-4 py-1 bg-(--app-surface-muted) rounded-full text-sm text-(--app-fg) font-medium border border-(--app-border)">
 							{nickname}
 						</div>
 					</div>

@@ -17,15 +17,15 @@ export function ReportPagination({
 		[
 			"px-3 py-2 rounded-lg text-sm border transition-colors",
 			disabled
-				? "opacity-50 cursor-not-allowed bg-gray-800/30 border-gray-700 text-gray-400"
-				: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+				? "opacity-50 cursor-not-allowed bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+				: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 		].join(" ");
 
 	return (
 		<div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<p className="text-xs text-gray-400">
+			<p className="text-xs text-(--app-fg-muted)">
 				Page {page} / {totalPages}
-				<span className="text-gray-600"> · </span>
+				<span className="text-(--app-fg-muted)/60"> · </span>
 				{totalItems} sessions
 			</p>
 			<div className="flex items-center gap-2">

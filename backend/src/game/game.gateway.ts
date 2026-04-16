@@ -104,7 +104,13 @@ export class GameGateway
             return { success: true, lobbyId: lobby.id, pin: lobby.pin };
         } catch (error) {
             this.logger.error(error?.message ?? error);
-            return { success: false };
+            return {
+                success: false,
+                message:
+                    typeof error?.message === "string"
+                        ? error.message
+                        : "Could not create lobby",
+            };
         }
     }
 

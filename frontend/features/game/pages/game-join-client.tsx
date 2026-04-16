@@ -99,7 +99,7 @@ export function GameJoinClient() {
 
 	return (
 		<div className="px-4">
-			<div className="flex flex-col items-center justify-center min-h-dvh text-white">
+			<div className="flex flex-col items-center justify-center min-h-dvh text-(--app-fg)">
 				<div className="mb-10 select-none">
 					<AppLogo className="text-5xl font-extrabold tracking-tight" />
 				</div>

@@ -26,15 +26,15 @@ export function ProfileEditModal({
 			role="dialog"
 		>
 			<div
-				className="relative w-full max-w-lg rounded-lg bg-gray-800 border border-gray-700 shadow-2xl"
+				className="relative w-full max-w-lg rounded-lg bg-(--app-elevated) border border-(--app-border) shadow-2xl"
 				onClick={(e) => e.stopPropagation()}
 			>
-				<div className="flex items-center justify-between p-4 border-b border-gray-700">
-					<h3 className="text-xl font-semibold text-white">Edit profile</h3>
+				<div className="flex items-center justify-between p-4 border-b border-(--app-border)">
+					<h3 className="text-xl font-semibold text-(--app-fg)">Edit profile</h3>
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-1 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+						className="p-1 rounded-full text-(--app-fg-muted) hover:bg-(--app-surface-muted) hover:text-(--app-fg) transition-colors"
 						aria-label="Close"
 					>
 						<X className="w-5 h-5" />

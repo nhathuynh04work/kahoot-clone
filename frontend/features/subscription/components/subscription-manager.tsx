@@ -93,7 +93,7 @@ export function SubscriptionManager({
 
 	const statusBadgeClass =
 		statusTone === "free"
-			? "bg-gray-800/80 text-gray-300"
+			? "bg-(--app-surface-muted) text-(--app-fg-muted)"
 			: statusTone === "canceling"
 				? "bg-amber-500/10 text-amber-100"
 				: "bg-emerald-500/15 text-emerald-200";
@@ -124,7 +124,7 @@ export function SubscriptionManager({
 	const showLimitsAndPlansCard = showPlanGrid;
 
 	const cardClass =
-		"rounded-xl border border-gray-700 bg-gray-800/40 p-5 sm:p-6 space-y-6";
+		"rounded-xl border border-(--app-border) bg-(--app-surface-muted)/80 p-5 sm:p-6 space-y-6";
 
 	const invoices = initialHistory?.invoices ?? [];
 
@@ -146,10 +146,10 @@ export function SubscriptionManager({
 
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
-						<p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+						<p className="text-xs font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 							Subscription
 						</p>
-						<p className="text-sm text-gray-500">{user.email}</p>
+						<p className="text-sm text-(--app-fg-muted)">{user.email}</p>
 					</div>
 					<span
 						className={`inline-flex w-fit items-center rounded-md px-2.5 py-1 text-xs font-semibold ${statusBadgeClass}`}
@@ -159,16 +159,16 @@ export function SubscriptionManager({
 				</div>
 
 				{isVip || recurringActive ? (
-					<div className="space-y-2 border-t border-gray-800 pt-6">
-						<h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+					<div className="space-y-2 border-t border-(--app-border) pt-6">
+						<h2 className="text-xs font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 							Current plan
 						</h2>
-						<p className="text-xl font-semibold text-white">
+						<p className="text-xl font-semibold text-(--app-fg)">
 							VIP subscription
 						</p>
 						{periodEndDate &&
 						(recurringActive || user.vip?.source === "subscription") ? (
-							<p className="text-sm text-gray-400">
+							<p className="text-sm text-(--app-fg-muted)">
 								{cancelScheduled
 									? `Access until ${periodEndDate.toLocaleDateString()}`
 									: `Renews ${periodEndDate.toLocaleDateString()}`}
@@ -183,12 +183,12 @@ export function SubscriptionManager({
 				) : null}
 
 				{hasStripeCustomer ? (
-					<div className="space-y-2 border-t border-gray-800 pt-6">
+					<div className="space-y-2 border-t border-(--app-border) pt-6">
 						<button
 							type="button"
 							onClick={() => onPortal()}
 							disabled={loadingKey !== null}
-							className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-gray-950 px-4 py-2.5 text-sm font-semibold hover:bg-gray-100 disabled:opacity-50"
+							className="inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-fg) text-(--app-bg) px-4 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50"
 						>
 							{loadingKey === "portal" ? (
 								<Loader2 className="animate-spin w-4 h-4" />
@@ -197,7 +197,7 @@ export function SubscriptionManager({
 							)}
 							Manage billing in Stripe
 						</button>
-						<p className="text-xs text-gray-500 max-w-md">
+						<p className="text-xs text-(--app-fg-muted) max-w-md">
 							Card, invoices, and cancellation live in Stripe&apos;s secure portal.
 						</p>
 					</div>
@@ -209,46 +209,46 @@ export function SubscriptionManager({
 					{showPlanGrid ? (
 						<div className="space-y-6">
 							<div>
-								<h2 className="text-lg font-semibold text-white">Plans</h2>
-								<p className="text-sm text-gray-500 mt-1 max-w-2xl">
+								<h2 className="text-lg font-semibold text-(--app-fg)">Plans</h2>
+								<p className="text-sm text-(--app-fg-muted) mt-1 max-w-2xl">
 									Compare Free vs VIP. VIP is a subscription you can cancel anytime
 									from the Stripe billing portal.
 								</p>
 							</div>
 
 							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-								<div className="rounded-2xl border border-gray-800 bg-gray-950/30 p-5">
+								<div className="rounded-2xl border border-(--app-border) bg-(--app-surface-muted)/50 p-5">
 									<div className="flex items-start justify-between gap-4">
 										<div className="min-w-0">
-											<p className="text-sm font-semibold text-white">Free</p>
-											<p className="text-xs text-gray-500 mt-1">
+											<p className="text-sm font-semibold text-(--app-fg)">Free</p>
+											<p className="text-xs text-(--app-fg-muted) mt-1">
 												Everything you need to start hosting.
 											</p>
 										</div>
-										<span className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-300">
+										<span className="inline-flex items-center rounded-full border border-(--app-border) bg-(--app-surface-muted)/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-(--app-fg-muted)">
 											{!isVip && !recurringActive ? "Current" : "Included"}
 										</span>
 									</div>
 
-									<ul className="mt-4 space-y-3 text-sm text-gray-300">
+									<ul className="mt-4 space-y-3 text-sm text-(--app-fg-muted)">
 										<li className="flex items-start gap-3">
-											<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+											<CheckCircle2 className="w-5 h-5 text-(--app-fg-muted) mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">Up to 20 questions</span> per quiz
+												<span className="font-semibold text-(--app-fg)">Up to 20 questions</span> per quiz
 											</span>
 										</li>
 										<li className="flex items-start gap-3">
-											<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+											<CheckCircle2 className="w-5 h-5 text-(--app-fg-muted) mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">Basic question types</span>{" "}
+												<span className="font-semibold text-(--app-fg)">Basic question types</span>{" "}
 												(multiple choice + true/false)
 											</span>
 										</li>
 										<li className="flex items-start gap-3">
-											<CheckCircle2 className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" aria-hidden />
+											<CheckCircle2 className="w-5 h-5 text-(--app-fg-muted) mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">10 documents</span> and{" "}
-												<span className="font-semibold text-white">50 MB</span> total storage
+												<span className="font-semibold text-(--app-fg)">10 documents</span> and{" "}
+												<span className="font-semibold text-(--app-fg)">50 MB</span> total storage
 											</span>
 										</li>
 									</ul>
@@ -257,56 +257,56 @@ export function SubscriptionManager({
 								<div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 shadow-[0_0_0_1px_rgba(245,158,11,0.10)]">
 									<div className="flex items-start justify-between gap-4">
 										<div className="min-w-0">
-											<p className="text-sm font-semibold text-white inline-flex items-center gap-2">
+											<p className="text-sm font-semibold text-(--app-fg) inline-flex items-center gap-2">
 												VIP
 												<span className="inline-flex items-center rounded-full border border-amber-500/25 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
 													Subscription
 												</span>
 											</p>
-											<p className="text-xs text-gray-500 mt-1">
+											<p className="text-xs text-(--app-fg-muted) mt-1">
 												More content, advanced questions, and bigger limits.
 											</p>
 										</div>
 										<div className="hidden sm:flex items-center justify-center shrink-0">
-											<div className="relative w-12 h-12 rounded-xl border border-gray-800 bg-gray-950/20 flex items-center justify-center">
-												<Crown className="w-6 h-6 text-indigo-300/90" aria-hidden />
+											<div className="relative w-12 h-12 rounded-xl border border-(--app-border) bg-(--app-surface-muted)/50 flex items-center justify-center">
+												<Crown className="w-6 h-6 text-indigo-600 dark:text-indigo-300/90" aria-hidden />
 											</div>
 										</div>
 									</div>
 
 									<div className="mt-4">
-										<p className="text-3xl font-black tracking-tight text-white tabular-nums">
+										<p className="text-3xl font-black tracking-tight text-(--app-fg) tabular-nums">
 											$10
-											<span className="text-sm font-semibold text-gray-400 ml-2">every 3 months</span>
+											<span className="text-sm font-semibold text-(--app-fg-muted) ml-2">every 3 months</span>
 										</p>
-										<p className="text-xs text-gray-500 mt-1">$3.33/mo</p>
+										<p className="text-xs text-(--app-fg-muted) mt-1">$3.33/mo</p>
 									</div>
 
-									<ul className="mt-4 space-y-3 text-sm text-gray-300">
+									<ul className="mt-4 space-y-3 text-sm text-(--app-fg-muted)">
 										<li className="flex items-start gap-3">
-											<CheckCircle2 className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+											<CheckCircle2 className="w-5 h-5 text-indigo-600 dark:text-indigo-300 mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">Up to 200 questions</span> per quiz
+												<span className="font-semibold text-(--app-fg)">Up to 200 questions</span> per quiz
 											</span>
 										</li>
 										<li className="flex items-start gap-3">
-											<ListChecks className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+											<ListChecks className="w-5 h-5 text-indigo-600 dark:text-indigo-300 mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">Advanced question types</span>{" "}
+												<span className="font-semibold text-(--app-fg)">Advanced question types</span>{" "}
 												(short answer + number input)
 											</span>
 										</li>
 										<li className="flex items-start gap-3">
-											<FileText className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+											<FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-300 mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">100 documents</span> and{" "}
-												<span className="font-semibold text-white">500 MB</span> total storage
+												<span className="font-semibold text-(--app-fg)">100 documents</span> and{" "}
+												<span className="font-semibold text-(--app-fg)">500 MB</span> total storage
 											</span>
 										</li>
 										<li className="flex items-start gap-3">
-											<Sparkles className="w-5 h-5 text-indigo-300 mt-0.5 shrink-0" aria-hidden />
+											<Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-300 mt-0.5 shrink-0" aria-hidden />
 											<span>
-												<span className="font-semibold text-white">VIP AI generation</span> can include advanced formats
+												<span className="font-semibold text-(--app-fg)">VIP AI generation</span> can include advanced formats
 											</span>
 										</li>
 									</ul>
@@ -318,7 +318,7 @@ export function SubscriptionManager({
 											disabled={loadingKey !== null || isVip || recurringActive}
 											className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2 ${
 												isVip || recurringActive
-													? "bg-gray-800 text-gray-400 cursor-default"
+													? "bg-(--app-surface-muted) text-(--app-fg-muted) cursor-default"
 													: "bg-amber-500 hover:bg-amber-400 text-gray-950"
 											}`}
 										>
@@ -327,7 +327,7 @@ export function SubscriptionManager({
 											) : null}
 											{isVip || recurringActive ? "You’re VIP" : "Subscribe"}
 										</button>
-										<p className="text-[11px] text-gray-500 mt-3 min-h-[32px]">
+										<p className="text-[11px] text-(--app-fg-muted) mt-3 min-h-[32px]">
 											{hasStripeCustomer
 												? "After subscribing, manage invoices and cancellation in the Stripe portal above."
 												: "After subscribing, you can manage billing in Stripe."}
@@ -344,8 +344,8 @@ export function SubscriptionManager({
 				<div className={cardClass}>
 					<div className="flex items-end justify-between gap-4">
 						<div>
-							<h2 className="text-lg font-semibold text-white">Payment history</h2>
-							<p className="text-sm text-gray-500 mt-1">
+							<h2 className="text-lg font-semibold text-(--app-fg)">Payment history</h2>
+							<p className="text-sm text-(--app-fg-muted) mt-1">
 								Recent invoice payments.
 							</p>
 						</div>
@@ -354,20 +354,20 @@ export function SubscriptionManager({
 					<div className="overflow-x-auto">
 						<table className="min-w-full text-sm">
 							<thead>
-								<tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+								<tr className="text-left text-xs uppercase tracking-wide text-(--app-fg-muted)">
 									<th className="py-2 pr-4">Date</th>
 									<th className="py-2 pr-4">Amount</th>
 									<th className="py-2 pr-4">Status</th>
 									<th className="py-2 pr-4">Receipt</th>
 								</tr>
 							</thead>
-							<tbody className="text-gray-200">
+							<tbody className="text-(--app-fg)">
 								{/* Invoices */}
 								{invoices.slice(0, 10).map((i) => {
 									const date = i.occurredAt ? new Date(i.occurredAt) : null;
 									const amount = i.amountCents;
 									return (
-										<tr key={`inv:${i.externalId}`} className="border-t border-gray-800">
+										<tr key={`inv:${i.externalId}`} className="border-t border-(--app-border)">
 											<td className="py-3 pr-4 whitespace-nowrap">
 												{date ? date.toLocaleDateString() : "—"}
 											</td>
@@ -383,7 +383,7 @@ export function SubscriptionManager({
 														href={i.externalUrl}
 														target="_blank"
 														rel="noreferrer"
-														className="text-indigo-300 hover:text-indigo-200 font-semibold"
+														className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200 font-semibold"
 													>
 														View
 													</a>

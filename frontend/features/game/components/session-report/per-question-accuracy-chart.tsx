@@ -22,24 +22,24 @@ export function PerQuestionAccuracyChart({
 	}, [report.questions, limit]);
 
 	return (
-		<div className="rounded-lg border border-gray-700 bg-gray-900/30 p-3">
+		<div className="rounded-lg border border-(--app-border) bg-(--app-surface-muted)/60 p-3">
 			<div className="flex items-center justify-between gap-3">
-				<p className="text-sm font-medium text-white">Per-question accuracy</p>
-				<p className="text-xs text-gray-400">First {data.length} questions</p>
+				<p className="text-sm font-medium text-(--app-fg)">Per-question accuracy</p>
+				<p className="text-xs text-(--app-fg-muted)">First {data.length} questions</p>
 			</div>
 			<div className="mt-3 h-44">
 				<ResponsiveContainer width="100%" height="100%">
 					<BarChart data={data} margin={{ left: 8, right: 8 }}>
 						<XAxis
 							dataKey="name"
-							tick={{ fill: "#9ca3af", fontSize: 12 }}
-							axisLine={{ stroke: "rgba(55, 65, 81, 0.8)" }}
+							tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+							axisLine={{ stroke: "var(--app-border)" }}
 							tickLine={false}
 						/>
 						<YAxis
 							domain={[0, 100]}
-							tick={{ fill: "#9ca3af", fontSize: 12 }}
-							axisLine={{ stroke: "rgba(55, 65, 81, 0.8)" }}
+							tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+							axisLine={{ stroke: "var(--app-border)" }}
 							tickLine={false}
 							width={32}
 							tickFormatter={(v) => `${v}%`}
@@ -47,12 +47,12 @@ export function PerQuestionAccuracyChart({
 						<Tooltip
 							cursor={{ fill: "rgba(99, 102, 241, 0.08)" }}
 							contentStyle={{
-								background: "rgba(17, 24, 39, 0.95)",
-								border: "1px solid rgba(55, 65, 81, 0.9)",
-								color: "#fff",
+								background: "var(--app-elevated)",
+								border: "1px solid var(--app-border)",
+								color: "var(--app-fg)",
 								borderRadius: 10,
 							}}
-							labelStyle={{ color: "#e5e7eb" }}
+							labelStyle={{ color: "var(--app-fg-muted)" }}
 							formatter={(v) => [`${v}%`, "Accuracy"]}
 						/>
 						<Bar dataKey="value" fill="#6366f1" radius={[8, 8, 2, 2]} />

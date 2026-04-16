@@ -91,7 +91,7 @@ export function PerQuestionStatsList({
 	return (
 		<div>
 			<div className="flex items-center justify-between gap-3">
-				<p className="text-xs text-gray-400">
+				<p className="text-xs text-(--app-fg-muted)">
 					{rows.length} question{rows.length === 1 ? "" : "s"}
 				</p>
 			</div>
@@ -103,9 +103,9 @@ export function PerQuestionStatsList({
 					return (
 						<div
 							key={r.key}
-							className="grid grid-cols-[56px_1fr] items-stretch border border-gray-700/60 rounded-md overflow-hidden bg-gray-900/10"
+							className="grid grid-cols-[56px_1fr] items-stretch border border-(--app-border)/80 rounded-md overflow-hidden bg-(--app-surface-muted)/40"
 						>
-							<div className="relative w-14 min-h-11 bg-gray-950/20 overflow-hidden rounded-none shrink-0">
+							<div className="relative w-14 min-h-11 bg-(--app-surface-muted)/60 overflow-hidden rounded-none shrink-0">
 								{r.imageUrl ? (
 									<Image
 										src={r.imageUrl}
@@ -115,7 +115,7 @@ export function PerQuestionStatsList({
 										className="object-cover"
 									/>
 								) : (
-									<div className="absolute inset-0 flex items-center justify-center text-gray-500">
+									<div className="absolute inset-0 flex items-center justify-center text-(--app-fg-muted)">
 										<ImageIcon className="w-5 h-5 opacity-70" />
 									</div>
 								)}
@@ -126,7 +126,7 @@ export function PerQuestionStatsList({
 								className={cn(
 									"w-full px-3 py-2 flex items-start justify-between gap-3 rounded-none bg-transparent",
 									"text-left transition-colors",
-									isOpen ? "" : "hover:bg-gray-900/20",
+									isOpen ? "" : "hover:bg-(--app-surface-muted)/50",
 								)}
 								aria-expanded={isOpen}
 								onClick={() =>
@@ -135,13 +135,13 @@ export function PerQuestionStatsList({
 							>
 								<div className="min-w-0">
 									<div className="flex items-center gap-2">
-										<p className="text-xs text-gray-400">{r.label}</p>
-										<p className="text-xs font-semibold text-indigo-300 tabular-nums">
+										<p className="text-xs text-(--app-fg-muted)">{r.label}</p>
+										<p className="text-xs font-semibold text-indigo-600 dark:text-indigo-300 tabular-nums">
 											{r.accuracy}%
 										</p>
 									</div>
 									<p
-										className="mt-0.5 text-sm text-white truncate"
+										className="mt-0.5 text-sm text-(--app-fg) truncate"
 										title={r.text}
 									>
 										{r.text}
@@ -149,14 +149,14 @@ export function PerQuestionStatsList({
 								</div>
 
 								<div className="shrink-0 text-right tabular-nums">
-									<p className="text-xs text-gray-400">
+									<p className="text-xs text-(--app-fg-muted)">
 										{r.correct}✓ / {r.incorrect}✕
 									</p>
 									<div className="mt-1 flex justify-end">
 										{isOpen ? (
-											<ChevronDown className="w-4 h-4 text-gray-400" />
+											<ChevronDown className="w-4 h-4 text-(--app-fg-muted)" />
 										) : (
-											<ChevronRight className="w-4 h-4 text-gray-400" />
+											<ChevronRight className="w-4 h-4 text-(--app-fg-muted)" />
 										)}
 									</div>
 								</div>
@@ -174,7 +174,7 @@ export function PerQuestionStatsList({
 								>
 									<div className="overflow-hidden">
 										<div>
-											<div className="divide-y divide-gray-700/60 border-t border-gray-700/60">
+											<div className="divide-y divide-(--app-border)/80 border-t border-(--app-border)/80">
 												{(r.qType === "SHORT_ANSWER" ||
 													r.qType === "NUMBER_INPUT") &&
 												r.freeTextRows.length > 0 ? (
@@ -182,10 +182,10 @@ export function PerQuestionStatsList({
 														<div
 															key={row.label}
 															className="flex items-center justify-between gap-3 px-3 py-2">
-															<p className="text-sm text-white truncate font-mono">
+															<p className="text-sm text-(--app-fg) truncate font-mono">
 																{row.label}
 															</p>
-															<span className="text-sm font-semibold text-indigo-300 tabular-nums">
+															<span className="text-sm font-semibold text-indigo-600 dark:text-indigo-300 tabular-nums">
 																{row.count}
 															</span>
 														</div>
@@ -220,7 +220,7 @@ export function PerQuestionStatsList({
 																			<CheckCircle2 className="absolute inset-0 m-auto w-4 h-4 text-white" />
 																		) : null}
 																	</div>
-																	<p className="text-sm text-white truncate">
+																	<p className="text-sm text-(--app-fg) truncate">
 																		{opt.text?.trim() || "(No text)"}
 																	</p>
 																</div>
@@ -230,13 +230,13 @@ export function PerQuestionStatsList({
 																		className={cn(
 																			"text-sm font-semibold tabular-nums",
 																			isCorrect
-																				? "text-emerald-300"
-																				: "text-indigo-300",
+																				? "text-emerald-600 dark:text-emerald-300"
+																				: "text-indigo-600 dark:text-indigo-300",
 																		)}
 																	>
 																		{opt.chosen}
 																	</div>
-																	<p className="text-[11px] text-gray-400">
+																	<p className="text-[11px] text-(--app-fg-muted)">
 																		{chosenLabel}
 																	</p>
 																</div>
@@ -244,7 +244,7 @@ export function PerQuestionStatsList({
 														);
 													})
 												) : (
-													<p className="text-sm text-gray-400">
+													<p className="text-sm text-(--app-fg-muted)">
 														{r.qType === "MULTIPLE_CHOICE" ||
 														r.qType === "TRUE_FALSE"
 															? "No options for this question."

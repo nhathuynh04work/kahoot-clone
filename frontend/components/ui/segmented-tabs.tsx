@@ -23,7 +23,7 @@ export function SegmentedTabs<T extends string>({
 	return (
 		<div
 			className={cn(
-				"max-w-full overflow-x-auto inline-flex rounded-xl border border-gray-700 bg-gray-900/40",
+				"max-w-full overflow-x-auto inline-flex rounded-xl border border-(--app-border) bg-(--app-elevated) shadow-sm",
 				stretch && "flex w-full",
 				className,
 			)}
@@ -42,15 +42,15 @@ export function SegmentedTabs<T extends string>({
 						aria-selected={isActive}
 						onClick={() => onChange(tab.id)}
 						className={cn(
-							"relative min-w-[72px] sm:min-w-[88px] px-3 py-2 text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap",
-							idx !== 0 && "border-l border-gray-700",
+							"relative min-w-[72px] sm:min-w-[88px] px-3 py-2 text-sm font-bold transition-colors flex items-center justify-center whitespace-nowrap",
+							idx !== 0 && "border-l border-(--app-border)",
 							isFirst && "rounded-l-xl",
 							isLast && "rounded-r-xl",
 							stretch && "flex-1 min-w-0",
 							isActive
-								? "bg-indigo-600/20 text-indigo-200 ring-1 ring-inset ring-indigo-500/70 z-10"
-								: "text-gray-300 hover:bg-gray-800/60 hover:text-white",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
+								? "bg-(--app-control-active-bg) text-(--app-control-active-fg) ring-1 ring-inset ring-(--app-control-active-border) shadow-sm z-10 dark:bg-(--app-surface) dark:text-(--app-fg) dark:ring-1 dark:ring-inset dark:ring-indigo-500/30"
+								: "bg-transparent text-(--app-fg) hover:bg-(--app-control-bg-hover) hover:text-(--app-fg)",
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--app-ring)/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--app-surface)",
 						)}
 					>
 						{tab.label}

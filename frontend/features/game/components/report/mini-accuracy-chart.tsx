@@ -34,17 +34,17 @@ export function ReportMiniAccuracyChart({
 					<RadialBar
 						dataKey="value"
 						cornerRadius={999}
-						background={{ fill: "rgba(55, 65, 81, 0.8)" }}
+						background={{ fill: "var(--app-border)" }}
 						fill="#6366f1"
 					/>
 				</RadialBarChart>
 			</ResponsiveContainer>
 			<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-				<div className="text-[11px] leading-none font-semibold text-white tabular-nums">
+				<div className="text-[11px] leading-none font-semibold text-(--app-fg) tabular-nums">
 					{percent.toFixed(0)}%
 				</div>
 				{label ? (
-					<div className="mt-1 text-[10px] leading-none text-gray-400">
+					<div className="mt-1 text-[10px] leading-none text-(--app-fg-muted)">
 						{label}
 					</div>
 				) : null}

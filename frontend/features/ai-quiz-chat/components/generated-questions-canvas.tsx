@@ -6,10 +6,10 @@ import type { MockGeneratedQuestion } from "../types";
 import { cn } from "@/lib/utils";
 
 const OPTION_COLORS = [
-	"bg-red-800",
-	"bg-blue-800",
-	"bg-yellow-800",
-	"bg-green-800",
+	"bg-red-500 dark:bg-red-800",
+	"bg-blue-500 dark:bg-blue-800",
+	"bg-amber-400 dark:bg-yellow-700",
+	"bg-green-500 dark:bg-green-800",
 ];
 
 export type { MockGeneratedQuestion };
@@ -43,20 +43,20 @@ export function GeneratedQuestionsCanvas({
 	return (
 		<div
 			className={cn(
-				"flex flex-col bg-gray-800 border-l border-gray-700 overflow-hidden",
+				"flex flex-col bg-(--app-surface) border-l border-(--app-border) overflow-hidden text-(--app-fg)",
 				className,
 			)}
 		>
-			<div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-700 shrink-0">
+			<div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-(--app-border) shrink-0">
 				<div className="flex items-center gap-2 min-w-0">
 					<PanelRight className="w-5 h-5 text-indigo-400 shrink-0" />
-					<h3 className="font-semibold text-white truncate">Generated questions</h3>
+					<h3 className="font-semibold text-(--app-fg) truncate">Generated questions</h3>
 				</div>
 				{onClose && (
 					<button
 						type="button"
 						onClick={onClose}
-						className="px-2.5 py-1 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors shrink-0"
+						className="px-2.5 py-1 rounded-lg text-sm font-medium text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors shrink-0"
 						aria-label="Close panel"
 					>
 						Done
@@ -71,11 +71,11 @@ export function GeneratedQuestionsCanvas({
 					return (
 						<div
 							key={q.id}
-							className="rounded-md border border-gray-700 bg-gray-800 overflow-hidden shadow-sm"
+							className="rounded-md border border-(--app-border) bg-(--app-surface-muted) overflow-hidden shadow-sm"
 						>
-							<div className="p-2.5 sm:p-3 border-b border-gray-700 flex items-start justify-between gap-2">
+							<div className="p-2.5 sm:p-3 border-b border-(--app-border) flex items-start justify-between gap-2">
 								<div className="min-w-0 flex-1 space-y-1">
-									<p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">
+									<p className="text-[10px] uppercase tracking-wide text-(--app-fg-muted)/80 font-semibold">
 										{q.type.replace(/_/g, " ")}
 									</p>
 									{editable && onUpdateQuestion ? (
@@ -85,11 +85,11 @@ export function GeneratedQuestionsCanvas({
 											onChange={(e) =>
 												onUpdateQuestion(q.id, { text: e.target.value })
 											}
-											className="w-full text-sm font-medium text-gray-200 bg-gray-900 border border-gray-600 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500"
+											className="w-full text-sm font-medium text-(--app-fg) bg-(--app-input-bg) border border-(--app-border) rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500"
 											placeholder="Question text"
 										/>
 									) : (
-										<p className="text-sm font-medium text-gray-200 wrap-break-word">
+										<p className="text-sm font-medium text-(--app-fg) wrap-break-word">
 											{q.text}
 										</p>
 									)}
@@ -102,7 +102,7 @@ export function GeneratedQuestionsCanvas({
 											"shrink-0 p-1.5 rounded transition-colors",
 											isEditing
 												? "bg-indigo-600 text-white"
-												: "text-gray-400 hover:text-indigo-400 hover:bg-gray-700",
+												: "text-(--app-fg-muted) hover:text-indigo-400 hover:bg-(--app-surface)",
 										)}
 										title={isEditing ? "Done" : "Edit"}
 										aria-label={isEditing ? "Done editing" : "Edit question"}
@@ -117,8 +117,8 @@ export function GeneratedQuestionsCanvas({
 							</div>
 
 							{q.type === "TRUE_FALSE" ? (
-								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
-									<span className="text-gray-500">Correct: </span>
+								<div className="p-3 text-xs text-(--app-fg-muted) border-t border-(--app-border)/60">
+									<span className="text-(--app-fg-muted)/80">Correct: </span>
 									<span className="text-emerald-400 font-medium">
 										{q.correctIsTrue ? "True" : "False"}
 									</span>
@@ -130,7 +130,7 @@ export function GeneratedQuestionsCanvas({
 									{q.options.map((opt, i) => (
 										<div
 											key={i}
-											className="py-1.5 px-2 rounded-md border border-gray-700 bg-gray-900 flex items-center gap-2 min-h-0"
+											className="py-1.5 px-2 rounded-md border border-(--app-border) bg-(--app-input-bg) flex items-center gap-2 min-h-0"
 										>
 											<div
 												className={cn(
@@ -147,11 +147,11 @@ export function GeneratedQuestionsCanvas({
 															option: { index: i, text: e.target.value },
 														})
 													}
-													className="flex-1 min-w-0 text-xs text-white bg-transparent border border-gray-600 rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500"
+													className="flex-1 min-w-0 text-xs text-(--app-fg) bg-transparent border border-(--app-border) rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500"
 													placeholder={`Option ${i + 1}`}
 												/>
 											) : (
-												<span className="text-xs text-white wrap-break-word flex-1 min-w-0">
+												<span className="text-xs text-(--app-fg) wrap-break-word flex-1 min-w-0">
 													{opt.text}
 												</span>
 											)}
@@ -163,13 +163,13 @@ export function GeneratedQuestionsCanvas({
 															option: { index: i, isCorrect: !opt.isCorrect },
 														})
 													}
-													className="shrink-0 p-0.5 rounded hover:bg-gray-700 transition-colors"
+													className="shrink-0 p-0.5 rounded hover:bg-(--app-surface-muted) transition-colors"
 													title={opt.isCorrect ? "Correct answer" : "Mark as correct"}
 												>
 													{opt.isCorrect ? (
 														<CheckCircle className="w-4 h-4 text-green-500" />
 													) : (
-														<Circle className="w-4 h-4 text-gray-600" />
+														<Circle className="w-4 h-4 text-(--app-fg-muted)" />
 													)}
 												</button>
 											) : (
@@ -177,7 +177,7 @@ export function GeneratedQuestionsCanvas({
 													{opt.isCorrect ? (
 														<CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
 													) : (
-														<Circle className="w-4 h-4 text-gray-600 shrink-0" />
+														<Circle className="w-4 h-4 text-(--app-fg-muted) shrink-0" />
 													)}
 												</>
 											)}
@@ -187,14 +187,14 @@ export function GeneratedQuestionsCanvas({
 							) : null}
 
 							{q.type === "SHORT_ANSWER" ? (
-								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
-									<span className="text-gray-500">Correct: </span>
+								<div className="p-3 text-xs text-(--app-fg-muted) border-t border-(--app-border)/60">
+									<span className="text-(--app-fg-muted)/80">Correct: </span>
 									<span className="text-emerald-400 font-medium">{q.correctText}</span>
 								</div>
 							) : null}
 
 							{q.type === "NUMBER_INPUT" ? (
-								<div className="p-3 text-xs text-gray-400 border-t border-gray-700/60">
+								<div className="p-3 text-xs text-(--app-fg-muted) border-t border-(--app-border)/60">
 									Correct: {q.correctNumber} (± {q.rangeProximity})
 								</div>
 							) : null}
@@ -207,7 +207,7 @@ export function GeneratedQuestionsCanvas({
 									className={cn(
 										"w-full flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
 										added
-											? "bg-gray-700 text-green-400 cursor-default"
+											? "bg-(--app-surface-muted) text-emerald-600 dark:text-emerald-400 cursor-default border border-(--app-border)"
 											: "bg-indigo-600 hover:bg-indigo-500 text-white",
 									)}
 								>

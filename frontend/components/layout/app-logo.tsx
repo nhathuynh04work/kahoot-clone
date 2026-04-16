@@ -11,7 +11,7 @@ export function AppLogo({ className, variant = "wordmark" }: AppLogoProps) {
 	if (variant === "mark") {
 		return (
 			<span
-				className={cn("inline-flex items-baseline text-white", className)}
+				className={cn("inline-flex items-baseline text-(--app-fg)", className)}
 				role="img"
 				aria-label="Quiztopia"
 			>
@@ -22,12 +22,12 @@ export function AppLogo({ className, variant = "wordmark" }: AppLogoProps) {
 
 	return (
 		<span
-			className={cn("inline-flex items-baseline gap-0 text-white", className)}
+			className={cn("inline-flex items-baseline gap-0 text-(--app-fg)", className)}
 			role="img"
 			aria-label="Quiztopia"
 		>
-			<span className="text-white">quiztopia</span>
-			<span className="text-indigo-600">!</span>
+			<span className="text-(--app-fg)">quiztopia</span>
+			<span className="text-(--app-accent)">!</span>
 		</span>
 	);
 }

@@ -16,10 +16,10 @@ export default async function RegisterPage() {
 	return (
 		<>
 			<div className="text-center mb-8">
-				<h1 className="text-3xl sm:text-4xl font-black text-white mb-2 tracking-tight">
+				<h1 className="text-3xl sm:text-4xl font-black text-(--app-fg) mb-2 tracking-tight">
 					Create your account
 				</h1>
-				<p className="text-gray-400 text-sm sm:text-base">
+				<p className="text-(--app-fg-muted) text-sm sm:text-base">
 					Start creating quizzes and hosting games in minutes.
 				</p>
 			</div>

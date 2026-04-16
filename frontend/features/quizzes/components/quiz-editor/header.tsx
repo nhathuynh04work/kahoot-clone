@@ -102,7 +102,7 @@ export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 
 	return (
 		<>
-			<div className="h-[58px] flex items-center gap-4 px-4 border-b border-gray-700 bg-gray-800 text-white shrink-0">
+			<div className="h-[58px] flex items-center gap-4 px-4 border-b border-(--app-border) bg-(--app-surface) text-(--app-fg) shrink-0">
 				<Link
 					href="/library/quizzes"
 					className="text-xl font-extrabold shrink-0 tracking-tight">
@@ -110,17 +110,17 @@ export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 				</Link>
 
 				<div className="hidden md:flex flex-1 min-w-0 justify-center">
-					<div className="w-full max-w-md border border-gray-700 bg-gray-900 rounded-lg px-4 py-2 flex items-center gap-3 hover:border-gray-500 transition-colors">
+					<div className="w-full max-w-md border border-(--app-border) bg-(--app-bg) rounded-lg px-4 py-2 flex items-center gap-3 hover:border-indigo-500/40 transition-colors">
 						<button
 							onClick={openTitleModal}
 							className={`font-semibold text-left truncate flex-1 min-w-0 text-sm ${
-								title ? "text-white" : "text-gray-400"
+								title ? "text-(--app-fg)" : "text-(--app-fg-muted)"
 							}`}>
 							{title || "Quiz title"}
 						</button>
 						<button
 							onClick={() => setIsModalOpen(true)}
-							className="bg-gray-700 hover:bg-gray-600 text-white px-2.5 py-1 rounded text-xs font-semibold transition-colors shrink-0"
+							className="bg-(--app-surface-muted) hover:bg-(--app-surface-muted) text-(--app-fg) px-2.5 py-1 rounded text-xs font-semibold transition-colors shrink-0 border border-(--app-border)"
 							aria-label="Quiz settings">
 							Settings
 						</button>
@@ -131,7 +131,7 @@ export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 					<button
 						type="button"
 						onClick={() => setIsModalOpen(true)}
-						className="p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700/70 transition-colors md:hidden"
+						className="p-2 rounded-lg text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors md:hidden"
 						aria-label="Quiz settings"
 					>
 						<Settings className="w-5 h-5" aria-hidden />
@@ -142,13 +142,13 @@ export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 							setIsAiPanelOpen(true);
 							onAiPanelOpenChange?.(true);
 						}}
-						className="p-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-gray-700/70 transition-colors"
+						className="p-2 rounded-lg text-indigo-500 hover:text-indigo-600 hover:bg-(--app-surface-muted) transition-colors"
 						aria-label="Generate with AI">
 						<Sparkles className="w-5 h-5" />
 					</button>
 
 					<div
-						className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-gray-400"
+						className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-(--app-fg-muted)"
 						aria-label={isSaving ? "Saving" : "Saved"}>
 						{isSaving ? (
 							<Loader2 className="w-4 h-4 animate-spin" />

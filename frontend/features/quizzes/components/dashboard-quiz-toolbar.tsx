@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { appInputClassName } from "@/components/ui/app-input";
+import { cn } from "@/lib/utils";
 
 type QuizDashboardTab = "my" | "favorites";
 
@@ -62,7 +64,7 @@ export function DashboardQuizToolbar() {
 
 			<div className="relative w-full sm:max-w-sm sm:ml-auto">
 				<Search
-					className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+					className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--app-fg-muted)"
 					aria-hidden
 				/>
 				<input
@@ -70,7 +72,7 @@ export function DashboardQuizToolbar() {
 					onChange={(e) => setQ(e.target.value)}
 					type="search"
 					placeholder="Search by title…"
-					className="w-full rounded-xl border border-gray-700 bg-gray-800/50 pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70"
+					className={cn(appInputClassName, "rounded-xl pl-9 pr-4 py-2.5")}
 					aria-label="Search quizzes by title"
 				/>
 			</div>

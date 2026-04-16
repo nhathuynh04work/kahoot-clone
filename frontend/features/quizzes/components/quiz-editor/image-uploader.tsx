@@ -35,13 +35,13 @@ export function ImageUploader({
                         flex flex-col items-center justify-center overflow-hidden relative group transition-colors
                         ${
 							!imageUrl
-								? "cursor-pointer hover:bg-gray-800/50 hover:border-gray-500"
+								? "cursor-pointer hover:bg-(--app-surface-muted) hover:border-indigo-500/40"
 								: ""
 						}
                         ${
 							error
 								? "border-red-500 bg-red-900/10"
-								: "bg-gray-900 border-gray-700 text-gray-500"
+								: "bg-(--app-bg) border-(--app-border) text-(--app-fg-muted)/70"
 						}
                     `}>
 					{/* A. LOADING STATE OVERLAY */}
@@ -96,7 +96,7 @@ export function ImageUploader({
 											e.stopPropagation();
 											triggerUpload();
 										}}
-										className="text-xs bg-gray-800 border border-gray-600 px-3 py-1 rounded hover:bg-gray-700 text-white">
+										className="text-xs bg-(--app-surface) border border-(--app-border) px-3 py-1 rounded hover:bg-(--app-surface-muted) text-(--app-fg)">
 										Try Again
 									</button>
 								</>
@@ -106,11 +106,11 @@ export function ImageUploader({
 										className="w-16 h-16 mb-4 opacity-50 group-hover:scale-110 transition-transform duration-300"
 										strokeWidth={1}
 									/>
-									<p className="font-semibold mb-1 text-gray-300">
+									<p className="font-semibold mb-1 text-(--app-fg-muted)">
 										Add Image
 									</p>
 
-									<div className="px-4 py-2 bg-gray-800 rounded-full text-xs font-medium text-gray-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors flex items-center gap-2">
+									<div className="px-4 py-2 bg-(--app-surface) rounded-full text-xs font-medium text-(--app-fg-muted) border border-(--app-border) group-hover:bg-indigo-600 group-hover:text-white transition-colors flex items-center gap-2">
 										<UploadCloud className="w-4 h-4" />
 										Upload File
 									</div>

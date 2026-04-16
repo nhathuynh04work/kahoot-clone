@@ -14,8 +14,8 @@ export const PlayerResultScreen = ({
 	pointsThisRound = 0,
 }: PlayerResultScreenProps) => {
 	return (
-		<div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6">
-			<div className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl p-8 shadow-lg flex flex-col items-center text-center relative overflow-hidden">
+		<div className="min-h-screen bg-(--app-bg) flex flex-col items-center justify-center p-6">
+			<div className="w-full max-w-md bg-(--app-elevated) border border-(--app-border) rounded-xl p-8 shadow-lg flex flex-col items-center text-center relative overflow-hidden">
 				{/* Top Status Bar (Color Accent) */}
 				<div
 					className={`absolute top-0 left-0 w-full h-2 ${
@@ -38,18 +38,18 @@ export const PlayerResultScreen = ({
 				</div>
 
 				{/* Title */}
-				<h2 className="text-3xl font-bold text-white mb-2">
+				<h2 className="text-3xl font-bold text-(--app-fg) mb-2">
 					{isCorrect ? "Correct!" : "Incorrect"}
 				</h2>
 
 				{/* Message */}
-				<p className="text-gray-400 mb-2">
+				<p className="text-(--app-fg-muted) mb-2">
 					{isCorrect
 						? "Great job! Keep it up."
 						: "Don't worry, you'll get the next one."}
 				</p>
 				{pointsThisRound > 0 ? (
-					<p className="text-indigo-300 text-sm font-medium mb-8">
+					<p className="text-indigo-600 dark:text-indigo-300 text-sm font-medium mb-8">
 						+{pointsThisRound} points this question
 					</p>
 				) : (
@@ -57,16 +57,16 @@ export const PlayerResultScreen = ({
 				)}
 
 				{/* Score Card */}
-				<div className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 flex items-center justify-between">
+				<div className="w-full bg-(--app-surface-muted) border border-(--app-border) rounded-lg p-4 flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<div className="p-2 bg-gray-800 rounded-md border border-gray-700">
+						<div className="p-2 bg-(--app-surface) rounded-md border border-(--app-border)">
 							<Trophy size={20} className="text-yellow-500" />
 						</div>
-						<span className="text-gray-400 font-medium">
+						<span className="text-(--app-fg-muted) font-medium">
 							Total Score
 						</span>
 					</div>
-					<span className="text-2xl font-mono font-bold text-white">
+					<span className="text-2xl font-mono font-bold text-(--app-fg)">
 						{points}
 					</span>
 				</div>

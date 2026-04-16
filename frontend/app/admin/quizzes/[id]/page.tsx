@@ -60,26 +60,26 @@ export default async function AdminQuizDetailPage({
 					]}
 				/>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
-					<p className="text-sm font-medium text-white">Recent sessions</p>
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted) p-4">
+					<p className="text-sm font-medium text-(--app-fg)">Recent sessions</p>
 					<div className="mt-3 space-y-2">
 						{quiz.recentSessions.length ? (
 							quiz.recentSessions.map((s) => (
 								<Link
 									key={s.id}
 									href={`/admin/sessions/${s.id}`}
-									className="block rounded-lg border border-gray-800 bg-gray-950/30 hover:bg-gray-800/40 transition-colors px-3 py-2"
+									className="block rounded-lg border border-(--app-border) bg-(--app-surface) hover:bg-(--app-surface-muted) transition-colors px-3 py-2"
 								>
 									<div className="flex items-center justify-between gap-3">
 										<div className="min-w-0">
-											<p className="text-sm font-semibold text-white truncate">
-												{s.pin} <span className="text-gray-500">•</span> {s.status}
+											<p className="text-sm font-semibold text-(--app-fg) truncate">
+												{s.pin} <span className="text-(--app-fg-muted)/60">•</span> {s.status}
 											</p>
-											<p className="text-xs text-gray-400 truncate">
+											<p className="text-xs text-(--app-fg-muted) truncate">
 												Host: {s.hostEmail}
 											</p>
 										</div>
-										<div className="text-xs text-gray-400 text-right tabular-nums shrink-0">
+										<div className="text-xs text-(--app-fg-muted) text-right tabular-nums shrink-0">
 											<div>{s.totalPlayers ?? "—"} players</div>
 											<div>{s.endedAt ? formatDateTime(s.endedAt) : "—"}</div>
 										</div>
@@ -87,7 +87,7 @@ export default async function AdminQuizDetailPage({
 								</Link>
 							))
 						) : (
-							<p className="text-sm text-gray-400">No sessions yet.</p>
+							<p className="text-sm text-(--app-fg-muted)">No sessions yet.</p>
 						)}
 					</div>
 				</div>

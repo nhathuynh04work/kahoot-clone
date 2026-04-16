@@ -14,33 +14,33 @@ export const HostFinishedScreen = ({
 	const top3 = leaderboard.slice(0, 3);
 
 	return (
-		<div className="min-h-dvh bg-gray-900 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
+		<div className="min-h-dvh bg-(--app-bg) flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
 			<div className="text-center mb-8 sm:mb-12 animate-in fade-in slide-in-from-top-10 duration-700">
-				<h1 className="text-4xl sm:text-5xl font-black text-white mb-3 sm:mb-4 tracking-tight">
+				<h1 className="text-4xl sm:text-5xl font-black text-(--app-fg) mb-3 sm:mb-4 tracking-tight">
 					Podium
 				</h1>
-				<p className="text-gray-400 text-base sm:text-lg">
+				<p className="text-(--app-fg-muted) text-base sm:text-lg">
 					Congratulations to the winners!
 				</p>
 			</div>
 
 			{/* Podium Container */}
-			<div className="flex items-end justify-center gap-3 sm:gap-4 md:gap-8 h-[min(45vh,420px)] w-full max-w-4xl px-2 sm:px-4 border-b border-gray-700 pb-px">
+			<div className="flex items-end justify-center gap-3 sm:gap-4 md:gap-8 h-[min(45vh,420px)] w-full max-w-4xl px-2 sm:px-4 border-b border-(--app-border) pb-px">
 				{/* 2nd Place */}
 				<div className="flex flex-col items-center w-1/3 h-2/3 animate-in slide-in-from-bottom-full duration-1000 delay-300 fill-mode-forwards ease-out">
 					{top3[1] && (
 						<>
 							<div className="mb-4 text-center animate-in fade-in duration-500 delay-1000">
-								<div className="font-bold text-white text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
+								<div className="font-bold text-(--app-fg) text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
 									{top3[1].nickname}
 								</div>
-								<div className="text-gray-400 font-mono text-sm sm:text-base">
+								<div className="text-(--app-fg-muted) font-mono text-sm sm:text-base">
 									{top3[1].points} pts
 								</div>
 							</div>
-							<div className="w-full h-full bg-gray-800 rounded-t-lg border-t-4 border-gray-500 relative flex justify-center pt-6 shadow-2xl">
-								<Medal className="text-gray-400 w-12 h-12 md:w-16 md:h-16" />
-								<span className="absolute bottom-4 text-6xl font-black text-gray-700 select-none opacity-50">
+							<div className="w-full h-full bg-(--app-surface-muted) rounded-t-lg border-t-4 border-(--app-fg-muted)/40 relative flex justify-center pt-6 shadow-2xl">
+								<Medal className="text-(--app-fg-muted) w-12 h-12 md:w-16 md:h-16" />
+								<span className="absolute bottom-4 text-6xl font-black text-(--app-fg-muted)/30 select-none">
 									2
 								</span>
 							</div>
@@ -75,16 +75,16 @@ export const HostFinishedScreen = ({
 					{top3[2] && (
 						<>
 							<div className="mb-4 text-center animate-in fade-in duration-500 delay-1000">
-								<div className="font-bold text-white text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
+								<div className="font-bold text-(--app-fg) text-base sm:text-xl md:text-2xl truncate max-w-[120px] sm:max-w-[150px]">
 									{top3[2].nickname}
 								</div>
-								<div className="text-gray-400 font-mono text-sm sm:text-base">
+								<div className="text-(--app-fg-muted) font-mono text-sm sm:text-base">
 									{top3[2].points} pts
 								</div>
 							</div>
-							<div className="w-full h-full bg-gray-800 rounded-t-lg border-t-4 border-orange-700 relative flex justify-center pt-6 shadow-2xl">
+							<div className="w-full h-full bg-(--app-surface-muted) rounded-t-lg border-t-4 border-orange-700 relative flex justify-center pt-6 shadow-2xl">
 								<Award className="text-orange-700 w-12 h-12 md:w-16 md:h-16" />
-								<span className="absolute bottom-4 text-6xl font-black text-gray-700 select-none opacity-50">
+								<span className="absolute bottom-4 text-6xl font-black text-(--app-fg-muted)/30 select-none">
 									3
 								</span>
 							</div>
@@ -96,7 +96,7 @@ export const HostFinishedScreen = ({
 			<div className="mt-10">
 				<Link
 					href="/library/quizzes"
-					className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition-colors"
+					className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors"
 				>
 					Return to My quizzes
 				</Link>

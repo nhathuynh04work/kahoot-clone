@@ -15,15 +15,15 @@ export function RejoinDialog({ onContinue, onStartFresh }: RejoinDialogProps) {
 	} catch {}
 
 	return (
-		<div className="w-full max-w-sm p-8 bg-gray-800 rounded-2xl shadow-xl border border-gray-700 animate-in zoom-in-95 duration-300">
+		<div className="w-full max-w-sm p-8 bg-(--app-elevated) rounded-2xl shadow-xl border border-(--app-border) animate-in zoom-in-95 duration-300">
 			<div className="text-center mb-8">
 				<div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
 					<History size={32} />
 				</div>
-				<h1 className="text-2xl font-bold text-white mb-2">
+				<h1 className="text-2xl font-bold text-(--app-fg) mb-2">
 					Welcome Back!
 				</h1>
-				<p className="text-gray-400">
+				<p className="text-(--app-fg-muted)">
 					It looks like you were disconnected.
 				</p>
 			</div>
@@ -40,7 +40,7 @@ export function RejoinDialog({ onContinue, onStartFresh }: RejoinDialogProps) {
 
 				<button
 					onClick={onStartFresh}
-					className="w-full py-3 rounded-xl font-semibold text-gray-400 hover:text-white hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+					className="w-full py-3 rounded-xl font-semibold text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors flex items-center justify-center gap-2">
 					<LogOut size={18} />
 					No, start fresh
 				</button>

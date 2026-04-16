@@ -34,14 +34,14 @@ function InlineToggle({
 				"w-full flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
 				checked
 					? "border-indigo-500/60 bg-indigo-500/10"
-					: "border-gray-700 bg-gray-900/30 hover:bg-gray-800/40",
-				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950",
+					: "border-(--app-border) bg-(--app-surface) hover:bg-(--app-surface-muted)",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-(--app-bg)",
 			)}
 		>
 			<span className="min-w-0">
-				<span className="block text-sm font-semibold text-gray-200">{label}</span>
+				<span className="block text-sm font-semibold text-(--app-fg)">{label}</span>
 				{description ? (
-					<span className="block text-xs text-gray-500 mt-0.5">
+					<span className="block text-xs text-(--app-fg-muted)/70 mt-0.5">
 						{description}
 					</span>
 				) : null}
@@ -52,7 +52,7 @@ function InlineToggle({
 					"relative shrink-0 h-6 w-11 rounded-full border transition-colors",
 					checked
 						? "bg-indigo-500/80 border-indigo-400/60"
-						: "bg-gray-800 border-gray-700",
+						: "bg-(--app-surface-muted) border-(--app-border)",
 				)}
 			>
 				<span
@@ -78,12 +78,12 @@ export function QuestionTypeFields({ questionIndex }: { questionIndex: number })
 		<div className="w-full max-w-2xl mx-auto px-4 space-y-3">
 			{type === "SHORT_ANSWER" ? (
 				<div>
-					<label className="text-xs font-semibold text-gray-400 uppercase tracking-wide block mb-1">
+					<label className="text-xs font-semibold text-(--app-fg-muted) uppercase tracking-wide block mb-1">
 						Correct answer
 					</label>
 					<input
 						{...register(`${prefix}.correctText`)}
-						className="w-full rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-sm text-white"
+						className="w-full rounded-lg bg-(--app-bg) border border-(--app-border) px-3 py-2 text-sm text-(--app-fg)"
 						placeholder="Expected answer"
 					/>
 				</div>
@@ -92,7 +92,7 @@ export function QuestionTypeFields({ questionIndex }: { questionIndex: number })
 			{type === "NUMBER_INPUT" ? (
 				<div className="space-y-3">
 					<div>
-						<label className="text-xs font-semibold text-gray-400 uppercase tracking-wide block mb-1">
+						<label className="text-xs font-semibold text-(--app-fg-muted) uppercase tracking-wide block mb-1">
 							Correct number
 						</label>
 						<input
@@ -101,10 +101,10 @@ export function QuestionTypeFields({ questionIndex }: { questionIndex: number })
 							{...register(`${prefix}.correctNumber`, {
 								valueAsNumber: true,
 							})}
-							className="w-full rounded-lg bg-gray-800 border border-gray-600 px-3 py-2 text-sm text-white"
+							className="w-full rounded-lg bg-(--app-bg) border border-(--app-border) px-3 py-2 text-sm text-(--app-fg)"
 							placeholder="0"
 						/>
-						<p className="text-[11px] text-gray-500 mt-1">
+						<p className="text-[11px] text-(--app-fg-muted)/70 mt-1">
 							Player must match this exactly unless “Allow range” is enabled in the sidebar.
 						</p>
 					</div>
@@ -119,11 +119,11 @@ export function QuestionTypeFields({ questionIndex }: { questionIndex: number })
 							const min = correct - proximity;
 							const max = correct + proximity;
 							return (
-								<div className="rounded-xl border border-gray-700 bg-gray-900/30 px-3 py-2">
-									<p className="text-xs text-gray-500 uppercase tracking-wide">
+								<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted) px-3 py-2">
+									<p className="text-xs text-(--app-fg-muted)/70 uppercase tracking-wide">
 										Accepted range
 									</p>
-									<p className="text-sm text-gray-200 mt-1 tabular-nums">
+									<p className="text-sm text-(--app-fg) mt-1 tabular-nums">
 										{min} to {max} (inclusive)
 									</p>
 								</div>

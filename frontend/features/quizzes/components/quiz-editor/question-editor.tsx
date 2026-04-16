@@ -35,7 +35,7 @@ export function QuestionEditor({
 		qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
 
 	return (
-		<div className="flex flex-col items-center p-4 sm:p-6 md:p-10 bg-gray-900 gap-6 sm:gap-10">
+		<div className="flex flex-col items-center p-4 sm:p-6 md:p-10 bg-(--app-bg) gap-6 sm:gap-10">
 			<QuestionTextInput
 				key={`text-${questionIndex}`}
 				questionIndex={questionIndex}

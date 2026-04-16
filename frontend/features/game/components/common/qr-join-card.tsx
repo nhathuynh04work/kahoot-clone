@@ -83,7 +83,7 @@ export function QrJoinCard({
 			<div
 				className={
 					className ??
-					"rounded-2xl border border-white/10 bg-black/20 p-4 flex items-center gap-4"
+					"rounded-2xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4 flex items-center gap-4"
 				}
 			>
 				<div
@@ -134,13 +134,13 @@ export function QrJoinCard({
 				</div>
 				{showDetails && (
 					<div className="min-w-0">
-						<p className="text-xs uppercase tracking-widest text-white/60">
+						<p className="text-xs uppercase tracking-widest text-(--app-fg-muted)">
 							Join with PIN
 						</p>
-						<p className="mt-1 text-2xl font-black font-mono tracking-widest">
+						<p className="mt-1 text-2xl font-black font-mono tracking-widest text-(--app-fg)">
 							{pin}
 						</p>
-						<p className="mt-1 text-xs text-white/60 break-all">{joinUrl}</p>
+						<p className="mt-1 text-xs text-(--app-fg-muted) break-all">{joinUrl}</p>
 					</div>
 				)}
 			</div>

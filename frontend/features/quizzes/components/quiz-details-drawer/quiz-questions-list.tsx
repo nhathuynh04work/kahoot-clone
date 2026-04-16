@@ -21,14 +21,14 @@ export function QuizQuestionItem({
 	showAnswers: boolean;
 }) {
 	return (
-		<li className="group rounded-lg border border-gray-700 bg-gray-800/50 overflow-hidden transition-colors hover:bg-gray-800 hover:border-indigo-500/40 focus-within:border-indigo-500/60">
+		<li className="group rounded-lg border border-(--app-border) bg-(--app-surface-muted) overflow-hidden transition-colors hover:bg-(--app-surface) hover:border-indigo-500/40 focus-within:border-indigo-500/60">
 			<button
 				type="button"
 				onClick={onToggle}
 				className="w-full flex items-start gap-4 p-4 text-left"
 			>
 				<div className="shrink-0">
-					<div className="w-12 h-12 rounded-lg bg-gray-700/60 border border-gray-700 flex items-center justify-center group-hover:border-indigo-500/30 transition-colors overflow-hidden">
+					<div className="w-12 h-12 rounded-lg bg-(--app-surface) border border-(--app-border) flex items-center justify-center group-hover:border-indigo-500/30 transition-colors overflow-hidden">
 						{question.imageUrl ? (
 							<Image
 								src={question.imageUrl}
@@ -38,29 +38,29 @@ export function QuizQuestionItem({
 								className="object-cover w-full h-full"
 							/>
 						) : (
-							<span className="text-xs font-semibold text-gray-400 tabular-nums">
+							<span className="text-xs font-semibold text-(--app-fg-muted) tabular-nums">
 								Q{index + 1}
 							</span>
 						)}
 					</div>
 				</div>
 				<div className="min-w-0 flex-1">
-					<p className="text-xs text-gray-400 tabular-nums">
+					<p className="text-xs text-(--app-fg-muted) tabular-nums">
 						Question {index + 1}
 					</p>
-					<p className="mt-0.5 text-sm font-semibold text-white truncate">
+					<p className="mt-0.5 text-sm font-semibold text-(--app-fg) truncate">
 						{question.text?.trim() || "-"}
 					</p>
 				</div>
 				{isExpanded ? (
-					<ChevronDown className="w-5 h-5 text-gray-400 shrink-0 mt-1" />
+					<ChevronDown className="w-5 h-5 text-(--app-fg-muted) shrink-0 mt-1" />
 				) : (
-					<ChevronRight className="w-5 h-5 text-gray-400 shrink-0 mt-1" />
+					<ChevronRight className="w-5 h-5 text-(--app-fg-muted) shrink-0 mt-1" />
 				)}
 			</button>
 
 			{isExpanded && (
-				<div className="border-t border-gray-700 bg-gray-950/30">
+				<div className="border-t border-(--app-border) bg-(--app-surface)">
 					<QuestionPreview
 						question={question}
 						options={options}
@@ -99,7 +99,7 @@ export function QuizQuestionList({
 
 	if (questions.length === 0) {
 		return (
-			<p className="text-gray-400 text-center py-8">No questions yet.</p>
+			<p className="text-(--app-fg-muted) text-center py-8">No questions yet.</p>
 		);
 	}
 

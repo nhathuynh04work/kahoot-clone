@@ -39,7 +39,7 @@ const statusConfig = {
 	UPLOADED: {
 		icon: FileText,
 		label: "Uploaded",
-		className: "text-gray-400",
+		className: "text-(--app-fg-muted)",
 	},
 	PARSING: {
 		icon: Loader2,
@@ -94,15 +94,15 @@ export function DocumentCard({
 		<div
 			className={cn(
 				"flex items-center gap-3 p-4 rounded-lg border transition-colors",
-				"bg-gray-800/50 border-gray-700",
+				"bg-(--app-surface-muted)/80 border-(--app-border)",
 				selectable &&
-					"cursor-pointer hover:border-indigo-500/50 hover:bg-gray-800",
+					"cursor-pointer hover:border-indigo-500/50 hover:bg-(--app-surface)",
 				isSelected && "ring-2 ring-indigo-500 border-indigo-500",
 			)}
 			onClick={() => selectable && onSelect?.(document)}
 			role={selectable ? "button" : undefined}
 		>
-			<div className="shrink-0 w-10 h-10 rounded-lg bg-gray-700 border border-gray-600/50 flex items-center justify-center">
+			<div className="shrink-0 w-10 h-10 rounded-lg bg-(--app-surface) border border-(--app-border) flex items-center justify-center">
 				<Icon
 					className={cn(
 						"w-5 h-5",
@@ -113,21 +113,21 @@ export function DocumentCard({
 			</div>
 
 			<div className="flex-1 min-w-0">
-				<p className="font-medium text-white truncate">{document.fileName}</p>
-				<p className="text-sm text-gray-400">
+				<p className="font-medium text-(--app-fg) truncate">{document.fileName}</p>
+				<p className="text-sm text-(--app-fg-muted)">
 					{formatBytes(document.fileSize)} • {config.label}
 				</p>
 				<div className="mt-2 flex items-center gap-2 min-w-0">
 					<Link
 						href={`/users/${document.userId}`}
-						className="flex items-center gap-2 min-w-0 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+						className="flex items-center gap-2 min-w-0 text-xs text-(--app-fg-muted) hover:text-(--app-fg) transition-colors"
 						onClick={(e) => e.stopPropagation()}
 					>
 						<UserAvatar name={document.authorName ?? undefined} size={18} />
 						<span className="truncate">{document.authorName ?? "Unknown"}</span>
 					</Link>
 					{typeof document.saveCount === "number" && (
-						<span className="text-xs text-gray-500">
+						<span className="text-xs text-(--app-fg-muted)/80">
 							• {document.saveCount} {document.saveCount === 1 ? "save" : "saves"}
 						</span>
 					)}
@@ -143,7 +143,7 @@ export function DocumentCard({
 						updateVisibility({ id: document.id, visibility: nextVisibility });
 					}}
 					disabled={isUpdatingVisibility}
-					className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700/50 transition-colors disabled:opacity-50"
+					className="p-2 rounded-md text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors disabled:opacity-50"
 					aria-label={
 						visibility === "PUBLIC" ? "Make document private" : "Make document public"
 					}
@@ -165,7 +165,7 @@ export function DocumentCard({
 						toggleSave();
 					}}
 					disabled={isSaving}
-					className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700/50 transition-colors disabled:opacity-50"
+					className="p-2 rounded-md text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors disabled:opacity-50"
 					aria-label="Toggle document save"
 				>
 					<Bookmark className="w-4 h-4" fill={isSaved ? "currentColor" : "none"} />
@@ -180,7 +180,7 @@ export function DocumentCard({
 						deleteDoc(document.id);
 					}}
 					disabled={isDeleting}
-					className="p-2 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+					className="p-2 rounded-md text-(--app-fg-muted) hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
 					aria-label="Delete document"
 					title="Delete"
 				>

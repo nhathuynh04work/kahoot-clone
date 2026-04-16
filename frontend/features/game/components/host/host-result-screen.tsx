@@ -63,13 +63,13 @@ export const HostResultScreen = ({
 		const maxCount = Math.max(...values, 1);
 
 		return (
-			<div className="flex flex-col min-h-dvh bg-gray-900 p-4 sm:p-6 md:p-8">
+			<div className="flex flex-col min-h-dvh bg-(--app-bg) p-4 sm:p-6 md:p-8">
 				<div className="flex justify-between items-center mb-4">
 					<div className="flex items-center gap-3">
-						<div className="p-2 bg-gray-800 rounded-lg border border-gray-700">
+						<div className="p-2 bg-(--app-surface-muted) rounded-lg border border-(--app-border)">
 							<BarChart2 className="text-indigo-400" size={24} />
 						</div>
-						<h2 className="text-2xl font-bold text-white">Results</h2>
+						<h2 className="text-2xl font-bold text-(--app-fg)">Results</h2>
 					</div>
 					<button
 						type="button"
@@ -101,7 +101,7 @@ export const HostResultScreen = ({
 									style={{ height: `${heightPercent}%` }}
 								/>
 
-								<div className="w-full bg-gray-800 rounded-b-lg p-3 flex justify-center items-center gap-2 border-t-4 border-gray-900 shadow-sm z-10">
+								<div className="w-full bg-(--app-surface-muted) rounded-b-lg p-3 flex justify-center items-center gap-2 border-t-4 border-(--app-border) shadow-sm z-10">
 									<Icon
 										className={`${getBarColor(index).replace(
 											"bg-",
@@ -109,7 +109,7 @@ export const HostResultScreen = ({
 										)} w-8 h-8 fill-current bg-opacity-0`}
 										strokeWidth={3}
 									/>
-									<span className="text-white font-bold text-xl">
+									<span className="text-(--app-fg) font-bold text-xl">
 										{count}
 									</span>
 									{isCorrect ? (
@@ -164,14 +164,14 @@ export const HostResultScreen = ({
 	}
 
 	return (
-		<div className="flex flex-col min-h-dvh bg-gray-900 p-4 sm:p-6 md:p-8">
+		<div className="flex flex-col min-h-dvh bg-(--app-bg) p-4 sm:p-6 md:p-8">
 			<div className="flex justify-between items-start gap-4 mb-6">
 				<div className="flex items-center gap-3 min-w-0">
-					<div className="p-2 bg-gray-800 rounded-lg border border-gray-700 shrink-0">
+					<div className="p-2 bg-(--app-surface-muted) rounded-lg border border-(--app-border) shrink-0">
 						<BarChart2 className="text-indigo-400" size={24} />
 					</div>
 					<div className="min-w-0">
-						<h2 className="text-2xl font-bold text-white">Results</h2>
+						<h2 className="text-2xl font-bold text-(--app-fg)">Results</h2>
 					</div>
 				</div>
 				<button
@@ -183,18 +183,18 @@ export const HostResultScreen = ({
 			</div>
 
 			<div className="max-w-4xl mx-auto w-full">
-				<div className="rounded-3xl border border-gray-700 bg-gray-900/40 px-6 py-10 text-center mb-8">
+				<div className="rounded-3xl border border-(--app-border) bg-(--app-surface-muted)/60 px-6 py-10 text-center mb-8">
 					{heroLabel ? (
-						<p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">
+						<p className="text-xs text-indigo-600 dark:text-indigo-300 uppercase tracking-widest font-semibold">
 							{heroLabel}
 						</p>
 					) : null}
-					<p className="text-white font-extrabold text-5xl md:text-6xl mt-3 leading-tight">
+					<p className="text-(--app-fg) font-extrabold text-5xl md:text-6xl mt-3 leading-tight">
 						{heroValue || "—"}
 					</p>
 					{heroBadge ? (
 						<div className="mt-4 flex justify-center">
-							<span className="inline-flex items-center rounded-full border border-gray-700 bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-200">
+							<span className="inline-flex items-center rounded-full border border-(--app-border) bg-(--app-surface) px-3 py-1 text-xs font-semibold text-(--app-fg-muted)">
 								{heroBadge}
 							</span>
 						</div>
@@ -204,12 +204,12 @@ export const HostResultScreen = ({
 				{hideSubmittedAnswerStats ? null : (
 					<div className="max-w-2xl mx-auto w-full space-y-2">
 						{rows.length === 0 ? (
-							<p className="text-gray-500 text-sm">No answers recorded.</p>
+							<p className="text-(--app-fg-muted) text-sm">No answers recorded.</p>
 						) : (
 							rows.map((r) => (
 								<div
 									key={r.key}
-									className="flex items-center gap-3 rounded-lg bg-gray-800/80 border border-gray-700 p-3">
+									className="flex items-center gap-3 rounded-lg bg-(--app-surface-muted)/90 border border-(--app-border) p-3">
 									<div
 										className="h-2 rounded-full bg-indigo-500 transition-all"
 										style={{
@@ -217,10 +217,10 @@ export const HostResultScreen = ({
 											minWidth: "2rem",
 										}}
 									/>
-									<span className="flex-1 text-sm text-white truncate font-mono">
+									<span className="flex-1 text-sm text-(--app-fg) truncate font-mono">
 										{r.key}
 									</span>
-									<span className="text-sm font-semibold text-indigo-300 tabular-nums">
+									<span className="text-sm font-semibold text-indigo-600 dark:text-indigo-300 tabular-nums">
 										{r.count}
 									</span>
 								</div>

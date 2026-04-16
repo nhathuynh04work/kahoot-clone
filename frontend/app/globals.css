@@ -4,18 +4,90 @@
 	--background: #ffffff;
 	--foreground: #171717;
 
-	/* App dark theme (dashboard, quiz editor, AI chat) — single source of truth */
-	--app-bg: #111827;        /* gray-900 */
-	--app-surface: #1f2937;   /* gray-800 */
-	--app-surface-muted: rgba(31, 41, 55, 0.5);
-	--app-border: #374151;    /* gray-700 */
-	--app-accent: #4f46e5;    /* indigo-600 */
-	--app-accent-hover: #6366f1;
-	--app-accent-2: #10b981;  /* emerald-500 */
-	--app-accent-2-hover: #34d399;
+	/* App theme tokens — single source of truth (resolved by [data-theme]) */
+	--app-bg: #ffffff;
+	--app-surface: #ffffff;
+	--app-surface-muted: rgba(15, 23, 42, 0.04);
+	--app-border: rgba(15, 23, 42, 0.12);
+	--app-fg: #0f172a; /* slate-900 */
+	--app-fg-muted: rgba(15, 23, 42, 0.72);
+
+	/* Brand accents (keep indigo across themes) */
+	--app-accent: #4f46e5; /* indigo-600 */
+	--app-accent-hover: #4338ca; /* indigo-700 */
+
+	/* Secondary accent (used in a few places; keep as-is for now) */
+	--app-accent-2: #10b981; /* emerald-500 */
+	--app-accent-2-hover: #059669; /* emerald-600 */
+
+	/* Semantic surfaces (neutral clean light) */
+	--app-card: #ffffff;
+	--app-elevated: #f8fafc; /* slate-50 — popovers / dropdowns */
+	--app-input-bg: rgba(15, 23, 42, 0.04);
+	--app-ring: #4f46e5;
+
+	/* Control surfaces (buttons, tabs, pagination) */
+	--app-control-bg: rgba(15, 23, 42, 0.06);
+	--app-control-bg-hover: rgba(15, 23, 42, 0.1);
+	--app-control-active-bg: #4f46e5; /* indigo-600 */
+	--app-control-active-fg: #ffffff;
+	--app-control-active-border: rgba(67, 56, 202, 0.45); /* indigo-700/45 */
 
 	scrollbar-width: thin;
+	scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
+}
+
+[data-theme="dark"] {
+	--background: #0a0a0a;
+	--foreground: #ededed;
+
+	--app-bg: #111827; /* gray-900 */
+	--app-surface: #1f2937; /* gray-800 */
+	--app-surface-muted: rgba(31, 41, 55, 0.5);
+	--app-border: #374151; /* gray-700 */
+	--app-fg: #ffffff;
+	--app-fg-muted: rgba(255, 255, 255, 0.72);
+
+	--app-accent: #4f46e5; /* indigo-600 */
+	--app-accent-hover: #6366f1; /* indigo-500 */
+
+	--app-card: #1f2937;
+	--app-elevated: #111827;
+	--app-input-bg: rgba(31, 41, 55, 0.65);
+	--app-ring: #6366f1;
+
+	--app-control-bg: rgba(31, 41, 55, 0.65);
+	--app-control-bg-hover: rgba(31, 41, 55, 0.85);
+	--app-control-active-bg: #1f2937; /* gray-800 */
+	--app-control-active-fg: #ffffff;
+	--app-control-active-border: #374151; /* gray-700 */
+
 	scrollbar-color: #4a5565 transparent;
+}
+
+[data-theme="light"] {
+	--background: #ffffff;
+	--foreground: #171717;
+
+	/* Light-mode contrast tuning (admin UI especially) */
+	--app-surface-muted: rgba(15, 23, 42, 0.09);
+	--app-border: rgba(15, 23, 42, 0.22);
+	--app-fg-muted: rgba(15, 23, 42, 0.85);
+	--app-input-bg: rgba(15, 23, 42, 0.08);
+
+	--app-control-bg: rgba(15, 23, 42, 0.08);
+	--app-control-bg-hover: rgba(15, 23, 42, 0.12);
+	/* Active state in light mode: keep text near-black for maximum readability */
+	--app-control-active-bg: #e0e7ff; /* indigo-100 */
+	--app-control-active-fg: #0f172a; /* slate-900 (near-black) */
+	--app-control-active-border: rgba(79, 70, 229, 0.45); /* indigo-600/45 */
+
+	scrollbar-color: rgba(15, 23, 42, 0.3) transparent;
+}
+
+/* Admin-only light-mode contrast: make “muted” text read as black. */
+[data-theme="light"] .admin-contrast {
+	--app-fg-muted: var(--app-fg);
 }
 
 html {
@@ -30,7 +102,7 @@ html {
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
+	:root:not([data-theme]) {
 		--background: #0a0a0a;
 		--foreground: #ededed;
 	}

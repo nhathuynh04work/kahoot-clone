@@ -15,12 +15,12 @@ export default function AuthLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="min-h-dvh bg-gray-950 text-white">
-			<div className="grid min-h-dvh grid-cols-1 items-stretch gap-0 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-gray-800/70">
+		<div className="min-h-dvh bg-(--app-bg) text-(--app-fg)">
+			<div className="grid min-h-dvh grid-cols-1 items-stretch gap-0 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-(--app-border)">
 				{/* Left panel */}
-				<div className="relative hidden p-10 lg:flex lg:flex-col lg:bg-gray-800/30">
+				<div className="relative hidden p-10 lg:flex lg:flex-col lg:bg-(--app-surface-muted)">
 					<div className="relative">
-						<div className="inline-flex items-center gap-2 rounded-full border border-gray-800 bg-gray-950/40 px-3 py-1 text-xs text-gray-200">
+						<div className="inline-flex items-center gap-2 rounded-full border border-(--app-border) bg-(--app-surface) px-3 py-1 text-xs text-(--app-fg-muted)">
 							<span className="h-2 w-2 rounded-full bg-indigo-500" />
 							<span>Play. Create. Repeat.</span>
 						</div>
@@ -28,12 +28,12 @@ export default function AuthLayout({
 						<h1 className="mt-6 text-4xl font-black tracking-tight">
 							<AppLogo />
 						</h1>
-						<p className="mt-3 max-w-md text-sm leading-relaxed text-gray-200/80">
+						<p className="mt-3 max-w-md text-sm leading-relaxed text-(--app-fg-muted)">
 							Create quizzes, host live sessions, and track results with a fast,
 							minimal dashboard.
 						</p>
 
-						<ul className="mt-8 space-y-3 text-sm text-gray-100/80">
+						<ul className="mt-8 space-y-3 text-sm text-(--app-fg-muted)">
 							<li className="flex items-start gap-3">
 								<span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-indigo-300" />
 								<span>Build quizzes in minutes with a clean editor.</span>
@@ -49,26 +49,26 @@ export default function AuthLayout({
 						</ul>
 					</div>
 
-					<div className="relative mt-auto pt-10 text-xs text-gray-300/70">
+					<div className="relative mt-auto pt-10 text-xs text-(--app-fg-muted)">
 						<span>Tip: Use a strong password and keep it unique.</span>
 					</div>
 				</div>
 
 				{/* Right panel */}
-				<div className="flex items-center justify-center p-6 sm:p-10 lg:bg-gray-900/20">
+				<div className="flex items-center justify-center p-6 sm:p-10 lg:bg-(--app-surface-muted)">
 					<div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
 						{children}
-						<p className="mt-6 text-center text-xs text-gray-500">
+						<p className="mt-6 text-center text-xs text-(--app-fg-muted)/70">
 							By continuing you agree to our{" "}
 							<Link
 								href="#"
-								className="text-gray-400 underline decoration-gray-700 underline-offset-4 hover:text-gray-200">
+								className="text-(--app-fg-muted) underline decoration-(--app-border) underline-offset-4 hover:text-(--app-fg)">
 								terms
 							</Link>{" "}
 							and{" "}
 							<Link
 								href="#"
-								className="text-gray-400 underline decoration-gray-700 underline-offset-4 hover:text-gray-200">
+								className="text-(--app-fg-muted) underline decoration-(--app-border) underline-offset-4 hover:text-(--app-fg)">
 								privacy policy
 							</Link>
 							.

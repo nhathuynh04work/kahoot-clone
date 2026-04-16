@@ -56,7 +56,7 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex flex-col bg-gray-900"
+			className="fixed inset-0 z-50 flex flex-col bg-(--app-bg) text-(--app-fg)"
 			aria-modal
 			role="dialog"
 		>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { QrJoinCard } from "../common/qr-join-card";
 import { PlayerChip } from "../common/player-chip";
 import { AppLogo } from "@/components/layout/app-logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface HostWaitingScreenProps {
 	pin: string;
@@ -27,17 +28,17 @@ export const HostWaitingScreen = ({
 	};
 
 	return (
-		<div className="min-h-dvh bg-gray-900 p-4 md:p-8 relative overflow-hidden">
-			<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-indigo-600/15 via-gray-950/0 to-indigo-500/10" />
+		<div className="min-h-dvh bg-(--app-bg) p-4 md:p-8 relative overflow-hidden">
+			<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-indigo-500/12 via-transparent to-indigo-500/8" />
 
 			<div className="w-full max-w-6xl mx-auto flex flex-col gap-6 relative z-10">
 				{!joinExpanded && (
 					/* Top strip: PIN + QR (no links/copy) */
 					<div className="flex justify-center">
-						<div className="w-full max-w-xl rounded-2xl border border-white/10 bg-black/20 px-4 py-4 md:px-5 md:py-5">
+						<div className="w-full max-w-xl rounded-2xl border border-(--app-border) bg-(--app-elevated) px-4 py-4 md:px-5 md:py-5 shadow-sm">
 							<div className="flex flex-col items-center justify-center gap-4">
 							<div className="text-center w-full">
-								<p className="text-xs font-black uppercase tracking-widest text-gray-300">
+								<p className="text-xs font-black uppercase tracking-widest text-(--app-fg-muted)">
 									Game PIN
 								</p>
 								<button
@@ -52,11 +53,11 @@ export const HostWaitingScreen = ({
 									aria-label="Copy game PIN"
 								>
 									{isPinReady ? (
-										<span className="text-4xl sm:text-5xl md:text-6xl font-mono font-black tracking-widest text-white select-none">
+										<span className="text-4xl sm:text-5xl md:text-6xl font-mono font-black tracking-widest text-(--app-fg) select-none">
 											{pin}
 										</span>
 									) : (
-										<span className="inline-flex items-center gap-3 text-white">
+										<span className="inline-flex items-center gap-3 text-(--app-fg)">
 											<Loader2 className="h-7 w-7 animate-spin" />
 											<span className="text-lg font-semibold">
 												Creating lobby…
@@ -80,8 +81,8 @@ export const HostWaitingScreen = ({
 										className="border-0 bg-transparent p-0 flex items-center justify-center"
 									/>
 								) : (
-									<div className="h-[132px] w-[132px] rounded-xl border border-white/10 bg-black/20 flex items-center justify-center">
-										<Loader2 className="h-6 w-6 animate-spin text-white/80" />
+									<div className="h-[132px] w-[132px] rounded-xl border border-(--app-border) bg-(--app-surface-muted) flex items-center justify-center">
+										<Loader2 className="h-6 w-6 animate-spin text-(--app-fg-muted)" />
 									</div>
 								)}
 							</div>
@@ -96,13 +97,14 @@ export const HostWaitingScreen = ({
 						<div className="mt-8 sm:mt-10 flex flex-col gap-4 items-center md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-4">
 							<div className="hidden md:block" />
 							<AppLogo className="text-4xl md:text-5xl font-extrabold tracking-tight select-none md:justify-self-center" />
-							<div className="justify-self-center md:justify-self-end">
+							<div className="justify-self-center md:justify-self-end flex items-center gap-3">
+								<ThemeToggle compact />
 								<button
 									onClick={onStart}
 									disabled={!isPinReady || players.length === 0}
 									className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-transform active:scale-95 shadow-md ${
 										!isPinReady || players.length === 0
-											? "bg-gray-700 text-gray-300 cursor-not-allowed"
+											? "bg-(--app-surface-muted) text-(--app-fg-muted) cursor-not-allowed border border-(--app-border)"
 											: "bg-indigo-600 hover:bg-indigo-500 text-white"
 									}`}
 								>
@@ -117,8 +119,8 @@ export const HostWaitingScreen = ({
 				{!joinExpanded && (
 					/* Player List & Action */
 					<div className="w-full flex justify-center">
-						<div className="w-full rounded-3xl border border-white/10 bg-black/20 p-6 md:p-8 flex flex-col items-center gap-6">
-							<div className="flex items-center gap-2 text-indigo-200 font-semibold">
+						<div className="w-full rounded-3xl border border-(--app-border) bg-(--app-elevated) p-6 md:p-8 flex flex-col items-center gap-6 shadow-sm">
+							<div className="inline-flex items-center gap-2 rounded-full border border-(--app-border) bg-(--app-surface-muted)/70 px-3 py-1.5 text-indigo-600 dark:text-indigo-300 font-semibold">
 								<Users size={20} />
 								<span>{players.length} joined</span>
 							</div>
@@ -153,7 +155,7 @@ export const HostWaitingScreen = ({
 					<div className="relative z-10 min-h-dvh flex items-center justify-center p-4">
 						<div className="flex flex-col items-center gap-6">
 							<div className="text-center animate-in fade-in slide-in-from-top-6 duration-300">
-								<p className="text-xs font-black uppercase tracking-widest text-white/70">
+								<p className="text-xs font-black uppercase tracking-widest text-white/80">
 									Game PIN
 								</p>
 								<p className="mt-2 text-5xl sm:text-6xl md:text-7xl font-mono font-black tracking-widest text-white">

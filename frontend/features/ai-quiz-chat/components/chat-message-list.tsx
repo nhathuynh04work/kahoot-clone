@@ -22,10 +22,10 @@ export function ChatMessageList({
 			<div className="max-w-2xl mx-auto space-y-6 animate-pulse">
 				{Array.from({ length: 6 }).map((_, i) => (
 					<div key={i} className={cn("flex gap-3", i % 2 === 1 && "flex-row-reverse")}>
-						<div className="shrink-0 w-8 h-8 rounded-full bg-gray-700" />
-						<div className="rounded-2xl px-4 py-3 w-[70%] bg-gray-800 border border-gray-700">
-							<div className="h-3 bg-gray-700 rounded w-[85%]" />
-							<div className="h-3 bg-gray-700 rounded w-[65%] mt-2" />
+						<div className="shrink-0 w-8 h-8 rounded-full bg-(--app-surface-muted)" />
+						<div className="rounded-2xl px-4 py-3 w-[70%] bg-(--app-surface-muted) border border-(--app-border)">
+							<div className="h-3 bg-(--app-border) rounded w-[85%]" />
+							<div className="h-3 bg-(--app-border) rounded w-[65%] mt-2" />
 						</div>
 					</div>
 				))}
@@ -45,13 +45,13 @@ export function ChatMessageList({
 					<div
 						className={cn(
 							"shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-							msg.role === "user" ? "bg-indigo-600" : "bg-gray-700",
+							msg.role === "user" ? "bg-indigo-600" : "bg-(--app-surface-muted)",
 						)}
 					>
 						{msg.role === "user" ? (
 							<User className="w-4 h-4 text-white" />
 						) : (
-							<Bot className="w-4 h-4 text-gray-300" />
+							<Bot className="w-4 h-4 text-(--app-fg-muted)" />
 						)}
 					</div>
 					<div
@@ -59,7 +59,7 @@ export function ChatMessageList({
 							"rounded-2xl px-4 py-3 max-w-[85%] min-w-0 flex flex-col gap-2",
 							msg.role === "user"
 								? "bg-indigo-600 text-white"
-								: "bg-gray-800 text-gray-100 border border-gray-700",
+								: "bg-(--app-surface-muted) text-(--app-fg) border border-(--app-border)",
 						)}
 					>
 						{msg.role === "user" && msg.attachedDocument && (
@@ -87,14 +87,14 @@ export function ChatMessageList({
 			))}
 			{isGenerating && (
 				<div className="flex gap-3">
-					<div className="shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-						<Bot className="w-4 h-4 text-gray-300" />
+					<div className="shrink-0 w-8 h-8 rounded-full bg-(--app-surface-muted) flex items-center justify-center">
+						<Bot className="w-4 h-4 text-(--app-fg-muted)" />
 					</div>
-					<div className="rounded-2xl px-4 py-3 bg-gray-800 border border-gray-700 flex items-center gap-2">
+					<div className="rounded-2xl px-4 py-3 bg-(--app-surface-muted) border border-(--app-border) flex items-center gap-2">
 						<span className="flex gap-1">
-							<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:0ms]" />
-							<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:150ms]" />
-							<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:300ms]" />
+							<span className="w-2 h-2 rounded-full bg-(--app-fg-muted) animate-bounce [animation-delay:0ms]" />
+							<span className="w-2 h-2 rounded-full bg-(--app-fg-muted) animate-bounce [animation-delay:150ms]" />
+							<span className="w-2 h-2 rounded-full bg-(--app-fg-muted) animate-bounce [animation-delay:300ms]" />
 						</span>
 					</div>
 				</div>

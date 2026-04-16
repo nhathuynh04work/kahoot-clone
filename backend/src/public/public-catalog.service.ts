@@ -33,6 +33,7 @@ export class PublicCatalogService {
 
         const baseWhere: Prisma.QuizWhereInput = {
             visibility: "PUBLIC",
+            user: { isBlocked: false },
             ...(q
                 ? {
                       title: {
@@ -144,17 +145,18 @@ export class PublicCatalogService {
         const page = Math.max(1, options.page);
         const pageSize = Math.min(200, Math.max(1, options.pageSize));
 
+        const baseWhere: Prisma.QuizWhereInput = {
+            userId,
+            visibility: "PUBLIC",
+            user: { isBlocked: false },
+        };
+
         const totalItems = await this.prisma.quiz.count({
-            where: { userId, visibility: "PUBLIC" },
+            where: baseWhere,
         });
         const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
         const safePage = Math.min(page, totalPages);
         const skip = (safePage - 1) * pageSize;
-
-        const baseWhere: Prisma.QuizWhereInput = {
-            userId,
-            visibility: "PUBLIC",
-        };
 
         const fetchWithOrder = async (ids: number[]) => {
             const quizzes = await this.prisma.quiz.findMany({
@@ -244,7 +246,7 @@ export class PublicCatalogService {
 
     async getPublicQuizDetails(quizId: number) {
         const quiz = await this.prisma.quiz.findFirst({
-            where: { id: quizId, visibility: "PUBLIC" },
+            where: { id: quizId, visibility: "PUBLIC", user: { isBlocked: false } },
             include: {
                 user: { select: { name: true, email: true } },
                 questions: {

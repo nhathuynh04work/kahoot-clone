@@ -37,17 +37,17 @@ export function OverlayPanel({
 
 			<div
 				className={cn(
-					"absolute bg-gray-900 border-gray-700 shadow-2xl flex flex-col overflow-hidden",
+					"absolute bg-(--app-elevated) border-(--app-border) text-(--app-fg) shadow-2xl flex flex-col overflow-hidden",
 					isLeft
 						? "left-0 top-0 bottom-0 w-[min(92vw,360px)] border-r"
 						: "left-0 right-0 bottom-0 h-[min(85dvh,720px)] border-t rounded-t-2xl",
 				)}
 			>
-				<div className="shrink-0 px-4 py-3 border-b border-gray-700 flex items-center gap-3">
-					{title ? <p className="text-sm font-semibold text-white">{title}</p> : null}
+				<div className="shrink-0 px-4 py-3 border-b border-(--app-border) flex items-center gap-3">
+					{title ? <p className="text-sm font-semibold text-(--app-fg)">{title}</p> : null}
 					<button
 						type="button"
-						className="ml-auto inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-300 hover:bg-gray-800/70 transition-colors"
+						className="ml-auto inline-flex items-center justify-center h-9 w-9 rounded-lg text-(--app-fg-muted) hover:bg-(--app-surface-muted) transition-colors"
 						onClick={() => onOpenChange(false)}
 						aria-label="Close"
 					>

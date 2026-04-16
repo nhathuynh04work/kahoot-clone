@@ -39,7 +39,8 @@ export function QuestionSettingsSidebar({
 	return (
 		<div
 			className={cn(
-				"relative shrink-0 bg-gray-800/50 border-gray-700 flex flex-col",
+				"relative shrink-0 bg-(--app-surface-muted) border-(--app-border) flex flex-col",
+				variant === "desktopSidebar" && "h-full min-h-0",
 				variant === "desktopSidebar"
 					? `border-l transition-all duration-300 ease-in-out ${isOpen ? "w-80" : "w-0"}`
 					: "w-full border-0",
@@ -48,7 +49,7 @@ export function QuestionSettingsSidebar({
 			{variant === "desktopSidebar" ? (
 				<button
 					onClick={onToggle}
-					className="absolute top-1/2 left-0 z-10 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white rounded-full shadow-lg transition-colors"
+					className="absolute top-1/2 left-0 z-10 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-(--app-surface) hover:bg-(--app-surface-muted) text-(--app-fg) rounded-full shadow-lg transition-colors border border-(--app-border)"
 				>
 					{isOpen ? (
 						<ChevronRight className="w-5 h-5" />
@@ -60,7 +61,7 @@ export function QuestionSettingsSidebar({
 
 			<div
 				className={cn(
-					"grow h-full overflow-y-auto",
+					"min-h-0 grow overflow-y-auto",
 					variant === "desktopSidebar" ? "p-5 min-w-[20rem]" : "p-0 min-w-0",
 					variant === "desktopSidebar" && !isOpen && "hidden",
 				)}
@@ -74,7 +75,7 @@ export function QuestionSettingsSidebar({
 
 			<div
 				className={cn(
-					"p-4 border-t border-gray-700",
+					"p-4 border-t border-(--app-border)",
 					variant === "desktopSidebar" && "min-w-[20rem]",
 					variant === "desktopSidebar" && !isOpen && "hidden",
 				)}
@@ -83,7 +84,10 @@ export function QuestionSettingsSidebar({
 					<button
 						onClick={onDelete}
 						disabled={!canDelete}
-						className="flex items-center justify-center gap-2 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-900/50 hover:text-red-200 transition-colors flex-1 disabled:opacity-50 disabled:cursor-not-allowed">
+						className="flex items-center justify-center gap-2 text-(--app-fg) font-semibold py-2 px-4 rounded-md border border-(--app-border) hover:bg-red-500/10 hover:text-red-600 transition-colors flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+						title="Delete question"
+						aria-label="Delete question"
+					>
 						<Trash2 className="w-4 h-4" />
 						Delete
 					</button>
@@ -100,7 +104,7 @@ export function QuestionSettingsSidebar({
 					<button
 						type="button"
 						onClick={() => onRequestClose?.()}
-						className="mt-3 w-full py-2 rounded-md border border-gray-700 bg-gray-900/30 hover:bg-gray-800/50 text-sm font-semibold text-gray-200 transition-colors"
+						className="mt-3 w-full py-2 rounded-md border border-(--app-border) bg-(--app-surface) hover:bg-(--app-surface-muted) text-sm font-semibold text-(--app-fg) transition-colors"
 					>
 						Close
 					</button>

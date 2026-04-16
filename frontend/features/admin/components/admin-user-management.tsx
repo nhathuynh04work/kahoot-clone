@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Ban, Crown, Loader2, Unlock, UserRound } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type {
 	AdminUserListItem,
 	AdminUserListResponse,
@@ -108,10 +109,10 @@ export function AdminUserManagement({
 				meta: { widthClassName: "w-[420px]" },
 				cell: ({ row }) => (
 					<div className="min-w-0">
-						<div className="text-sm font-semibold text-white truncate">
+						<div className="text-sm font-semibold text-(--app-fg) truncate">
 							{row.original.name ?? "—"}
 						</div>
-						<div className="text-xs text-gray-400 truncate">
+						<div className="text-xs text-(--app-fg-muted) truncate">
 							{row.original.email}
 						</div>
 					</div>
@@ -122,17 +123,10 @@ export function AdminUserManagement({
 				header: "Role",
 				meta: { widthClassName: "w-[140px]" },
 				cell: ({ row }) => {
-					const roleIsAdmin = row.original.role === "ADMIN";
 					return (
-						<span
-							className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
-								roleIsAdmin
-									? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
-									: "bg-indigo-500/10 text-indigo-200 border border-indigo-500/30"
-							}`}
-						>
+						<Badge tone="neutral" className="text-xs">
 							{row.original.role}
-						</span>
+						</Badge>
 					);
 				},
 			},
@@ -143,15 +137,9 @@ export function AdminUserManagement({
 				cell: ({ row }) => {
 					const blocked = row.original.isBlocked;
 					return (
-						<span
-							className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ${
-								blocked
-									? "bg-red-500/10 text-red-200 border border-red-500/30"
-									: "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
-							}`}
-						>
+						<Badge tone="neutral" className="text-xs">
 							{blocked ? "BLOCKED" : "ACTIVE"}
-						</span>
+						</Badge>
 					);
 				},
 				sortingFn: "basic",
@@ -161,29 +149,36 @@ export function AdminUserManagement({
 				header: "Created",
 				meta: { widthClassName: "w-[140px]" },
 				cell: ({ row }) => (
-					<span className="text-sm text-gray-300">
+					<span className="text-sm text-(--app-fg-muted)">
 						{formatDate(row.original.createdAt)}
 					</span>
 				),
 			},
 			{
 				id: "actions",
-				header: () => <div className="text-right">Actions</div>,
+				header: "Actions",
 				enableSorting: false,
-				meta: { widthClassName: "w-[260px]" },
+				meta: {
+					widthClassName: "w-[108px]",
+					headerAlign: "right",
+				},
 				cell: ({ row }) => {
 					const u = row.original;
 					const blocked = u.isBlocked;
 					const roleIsAdmin = u.role === "ADMIN";
+					const blockDisabled = isPending || (roleIsAdmin && !blocked);
+					const roleDisabled = isPending || roleIsAdmin;
 
 					return (
 						<div
-							className="flex justify-end gap-2"
+							className="flex justify-end gap-1.5"
 							onClick={(e) => e.stopPropagation()}
 						>
 							<button
 								type="button"
-								disabled={isPending || (roleIsAdmin && !blocked)}
+								disabled={blockDisabled}
+								aria-label={blocked ? "Unblock user" : "Block user"}
+								title={blocked ? "Unblock" : "Block"}
 								onClick={() => {
 									if (roleIsAdmin && !blocked) return;
 									mutateAsync({
@@ -191,13 +186,19 @@ export function AdminUserManagement({
 										payload: { isBlocked: !blocked },
 									}).catch(() => {});
 								}}
-								className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+								className="inline-flex size-9 items-center justify-center rounded-lg border border-(--app-border) bg-(--app-control-bg) text-(--app-fg) hover:bg-(--app-control-bg-hover) disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:size-4"
 							>
-								{blocked ? "Unblock" : "Block"}
+								{blocked ? (
+									<Unlock className="" aria-hidden />
+								) : (
+									<Ban className="" aria-hidden />
+								)}
 							</button>
 							<button
 								type="button"
-								disabled={isPending || roleIsAdmin}
+								disabled={roleDisabled}
+								aria-label={roleIsAdmin ? "Demote to user" : "Promote to admin"}
+								title={roleIsAdmin ? "Demote" : "Promote"}
 								onClick={() => {
 									if (roleIsAdmin) return;
 									mutateAsync({
@@ -207,9 +208,13 @@ export function AdminUserManagement({
 										},
 									}).catch(() => {});
 								}}
-								className="px-3 py-2 rounded-lg border border-gray-700 bg-gray-800/50 text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+								className="inline-flex size-9 items-center justify-center rounded-lg border border-(--app-border) bg-(--app-control-bg) text-(--app-fg) hover:bg-(--app-control-bg-hover) disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:size-4"
 							>
-								{roleIsAdmin ? "Demote" : "Promote"}
+								{roleIsAdmin ? (
+									<UserRound className="" aria-hidden />
+								) : (
+									<Crown className="" aria-hidden />
+								)}
 							</button>
 						</div>
 					);
@@ -229,7 +234,7 @@ export function AdminUserManagement({
 								value={q}
 								onChange={(e) => setQ(e.target.value)}
 								placeholder="Search email or name…"
-								className="w-full rounded-xl border border-gray-700 bg-gray-800/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+								className="w-full rounded-xl border border-(--app-border) bg-(--app-input-bg) px-4 py-2.5 text-sm text-(--app-fg) placeholder:text-(--app-fg-muted)/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
 								aria-label="Search users"
 							/>
 						</div>
@@ -257,17 +262,17 @@ export function AdminUserManagement({
 					/>
 
 					<div className="mt-6 flex items-center justify-between gap-3">
-						<div className="text-sm text-gray-400">
+						<div className="text-sm text-(--app-fg-muted)">
 							Page{" "}
-							<span className="text-white font-medium">
+							<span className="text-(--app-fg) font-medium">
 								{page}
 							</span>{" "}
 							of{" "}
-							<span className="text-white font-medium">
+							<span className="text-(--app-fg) font-medium">
 								{totalPages}
 							</span>{" "}
-							<span className="text-gray-600">•</span>{" "}
-							<span className="text-gray-300">{totalItems} users</span>
+							<span className="text-(--app-fg-muted)/60">•</span>{" "}
+							<span className="text-(--app-fg-muted)">{totalItems} users</span>
 						</div>
 						<AdminPagination
 							page={page}
@@ -277,7 +282,7 @@ export function AdminUserManagement({
 					</div>
 
 					{isPending && (
-						<div className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-300">
+						<div className="mt-3 flex items-center justify-center gap-2 text-sm text-(--app-fg-muted)">
 							<Loader2 className="w-4 h-4 animate-spin" aria-hidden />
 							Updating user…
 						</div>

@@ -58,10 +58,10 @@ export function AdminDashboardStats({
 		<div className="space-y-6">
 			<div className="flex items-center justify-between gap-3">
 				<div className="min-w-0">
-					<p className="text-sm font-medium text-white">Dashboard</p>
-					<p className="text-sm text-gray-400">
+					<p className="text-sm font-medium text-(--app-fg)">Dashboard</p>
+					<p className="text-sm text-(--app-fg-muted)">
 						Trends for the last{" "}
-						<span className="text-gray-200 font-semibold">{rangeDays}</span> days
+						<span className="text-(--app-fg) font-semibold">{rangeDays}</span> days
 					</p>
 				</div>
 				<AdminDashboardRangeSelector rangeDays={rangeDays} />
@@ -69,9 +69,9 @@ export function AdminDashboardStats({
 
 			<div className="flex items-end justify-between gap-3">
 				<div className="min-w-0">
-					<p className="text-xs uppercase tracking-wide text-gray-500">Key metrics</p>
+					<p className="text-xs uppercase tracking-wide text-(--app-fg-muted)">Key metrics</p>
 				</div>
-				<div className="text-xs text-gray-500">
+				<div className="text-xs text-(--app-fg-muted)">
 					All-time totals
 				</div>
 			</div>
@@ -89,20 +89,27 @@ export function AdminDashboardStats({
 				/>
 			</div>
 
-			<p className="text-xs uppercase tracking-wide text-gray-500">Trends</p>
+			<p className="text-xs uppercase tracking-wide text-(--app-fg-muted)">Trends</p>
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4 lg:col-span-3">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4 lg:col-span-3">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">
+						<p className="text-sm font-medium text-(--app-fg)">
 							Revenue by day (paid invoices, last {rangeDays}d)
 						</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
 							<BarChart data={revenueChartData} margin={{ left: 0, right: 0 }}>
-								<CartesianGrid stroke="rgba(55, 65, 81, 0.35)" strokeDasharray="4 4" />
-								<XAxis dataKey="date" tickFormatter={formatDateTick} tick={{ fill: "#9ca3af", fontSize: 12 }} />
-								<YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} allowDecimals />
+								<CartesianGrid
+									stroke="color-mix(in oklab, var(--app-border) 70%, transparent)"
+									strokeDasharray="4 4"
+								/>
+								<XAxis
+									dataKey="date"
+									tickFormatter={formatDateTick}
+									tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								/>
+								<YAxis tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }} allowDecimals />
 								<Tooltip formatter={(v) => [`$${v}`, "Revenue"]} />
 								<Bar dataKey="dollars" fill="#fbbf24" radius={[6, 6, 0, 0]} />
 							</BarChart>
@@ -110,16 +117,23 @@ export function AdminDashboardStats({
 					</div>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">User growth</p>
+						<p className="text-sm font-medium text-(--app-fg)">User growth</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
 							<LineChart data={stats.charts.userGrowth} margin={{ left: 0, right: 0 }}>
-								<CartesianGrid stroke="rgba(55, 65, 81, 0.35)" strokeDasharray="4 4" />
-								<XAxis dataKey="date" tickFormatter={formatDateTick} tick={{ fill: "#9ca3af", fontSize: 12 }} />
-								<YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} allowDecimals={false} />
+								<CartesianGrid
+									stroke="color-mix(in oklab, var(--app-border) 70%, transparent)"
+									strokeDasharray="4 4"
+								/>
+								<XAxis
+									dataKey="date"
+									tickFormatter={formatDateTick}
+									tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								/>
+								<YAxis tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }} allowDecimals={false} />
 								<Tooltip />
 								<Line type="monotone" dataKey="count" name="Users" stroke="#6366f1" strokeWidth={2} dot={false} />
 							</LineChart>
@@ -127,16 +141,23 @@ export function AdminDashboardStats({
 					</div>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Quiz growth</p>
+						<p className="text-sm font-medium text-(--app-fg)">Quiz growth</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
 							<LineChart data={stats.charts.quizGrowth} margin={{ left: 0, right: 0 }}>
-								<CartesianGrid stroke="rgba(55, 65, 81, 0.35)" strokeDasharray="4 4" />
-								<XAxis dataKey="date" tickFormatter={formatDateTick} tick={{ fill: "#9ca3af", fontSize: 12 }} />
-								<YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} allowDecimals={false} />
+								<CartesianGrid
+									stroke="color-mix(in oklab, var(--app-border) 70%, transparent)"
+									strokeDasharray="4 4"
+								/>
+								<XAxis
+									dataKey="date"
+									tickFormatter={formatDateTick}
+									tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								/>
+								<YAxis tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }} allowDecimals={false} />
 								<Tooltip />
 								<Line type="monotone" dataKey="count" name="Quizzes" stroke="#10b981" strokeWidth={2} dot={false} />
 							</LineChart>
@@ -144,16 +165,23 @@ export function AdminDashboardStats({
 					</div>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Sessions played</p>
+						<p className="text-sm font-medium text-(--app-fg)">Sessions played</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
 							<BarChart data={stats.charts.sessionsPlayed} margin={{ left: 0, right: 0 }}>
-								<CartesianGrid stroke="rgba(55, 65, 81, 0.35)" strokeDasharray="4 4" />
-								<XAxis dataKey="date" tickFormatter={formatDateTick} tick={{ fill: "#9ca3af", fontSize: 12 }} />
-								<YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} allowDecimals={false} />
+								<CartesianGrid
+									stroke="color-mix(in oklab, var(--app-border) 70%, transparent)"
+									strokeDasharray="4 4"
+								/>
+								<XAxis
+									dataKey="date"
+									tickFormatter={formatDateTick}
+									tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }}
+								/>
+								<YAxis tick={{ fill: "var(--app-fg-muted)", fontSize: 12 }} allowDecimals={false} />
 								<Tooltip />
 								<Bar dataKey="count" fill="#f59e0b" radius={[6, 6, 0, 0]} />
 							</BarChart>
@@ -162,11 +190,11 @@ export function AdminDashboardStats({
 				</div>
 			</div>
 
-			<p className="text-xs uppercase tracking-wide text-gray-500">Breakdowns</p>
+			<p className="text-xs uppercase tracking-wide text-(--app-fg-muted)">Breakdowns</p>
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">VIP status</p>
+						<p className="text-sm font-medium text-(--app-fg)">VIP status</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
@@ -189,9 +217,9 @@ export function AdminDashboardStats({
 					</div>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Plan breakdown</p>
+						<p className="text-sm font-medium text-(--app-fg)">Plan breakdown</p>
 					</div>
 					<div className="mt-3 h-64">
 						<ResponsiveContainer width="100%" height="100%">
@@ -214,128 +242,128 @@ export function AdminDashboardStats({
 					</div>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Top played quizzes</p>
+						<p className="text-sm font-medium text-(--app-fg)">Top played quizzes</p>
 						<Link
 							href="/admin/quizzes"
-							className="text-xs text-gray-400 hover:text-white transition-colors"
+							className="text-xs text-(--app-fg-muted) hover:text-(--app-fg) transition-colors"
 						>
 							View
 						</Link>
 					</div>
-					<ol className="mt-3 divide-y divide-gray-800">
+					<ol className="mt-3 divide-y divide-(--app-border)">
 						{stats.charts.topQuizzes.length ? (
 							stats.charts.topQuizzes.slice(0, 10).map((q, idx) => (
 								<li key={q.quizId} className="py-2.5">
 									<Link
 										href={`/admin/quizzes/${q.quizId}`}
-										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-800/40 transition-colors"
+										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-(--app-surface-muted)/50 transition-colors"
 										title={q.title}
 									>
-										<div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-sm font-black text-emerald-200 tabular-nums shrink-0">
+										<div className="w-8 h-8 rounded-full bg-emerald-600/35 border border-emerald-700/45 flex items-center justify-center text-sm font-black text-emerald-950 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-200 tabular-nums shrink-0">
 											{idx + 1}
 										</div>
 										<div className="min-w-0 flex-1">
-											<p className="text-sm font-semibold text-white truncate group-hover:text-emerald-100">
+											<p className="text-sm font-semibold text-(--app-fg) truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-100">
 												{q.title}
 											</p>
-											<p className="text-xs text-gray-400">
+											<p className="text-xs text-(--app-fg-muted)">
 												{q.sessions.toLocaleString()} sessions
 											</p>
 										</div>
-										<div className="text-xs font-semibold text-gray-400 tabular-nums shrink-0">
+										<div className="text-xs font-semibold text-(--app-fg-muted) tabular-nums shrink-0">
 											{q.sessions.toLocaleString()}
 										</div>
 									</Link>
 								</li>
 							))
 						) : (
-							<li className="py-8 text-center text-sm text-gray-400">No session data yet.</li>
+							<li className="py-8 text-center text-sm text-(--app-fg-muted)">No session data yet.</li>
 						)}
 					</ol>
 				</div>
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Top saved quizzes</p>
+						<p className="text-sm font-medium text-(--app-fg)">Top saved quizzes</p>
 						<Link
 							href="/admin/quizzes?sort=saves_desc"
-							className="text-xs text-gray-400 hover:text-white transition-colors"
+							className="text-xs text-(--app-fg-muted) hover:text-(--app-fg) transition-colors"
 						>
 							View
 						</Link>
 					</div>
-					<ol className="mt-3 divide-y divide-gray-800">
+					<ol className="mt-3 divide-y divide-(--app-border)">
 						{stats.charts.topSavedQuizzes.length ? (
 							stats.charts.topSavedQuizzes.slice(0, 10).map((q, idx) => (
 								<li key={q.quizId} className="py-2.5">
 									<Link
 										href={`/admin/quizzes/${q.quizId}`}
-										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-800/40 transition-colors"
+										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-(--app-surface-muted)/50 transition-colors"
 										title={q.title}
 									>
-										<div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-black text-indigo-200 tabular-nums shrink-0">
+										<div className="w-8 h-8 rounded-full bg-indigo-600/35 border border-indigo-700/45 flex items-center justify-center text-sm font-black text-indigo-950 dark:bg-indigo-500/10 dark:border-indigo-500/20 dark:text-indigo-200 tabular-nums shrink-0">
 											{idx + 1}
 										</div>
 										<div className="min-w-0 flex-1">
-											<p className="text-sm font-semibold text-white truncate group-hover:text-indigo-100">
+											<p className="text-sm font-semibold text-(--app-fg) truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-100">
 												{q.title}
 											</p>
-											<p className="text-xs text-gray-400">
+											<p className="text-xs text-(--app-fg-muted)">
 												{q.saves.toLocaleString()} saves
 											</p>
 										</div>
-										<div className="text-xs font-semibold text-gray-400 tabular-nums shrink-0">
+										<div className="text-xs font-semibold text-(--app-fg-muted) tabular-nums shrink-0">
 											{q.saves.toLocaleString()}
 										</div>
 									</Link>
 								</li>
 							))
 						) : (
-							<li className="py-8 text-center text-sm text-gray-400">No saves yet.</li>
+							<li className="py-8 text-center text-sm text-(--app-fg-muted)">No saves yet.</li>
 						)}
 					</ol>
 				</div>
 
-				<div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4">
+				<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/60 p-4">
 					<div className="flex items-center justify-between gap-3">
-						<p className="text-sm font-medium text-white">Top saved documents</p>
+						<p className="text-sm font-medium text-(--app-fg)">Top saved documents</p>
 						<Link
 							href="/admin/documents?sort=saves_desc"
-							className="text-xs text-gray-400 hover:text-white transition-colors"
+							className="text-xs text-(--app-fg-muted) hover:text-(--app-fg) transition-colors"
 						>
 							View
 						</Link>
 					</div>
-					<ol className="mt-3 divide-y divide-gray-800">
+					<ol className="mt-3 divide-y divide-(--app-border)">
 						{stats.charts.topSavedDocuments.length ? (
 							stats.charts.topSavedDocuments.slice(0, 10).map((d, idx) => (
 								<li key={d.documentId} className="py-2.5">
 									<Link
 										href={`/admin/documents/${d.documentId}`}
-										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-800/40 transition-colors"
+										className="group flex items-center gap-3 rounded-md px-2 py-2 hover:bg-(--app-surface-muted)/50 transition-colors"
 										title={d.fileName}
 									>
-										<div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm font-black text-amber-200 tabular-nums shrink-0">
+										<div className="w-8 h-8 rounded-full bg-amber-600/35 border border-amber-700/45 flex items-center justify-center text-sm font-black text-amber-950 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-200 tabular-nums shrink-0">
 											{idx + 1}
 										</div>
 										<div className="min-w-0 flex-1">
-											<p className="text-sm font-semibold text-white truncate">{d.fileName}</p>
-											<p className="text-xs text-gray-400">
+											<p className="text-sm font-semibold text-(--app-fg) truncate">{d.fileName}</p>
+											<p className="text-xs text-(--app-fg-muted)">
 												{d.saves.toLocaleString()} saves
 											</p>
 										</div>
-										<div className="text-xs font-semibold text-gray-400 tabular-nums shrink-0">
+										<div className="text-xs font-semibold text-(--app-fg-muted) tabular-nums shrink-0">
 											{d.saves.toLocaleString()}
 										</div>
 									</Link>
 								</li>
 							))
 						) : (
-							<li className="py-8 text-center text-sm text-gray-400">No saves yet.</li>
+							<li className="py-8 text-center text-sm text-(--app-fg-muted)">No saves yet.</li>
 						)}
 					</ol>
 				</div>

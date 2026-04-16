@@ -50,9 +50,9 @@ export const HostQuestionScreen = ({
 	const qType = currentQuestion.type ?? "MULTIPLE_CHOICE";
 
 	return (
-		<div className="flex flex-col min-h-screen bg-gray-900 p-6 gap-6">
-			<div className="flex justify-between items-center text-gray-400 text-sm font-medium">
-				<span className="bg-gray-800 px-3 py-1 rounded-md border border-gray-700">
+		<div className="flex flex-col min-h-screen bg-(--app-bg) p-6 gap-6">
+			<div className="flex justify-between items-center text-(--app-fg-muted) text-sm font-medium">
+				<span className="bg-(--app-surface-muted) px-3 py-1 rounded-md border border-(--app-border)">
 					Question {currentQuestionIndex + 1} / {totalQuestions}
 				</span>
 				<div className="flex items-center gap-2">
@@ -62,27 +62,27 @@ export const HostQuestionScreen = ({
 			</div>
 
 			<div className="flex-1 flex flex-col items-center justify-center gap-8">
-				<h2 className="text-3xl md:text-4xl font-bold text-center text-white max-w-4xl leading-tight">
+				<h2 className="text-3xl md:text-4xl font-bold text-center text-(--app-fg) max-w-4xl leading-tight">
 					{currentQuestion.text}
 				</h2>
 
 				{qType === "SHORT_ANSWER" ? (
-					<p className="text-indigo-300 text-lg font-medium">
+					<p className="text-indigo-600 dark:text-indigo-300 text-lg font-medium">
 						Short answer — players type a response
 					</p>
 				) : null}
 				{qType === "NUMBER_INPUT" ? (
-					<p className="text-indigo-300 text-lg font-medium">
+					<p className="text-indigo-600 dark:text-indigo-300 text-lg font-medium">
 						Number input — players enter a number
 					</p>
 				) : null}
 
 				<div className="flex flex-col items-center gap-2 w-full max-w-md">
-					<div className="flex items-center gap-3 text-2xl font-bold text-white">
+					<div className="flex items-center gap-3 text-2xl font-bold text-(--app-fg)">
 						<Clock className="text-indigo-400" size={32} />
 						<span>{secondsLeft}</span>
 					</div>
-					<div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+					<div className="w-full h-3 bg-(--app-surface-muted) rounded-full overflow-hidden border border-(--app-border)">
 						<div
 							className="h-full bg-indigo-500 transition-all ease-linear duration-100"
 							style={{ width: `${percentage}%` }}

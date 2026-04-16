@@ -72,9 +72,9 @@ export default async function LibraryQuizzesPage({
 				<DashboardQuizToolbar />
 
 				{result.items.length === 0 ? (
-					<div className="text-center bg-gray-800 p-10 rounded-lg shadow-sm border border-gray-700">
-						<h3 className="text-xl font-medium text-white">No quizzes found.</h3>
-						<p className="text-gray-400 my-2">
+					<div className="text-center bg-(--app-surface-muted) p-10 rounded-lg shadow-sm border border-(--app-border)">
+						<h3 className="text-xl font-medium text-(--app-fg)">No quizzes found.</h3>
+						<p className="text-(--app-fg-muted) my-2">
 							Get started by clicking &quot;Create quiz&quot; in the sidebar!
 						</p>
 					</div>
@@ -82,7 +82,7 @@ export default async function LibraryQuizzesPage({
 					<>
 						<LibraryQuizzesClient quizzes={result.items} viewerId={viewer?.id} />
 						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
-							<p className="text-xs text-gray-400">
+							<p className="text-xs text-(--app-fg-muted)">
 								Page {result.page} / {result.totalPages}
 							</p>
 							<div className="flex items-center gap-2">
@@ -91,8 +91,8 @@ export default async function LibraryQuizzesPage({
 									className={[
 										"px-3 py-2 rounded-lg text-sm border transition-colors",
 										result.page <= 1
-											? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-											: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+											? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+											: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 									].join(" ")}
 									href={buildHref({ page: Math.max(1, result.page - 1) })}
 								>
@@ -103,8 +103,8 @@ export default async function LibraryQuizzesPage({
 									className={[
 										"px-3 py-2 rounded-lg text-sm border transition-colors",
 										result.page >= result.totalPages
-											? "pointer-events-none opacity-50 bg-gray-800/30 border-gray-700 text-gray-400"
-											: "bg-gray-800/50 border-gray-700 text-gray-200 hover:bg-gray-800",
+											? "pointer-events-none opacity-50 bg-(--app-surface-muted)/40 border-(--app-border) text-(--app-fg-muted)"
+											: "bg-(--app-surface-muted) border-(--app-border) text-(--app-fg) hover:bg-(--app-surface)",
 									].join(" ")}
 									href={buildHref({
 										page: Math.min(result.totalPages, result.page + 1),

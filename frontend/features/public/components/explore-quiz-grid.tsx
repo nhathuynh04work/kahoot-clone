@@ -26,7 +26,6 @@ export function ExploreQuizGrid({
 					<QuizCard
 						key={quiz.id}
 						quiz={quiz}
-						canEdit={false}
 						viewerId={viewerId}
 						onCardClick={() => setSelectedQuizId(quiz.id)}
 					/>

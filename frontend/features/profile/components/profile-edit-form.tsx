@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Uploader } from "@/features/img-upload/components/uploader";
 import Image from "next/image";
 import { Loader2, UploadCloud, Trash2 } from "lucide-react";
+import { appInputClassName } from "@/components/ui/app-input";
 
 type ProfileEditFormProps = {
 	initialName: string;
@@ -56,7 +57,7 @@ export function ProfileEditForm({
 						<button
 							type="button"
 							onClick={triggerUpload}
-							className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-700 bg-gray-800 shrink-0 group"
+							className="relative w-16 h-16 rounded-full overflow-hidden border border-(--app-border) bg-(--app-surface-muted) shrink-0 group"
 							aria-label="Change avatar"
 						>
 							{avatarUrl ? (
@@ -68,7 +69,7 @@ export function ProfileEditForm({
 									sizes="64px"
 								/>
 							) : (
-								<div className="absolute inset-0 flex items-center justify-center text-gray-300 font-semibold">
+								<div className="absolute inset-0 flex items-center justify-center text-(--app-fg-muted) font-semibold">
 									{(name?.trim()?.[0] ?? "?").toUpperCase()}
 								</div>
 							)}
@@ -91,15 +92,15 @@ export function ProfileEditForm({
 				</Uploader>
 
 				<div className="flex-1 min-w-0">
-					<p className="text-sm font-medium text-gray-200">Avatar</p>
-					<p className="text-xs text-gray-500">
+					<p className="text-sm font-medium text-(--app-fg)">Avatar</p>
+					<p className="text-xs text-(--app-fg-muted)">
 						Hover and click to change.
 					</p>
 					{avatarUrl && (
 						<button
 							type="button"
 							onClick={() => setAvatarUrl("")}
-							className="mt-2 inline-flex items-center gap-2 text-xs text-red-300 hover:text-red-200"
+							className="mt-2 inline-flex items-center gap-2 text-xs text-red-600 hover:text-red-500 dark:text-red-300 dark:hover:text-red-200"
 						>
 							<Trash2 className="w-3.5 h-3.5" />
 							Remove
@@ -109,14 +110,14 @@ export function ProfileEditForm({
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium text-gray-300 mb-2">
+				<label className="block text-sm font-medium text-(--app-fg-muted) mb-2">
 					Display name
 				</label>
 				<input
 					value={name}
 					onChange={(e) => setName(e.target.value)}
 					type="text"
-					className="w-full p-3 bg-gray-900 border border-gray-700 rounded-md text-white text-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+					className={`${appInputClassName} p-3 rounded-md text-lg`}
 					placeholder="Your name"
 				/>
 			</div>
@@ -125,7 +126,7 @@ export function ProfileEditForm({
 				<button
 					type="button"
 					onClick={() => router.push(`/users/${userId}`)}
-					className="font-semibold text-gray-300 py-2 px-6 rounded-md hover:bg-gray-800 hover:text-white transition-colors"
+					className="font-semibold text-(--app-fg-muted) py-2 px-6 rounded-md hover:bg-(--app-surface-muted) hover:text-(--app-fg) transition-colors"
 					disabled={isSaving}
 				>
 					Cancel

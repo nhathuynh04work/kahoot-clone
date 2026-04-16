@@ -29,6 +29,7 @@ export function QuizDetailsDrawerContainer({
 	const { mutate: createLobby, isPending } = useCreateLobby(quiz.id);
 	const isPublic = variant === "public";
 	const { fullQuiz, questionsLoading } = useFullQuiz(quiz.id, { variant });
+	const isOwner = typeof viewerId === "number" && viewerId === quiz.userId;
 	const {
 		sessions,
 		sessionsLoading,
@@ -46,13 +47,15 @@ export function QuizDetailsDrawerContainer({
 			topGap: isPublic ? "58px" : undefined,
 		});
 
+	const showSaveButton =
+		typeof viewerId === "number" && !isOwner;
+
 	const { data: mySavedQuizIds = [] } = useQuery({
 		queryKey: ["mySavedQuizzes"],
 		queryFn: getMySavedQuizIds,
-		enabled: !isPublic,
+		enabled: showSaveButton,
 	});
-	const isSaved = !isPublic && mySavedQuizIds.includes(quiz.id);
-	const isOwner = typeof viewerId === "number" && viewerId === quiz.userId;
+	const isSaved = mySavedQuizIds.includes(quiz.id);
 
 	const authorName = useMemo(
 		() => fullQuiz?.authorName ?? quiz.authorName ?? "Unknown author",
@@ -76,18 +79,22 @@ export function QuizDetailsDrawerContainer({
 				sessionsLoading ? "…" : `${participantCount} participants`
 			}
 			quizId={quiz.id}
-			isHostPending={isPublic ? undefined : isPending}
-			onHostLive={isPublic ? undefined : () => createLobby()}
-			showSaveButton={!isPublic && !isOwner}
-			initialIsSaved={!isPublic ? isSaved : undefined}
-			isOwner={!isPublic ? isOwner : false}
+			isHostPending={isPending}
+			onHostLive={() => createLobby()}
+			showSaveButton={showSaveButton}
+			initialIsSaved={showSaveButton ? isSaved : undefined}
+			isOwner={isOwner}
 			initialVisibility={
-				!isPublic ? ((fullQuiz?.visibility ?? quiz.visibility) as any) : undefined
+				isOwner
+					? ((fullQuiz?.visibility ?? quiz.visibility) as
+							| "PUBLIC"
+							| "PRIVATE")
+					: undefined
 			}
 			backdropStyle={backdropStyle}
 			panelStyle={panelStyle}
 			onBackdropClick={onBackdropClick}
-			hideSidebar={isPublic}
+			hideSidebar={false}
 			portal={isPublic}
 			content={
 				<QuizDetailsQuestionsPane

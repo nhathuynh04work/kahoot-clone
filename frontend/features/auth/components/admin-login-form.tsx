@@ -6,6 +6,7 @@ import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { appInputClassName } from "@/components/ui/app-input";
 
 type AdminLoginInput = {
 	email: string;
@@ -33,9 +34,8 @@ export function AdminLoginForm() {
 		}
 	}
 
-	const inputClasses =
-		"w-full px-4 py-3 bg-gray-950/40 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-transparent transition-all duration-200";
-	const labelClasses = "block text-sm font-semibold text-gray-300 mb-2";
+	const inputClasses = `${appInputClassName} px-4 py-3 rounded-xl`;
+	const labelClasses = "block text-sm font-semibold text-(--app-fg-muted) mb-2";
 	const errorClasses = "text-red-400 text-sm mt-1 font-medium";
 
 	return (
@@ -86,7 +86,7 @@ export function AdminLoginForm() {
 				<button
 					type="submit"
 					disabled={isSubmitting}
-					className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:bg-indigo-500 hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2">
+					className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white shadow-lg shadow-indigo-600/20 transition-all duration-200 hover:bg-indigo-500 hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:ring-offset-2 focus:ring-offset-(--app-bg) disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2">
 					{isSubmitting ? (
 						<>
 							<Loader2 className="animate-spin" size={20} />
@@ -98,12 +98,12 @@ export function AdminLoginForm() {
 				</button>
 			</form>
 
-			<div className="mt-8 border-t border-gray-800 pt-6 text-center">
-				<p className="text-sm text-gray-400">
+			<div className="mt-8 border-t border-(--app-border) pt-6 text-center">
+				<p className="text-sm text-(--app-fg-muted)">
 					Not an admin?{" "}
 					<Link
 						href="/auth/login"
-						className="font-semibold text-indigo-300 hover:text-indigo-200 transition-colors">
+						className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-300 dark:hover:text-indigo-200 transition-colors">
 						Sign in normally
 					</Link>
 				</p>

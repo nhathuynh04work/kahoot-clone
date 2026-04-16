@@ -14,6 +14,8 @@ type ColumnMeta = {
 	thClassName?: string;
 	tdClassName?: string;
 	widthClassName?: string;
+	/** Align header label (sort chevron only when sortable). */
+	headerAlign?: "left" | "right";
 };
 
 export function AdminDataTable<TData>({
@@ -44,15 +46,25 @@ export function AdminDataTable<TData>({
 	const clickable = useMemo(() => Boolean(onRowClick), [onRowClick]);
 
 	return (
-		<div className="rounded-xl border border-gray-800 bg-gray-900/30 overflow-x-auto">
+		<div className="rounded-xl border border-(--app-border) bg-(--app-surface-muted)/50 overflow-x-auto">
 			<table className="w-full text-left text-sm table-fixed">
-				<thead className="text-xs text-gray-300 border-b border-gray-800 bg-gray-950/40">
+				<thead className="text-xs text-(--app-fg-muted) border-b border-(--app-border) bg-(--app-surface-muted)">
 					{headerGroups.map((hg) => (
 						<tr key={hg.id} className="h-11">
 							{hg.headers.map((header) => {
 								const canSort = header.column.getCanSort();
 								const sorted = header.column.getIsSorted();
 								const meta = (header.column.columnDef.meta as ColumnMeta | undefined) ?? {};
+								const headerAlign = meta.headerAlign ?? "left";
+								const labelAlignClass =
+									headerAlign === "right" ? "text-right" : "text-left";
+								const rowLayoutClass = canSort
+									? headerAlign === "right"
+										? "flex-row-reverse justify-between"
+										: "justify-between"
+									: headerAlign === "right"
+										? "justify-end"
+										: "justify-start";
 
 								return (
 									<th
@@ -68,13 +80,14 @@ export function AdminDataTable<TData>({
 											disabled={!canSort}
 											onClick={header.column.getToggleSortingHandler()}
 											className={[
-												"w-full inline-flex items-center justify-between gap-2",
+												"w-full inline-flex items-center gap-2",
+												rowLayoutClass,
 												canSort
-													? "hover:text-white transition-colors"
+													? "hover:text-(--app-fg) transition-colors"
 													: "cursor-default",
 											].join(" ")}
 										>
-											<span className="min-w-0 truncate text-left">
+											<span className={["min-w-0 truncate", labelAlignClass].join(" ")}>
 												{header.isPlaceholder
 													? null
 													: flexRender(
@@ -82,15 +95,17 @@ export function AdminDataTable<TData>({
 															header.getContext(),
 														)}
 											</span>
-											<span
-												aria-hidden
-												className={[
-													"w-4 inline-flex items-center justify-center text-gray-500",
-													sorted ? "opacity-100" : "opacity-0",
-												].join(" ")}
-											>
-												{sorted === "asc" ? "▲" : sorted === "desc" ? "▼" : "▲"}
-											</span>
+											{canSort ? (
+												<span
+													aria-hidden
+													className={[
+														"w-4 shrink-0 inline-flex items-center justify-center text-(--app-fg-muted)",
+														sorted ? "opacity-100" : "opacity-0",
+													].join(" ")}
+												>
+													{sorted === "asc" ? "▲" : sorted === "desc" ? "▼" : "▲"}
+												</span>
+											) : null}
 										</button>
 									</th>
 								);
@@ -99,7 +114,7 @@ export function AdminDataTable<TData>({
 					))}
 				</thead>
 
-				<tbody className="divide-y divide-gray-800">
+				<tbody className="divide-y divide-(--app-border)">
 					{rows.map((row) => {
 						const original = row.original as TData;
 
@@ -111,9 +126,9 @@ export function AdminDataTable<TData>({
 									onRowClick?.(original);
 								}}
 								className={[
-									"text-gray-300 h-12",
+									"text-(--app-fg) h-12",
 									clickable
-										? "cursor-pointer hover:bg-gray-800/40"
+										? "cursor-pointer hover:bg-(--app-surface-muted)/80"
 										: "",
 								].join(" ")}
 							>
@@ -141,7 +156,7 @@ export function AdminDataTable<TData>({
 					{rows.length === 0 ? (
 						<tr>
 							<td
-								className="py-10 px-2 text-center text-gray-400"
+								className="py-10 px-2 text-center text-(--app-fg-muted)"
 								colSpan={table.getAllLeafColumns().length || 1}
 							>
 								{emptyText}

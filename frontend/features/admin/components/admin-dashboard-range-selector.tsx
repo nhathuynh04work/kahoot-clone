@@ -25,7 +25,7 @@ export function AdminDashboardRangeSelector({
 	};
 
 	return (
-		<div className="inline-flex items-center gap-1 rounded-xl border border-gray-800 bg-gray-900/40 p-1">
+		<div className="inline-flex items-center gap-1 rounded-xl border border-(--app-border) bg-(--app-elevated) p-1 shadow-sm">
 			{OPTIONS.map((o) => {
 				const active = rangeDays === o.days;
 				return (
@@ -34,10 +34,10 @@ export function AdminDashboardRangeSelector({
 						type="button"
 						onClick={() => setRange(o.days)}
 						className={[
-							"px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+							"px-3 py-1.5 rounded-lg text-xs font-bold transition-colors",
 							active
-								? "bg-emerald-500/15 text-emerald-100 border border-emerald-500/30"
-								: "text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent",
+								? "bg-(--app-control-active-bg) text-(--app-control-active-fg) border border-(--app-control-active-border) shadow-sm ring-1 ring-inset ring-(--app-control-active-border) dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:ring-0 dark:shadow-none"
+								: "text-(--app-fg) hover:text-(--app-fg) hover:bg-(--app-control-bg-hover) border border-transparent",
 						].join(" ")}
 						aria-pressed={active}
 					>

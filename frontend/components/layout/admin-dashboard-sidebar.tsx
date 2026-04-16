@@ -15,6 +15,7 @@ import type { User } from "@/features/auth/types";
 import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/features/auth/components/logout-button";
 import { AppLogo } from "@/components/layout/app-logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const navItems = [
 	{ href: "/admin", label: "Overview", icon: BarChart3 },
@@ -32,15 +33,15 @@ export function AdminDashboardSidebar({ user }: { user: User }) {
 	const router = useRouter();
 
 	return (
-		<aside className="w-[76px] shrink-0 border-r border-gray-800 bg-gray-950/40 flex flex-col sticky top-0 z-40 h-dvh">
-			<div className="h-[58px] shrink-0 flex items-center justify-center border-b border-gray-800">
+		<aside className="w-[76px] shrink-0 border-r border-(--app-border) bg-(--app-surface) flex flex-col sticky top-0 z-40 h-dvh">
+			<div className="h-[58px] shrink-0 flex items-center justify-center border-b border-(--app-border)">
 				<Link
 					href="/admin"
 					aria-label="Admin home"
 					title="Admin dashboard"
-					className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-900/60 transition-colors"
+					className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-(--app-surface-muted) transition-colors"
 				>
-					<AppLogo variant="mark" className="text-white" />
+					<AppLogo variant="mark" className="text-(--app-fg)" />
 				</Link>
 			</div>
 			<nav
@@ -57,12 +58,12 @@ export function AdminDashboardSidebar({ user }: { user: User }) {
 							title={label}
 							className={`flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg text-[11px] font-medium transition-colors border ${
 								isActive
-									? "bg-emerald-500/10 text-white border-emerald-500/30 shadow-[0_0_0_1px_rgba(16,185,129,0.15)]"
-									: "text-gray-400 border-transparent hover:text-white hover:bg-gray-900/60 hover:border-gray-800"
+									? "bg-emerald-600/15 text-(--app-fg) border-emerald-600/35 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] dark:bg-emerald-500/10 dark:border-emerald-500/30"
+									: "text-(--app-fg-muted) border-transparent hover:text-(--app-fg) hover:bg-(--app-surface-muted) hover:border-(--app-border)"
 							}`}
 						>
 							<Icon
-								className="w-5 h-5 shrink-0 text-emerald-400"
+								className="w-5 h-5 shrink-0 text-emerald-700 dark:text-emerald-400"
 								aria-hidden
 							/>
 							<span className="leading-[1.05] text-center">{label}</span>
@@ -71,25 +72,36 @@ export function AdminDashboardSidebar({ user }: { user: User }) {
 				})}
 			</nav>
 
-			<div className="mt-auto p-2 border-t border-gray-800 flex flex-col gap-1">
-				<button
-					type="button"
-					onClick={() => router.push(`/users/${user.id}`)}
-					className="w-full flex items-center justify-center p-1.5 hover:bg-gray-900/60 rounded-lg transition-colors"
-					aria-label="Go to profile"
-				>
-					<div className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center font-bold text-white shrink-0">
-						{getInitials(user.email)}
+			<div className="mt-auto">
+				<div className="p-2">
+					<div className="flex justify-center">
+						<ThemeToggle
+							compact
+							className="border-transparent bg-transparent shadow-none hover:bg-(--app-surface-muted)"
+						/>
 					</div>
-				</button>
+				</div>
 
-				<LogoutButton
-					aria-label="Log out"
-					className="w-full flex items-center justify-center p-2 rounded-lg bg-transparent text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-				>
-					<LogOut className="w-4 h-4 shrink-0" aria-hidden />
-					<span className="sr-only">Log out</span>
-				</LogoutButton>
+				<div className="p-2 border-t border-(--app-border) flex flex-col gap-1">
+					<button
+						type="button"
+						onClick={() => router.push(`/users/${user.id}`)}
+						className="w-full flex items-center justify-center p-1.5 hover:bg-(--app-surface-muted) rounded-lg transition-colors"
+						aria-label="Go to profile"
+					>
+						<div className="w-9 h-9 rounded-full bg-(--app-surface-muted) flex items-center justify-center font-bold text-(--app-fg) shrink-0">
+							{getInitials(user.email)}
+						</div>
+					</button>
+
+					<LogoutButton
+						aria-label="Log out"
+						className="w-full flex items-center justify-center p-2 rounded-lg bg-transparent text-(--app-fg-muted) hover:text-red-500 transition-colors cursor-pointer"
+					>
+						<LogOut className="w-4 h-4 shrink-0" aria-hidden />
+						<span className="sr-only">Log out</span>
+					</LogoutButton>
+				</div>
 			</div>
 		</aside>
 	);

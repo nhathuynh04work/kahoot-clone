@@ -10,6 +10,7 @@ import type { QuizWithQuestions } from "@/features/quizzes/types";
 import { QuizDetailsDrawerContainer } from "@/features/quizzes/components/quiz-details-drawer/quiz-details-drawer-container";
 import { formatBytes } from "@/features/documents/lib/constants";
 import { cn } from "@/lib/utils";
+import { appInputClassName } from "@/components/ui/app-input";
 import { globalSearch } from "../api/client-actions";
 
 export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
@@ -88,7 +89,7 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 				Search
 			</label>
 			<Search
-				className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+				className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--app-fg-muted)"
 				aria-hidden
 			/>
 			<input
@@ -101,12 +102,7 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 				}}
 				onFocus={() => setOpen(true)}
 				placeholder="Search quizzes, documents, users…"
-				className={cn(
-					"w-full pl-9 pr-10 py-2 rounded-lg text-sm text-white placeholder-gray-500",
-					"bg-gray-800/50 border border-gray-700",
-					"focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-transparent",
-					"[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
-				)}
+				className={cn(appInputClassName, "pl-9 pr-10 py-2 rounded-lg")}
 				aria-label="Search"
 				autoComplete="off"
 			/>
@@ -118,7 +114,7 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 						setQ("");
 						setOpen(false);
 					}}
-					className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors"
+					className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors"
 					aria-label="Clear search"
 				>
 					<X className="w-4 h-4" aria-hidden />
@@ -126,19 +122,19 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 			)}
 
 			{open && enabled && (
-				<div className="absolute left-0 right-0 top-full mt-2 rounded-lg border border-gray-700 bg-gray-800 shadow-xl z-50">
+				<div className="absolute left-0 right-0 top-full mt-2 rounded-lg border border-(--app-border) bg-(--app-elevated) shadow-xl z-50">
 					<div className="max-h-80 overflow-auto">
 						{isFetching && (
-							<div className="px-4 py-3 text-xs text-gray-400">Searching…</div>
+							<div className="px-4 py-3 text-xs text-(--app-fg-muted)">Searching…</div>
 						)}
 
 						{!isFetching && !hasResults && (
-							<div className="px-4 py-3 text-xs text-gray-400">No results.</div>
+							<div className="px-4 py-3 text-xs text-(--app-fg-muted)">No results.</div>
 						)}
 
 						{(data?.quizzes?.length ?? 0) > 0 && (
 							<div className="py-2">
-								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 									Quizzes
 								</p>
 								<div className="space-y-1">
@@ -147,23 +143,23 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 											key={`quiz-${quiz.id}`}
 											type="button"
 											className={cn(
-												"w-full text-left px-4 py-2 hover:bg-gray-700/60 transition-colors",
+												"w-full text-left px-4 py-2 hover:bg-(--app-surface-muted) transition-colors",
 												"flex items-start gap-3",
 											)}
 											onClick={() => openQuiz(quiz)}
 										>
-											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-gray-700 border border-gray-600 flex items-center justify-center">
-												<Video className="w-4 h-4 text-emerald-300" aria-hidden />
+											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+												<Video className="w-4 h-4 text-emerald-600" aria-hidden />
 											</div>
 											<div className="min-w-0 flex-1">
-												<p className="text-sm text-white truncate">
+												<p className="text-sm text-(--app-fg) truncate">
 													{quiz.title || "Untitled Quiz"}
 												</p>
-												<p className="text-xs text-gray-400 truncate">
+												<p className="text-xs text-(--app-fg-muted) truncate">
 													{quiz.authorName ?? "Unknown"} • {quiz.questionCount}{" "}
 													{quiz.questionCount === 1 ? "question" : "questions"}
 												</p>
-												<p className="mt-1 text-xs text-gray-500 flex items-center gap-3">
+												<p className="mt-1 text-xs text-(--app-fg-muted)/80 flex items-center gap-3">
 													<span className="inline-flex items-center gap-1.5">
 														<Video className="w-3.5 h-3.5" aria-hidden />
 														{quiz.playCount}
@@ -181,8 +177,8 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 						)}
 
 						{(data?.documents?.length ?? 0) > 0 && (
-							<div className="py-2 border-t border-gray-700">
-								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+							<div className="py-2 border-t border-(--app-border)">
+								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 									Documents
 								</p>
 								<div className="space-y-1">
@@ -191,20 +187,20 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 											key={`doc-${doc.id}`}
 											type="button"
 											className={cn(
-												"w-full text-left px-4 py-2 hover:bg-gray-700/60 transition-colors",
+												"w-full text-left px-4 py-2 hover:bg-(--app-surface-muted) transition-colors",
 												"flex items-start gap-3",
 											)}
 											onClick={() => goToDocumentsSearch(doc.fileName)}
 										>
-											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-gray-700 border border-gray-600 flex items-center justify-center">
-												<FileText className="w-4 h-4 text-indigo-300" aria-hidden />
+											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+												<FileText className="w-4 h-4 text-(--app-accent)" aria-hidden />
 											</div>
 											<div className="min-w-0 flex-1">
-												<p className="text-sm text-white truncate">{doc.fileName}</p>
-												<p className="text-xs text-gray-400 truncate">
+												<p className="text-sm text-(--app-fg) truncate">{doc.fileName}</p>
+												<p className="text-xs text-(--app-fg-muted) truncate">
 													{formatBytes(doc.fileSize)} • {doc.authorName ?? "Unknown"}
 												</p>
-												<p className="mt-1 text-xs text-gray-500 flex items-center gap-1.5">
+												<p className="mt-1 text-xs text-(--app-fg-muted)/80 flex items-center gap-1.5">
 													<Bookmark className="w-3.5 h-3.5" aria-hidden />
 													{doc.saveCount} {doc.saveCount === 1 ? "save" : "saves"}
 												</p>
@@ -216,8 +212,8 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 						)}
 
 						{(data?.users?.length ?? 0) > 0 && (
-							<div className="py-2 border-t border-gray-700">
-								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+							<div className="py-2 border-t border-(--app-border)">
+								<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 									Users
 								</p>
 								<div className="space-y-1">
@@ -227,18 +223,18 @@ export function GlobalSearch({ isAuthed }: { isAuthed: boolean }) {
 											href={`/users/${u.id}`}
 											onClick={() => setOpen(false)}
 											className={cn(
-												"block px-4 py-2 hover:bg-gray-700/60 transition-colors",
+												"block px-4 py-2 hover:bg-(--app-surface-muted) transition-colors",
 												"flex items-start gap-3",
 											)}
 										>
-											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-gray-700 border border-gray-600 flex items-center justify-center">
-												<UserIcon className="w-4 h-4 text-gray-200" aria-hidden />
+											<div className="mt-0.5 shrink-0 w-8 h-8 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+												<UserIcon className="w-4 h-4 text-(--app-fg-muted)" aria-hidden />
 											</div>
 											<div className="min-w-0 flex-1">
-												<p className="text-sm text-white truncate">
+												<p className="text-sm text-(--app-fg) truncate">
 													{u.name ?? "Unknown user"}
 												</p>
-												<p className="text-xs text-gray-400 truncate">View profile</p>
+												<p className="text-xs text-(--app-fg-muted) truncate">View profile</p>
 											</div>
 										</Link>
 									))}
@@ -342,18 +338,18 @@ export function MobileSearchDialog({
 
 	return (
 		<div
-			className="fixed inset-0 z-60 bg-gray-950/70 backdrop-blur-sm"
+			className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm"
 			role="dialog"
 			aria-modal="true"
 			aria-label="Search"
 		>
 			<div className="absolute inset-0" onClick={() => onOpenChange(false)} />
-			<div className="relative mx-auto h-dvh w-full max-w-2xl bg-gray-900 border-x border-gray-800 flex flex-col">
-				<div className="px-4 pt-4 pb-3 border-b border-gray-800">
+			<div className="relative mx-auto h-dvh w-full max-w-2xl bg-(--app-bg) border-x border-(--app-border) flex flex-col text-(--app-fg)">
+				<div className="px-4 pt-4 pb-3 border-b border-(--app-border)">
 					<div className="flex items-center gap-3">
 						<div className="relative flex-1">
 							<Search
-								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--app-fg-muted)"
 								aria-hidden
 							/>
 							<input
@@ -362,12 +358,7 @@ export function MobileSearchDialog({
 								value={q}
 								onChange={(e) => setQ(e.target.value)}
 								placeholder="Search quizzes, documents, users…"
-								className={cn(
-									"w-full pl-9 pr-10 py-2.5 rounded-xl text-sm text-white placeholder-gray-500",
-									"bg-gray-800/60 border border-gray-700",
-									"focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-transparent",
-									"[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
-								)}
+								className={cn(appInputClassName, "pl-9 pr-10 py-2.5 rounded-xl")}
 								aria-label="Search"
 								autoComplete="off"
 							/>
@@ -375,7 +366,7 @@ export function MobileSearchDialog({
 								<button
 									type="button"
 									onClick={() => setQ("")}
-									className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors"
+									className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors"
 									aria-label="Clear search"
 								>
 									<X className="w-4 h-4" aria-hidden />
@@ -385,7 +376,7 @@ export function MobileSearchDialog({
 						<button
 							type="button"
 							onClick={() => onOpenChange(false)}
-							className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-200 hover:bg-gray-800/70 transition-colors"
+							className="px-3 py-2 rounded-lg text-sm font-semibold text-(--app-fg-muted) hover:bg-(--app-surface-muted) hover:text-(--app-fg) transition-colors"
 						>
 							Close
 						</button>
@@ -394,18 +385,18 @@ export function MobileSearchDialog({
 
 				<div className="flex-1 overflow-auto">
 					{!trimmed ? (
-						<div className="px-4 py-10 text-center text-sm text-gray-400">
+						<div className="px-4 py-10 text-center text-sm text-(--app-fg-muted)">
 							Type to search.
 						</div>
 					) : isFetching ? (
-						<div className="px-4 py-6 text-sm text-gray-400">Searching…</div>
+						<div className="px-4 py-6 text-sm text-(--app-fg-muted)">Searching…</div>
 					) : !hasResults ? (
-						<div className="px-4 py-6 text-sm text-gray-400">No results.</div>
+						<div className="px-4 py-6 text-sm text-(--app-fg-muted)">No results.</div>
 					) : (
 						<div className="py-2">
 							{(data?.quizzes?.length ?? 0) > 0 && (
 								<div className="py-2">
-									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 										Quizzes
 									</p>
 									<div className="space-y-1">
@@ -414,19 +405,19 @@ export function MobileSearchDialog({
 												key={`quiz-${quiz.id}`}
 												type="button"
 												className={cn(
-													"w-full text-left px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"w-full text-left px-4 py-3 hover:bg-(--app-surface-muted) transition-colors",
 													"flex items-start gap-3",
 												)}
 												onClick={() => openQuiz(quiz)}
 											>
-												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
-													<Video className="w-4 h-4 text-emerald-300" aria-hidden />
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+													<Video className="w-4 h-4 text-emerald-600" aria-hidden />
 												</div>
 												<div className="min-w-0 flex-1">
-													<p className="text-sm text-white truncate">
+													<p className="text-sm text-(--app-fg) truncate">
 														{quiz.title || "Untitled Quiz"}
 													</p>
-													<p className="text-xs text-gray-400 truncate">
+													<p className="text-xs text-(--app-fg-muted) truncate">
 														{quiz.authorName ?? "Unknown"} • {quiz.questionCount}{" "}
 														{quiz.questionCount === 1 ? "question" : "questions"}
 													</p>
@@ -438,8 +429,8 @@ export function MobileSearchDialog({
 							)}
 
 							{(data?.documents?.length ?? 0) > 0 && (
-								<div className="py-2 border-t border-gray-800">
-									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+								<div className="py-2 border-t border-(--app-border)">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 										Documents
 									</p>
 									<div className="space-y-1">
@@ -448,17 +439,17 @@ export function MobileSearchDialog({
 												key={`doc-${doc.id}`}
 												type="button"
 												className={cn(
-													"w-full text-left px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"w-full text-left px-4 py-3 hover:bg-(--app-surface-muted) transition-colors",
 													"flex items-start gap-3",
 												)}
 												onClick={() => goToDocumentsSearch(doc.fileName)}
 											>
-												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
-													<FileText className="w-4 h-4 text-indigo-300" aria-hidden />
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+													<FileText className="w-4 h-4 text-(--app-accent)" aria-hidden />
 												</div>
 												<div className="min-w-0 flex-1">
-													<p className="text-sm text-white truncate">{doc.fileName}</p>
-													<p className="text-xs text-gray-400 truncate">
+													<p className="text-sm text-(--app-fg) truncate">{doc.fileName}</p>
+													<p className="text-xs text-(--app-fg-muted) truncate">
 														{formatBytes(doc.fileSize)} • {doc.authorName ?? "Unknown"}
 													</p>
 												</div>
@@ -469,8 +460,8 @@ export function MobileSearchDialog({
 							)}
 
 							{(data?.users?.length ?? 0) > 0 && (
-								<div className="py-2 border-t border-gray-800">
-									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+								<div className="py-2 border-t border-(--app-border)">
+									<p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-wide text-(--app-fg-muted)">
 										Users
 									</p>
 									<div className="space-y-1">
@@ -480,18 +471,18 @@ export function MobileSearchDialog({
 												href={`/users/${u.id}`}
 												onClick={() => onOpenChange(false)}
 												className={cn(
-													"block px-4 py-3 hover:bg-gray-800/70 transition-colors",
+													"block px-4 py-3 hover:bg-(--app-surface-muted) transition-colors",
 													"flex items-start gap-3",
 												)}
 											>
-												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center">
-													<UserIcon className="w-4 h-4 text-gray-200" aria-hidden />
+												<div className="mt-0.5 shrink-0 w-9 h-9 rounded-md bg-(--app-surface-muted) border border-(--app-border) flex items-center justify-center">
+													<UserIcon className="w-4 h-4 text-(--app-fg-muted)" aria-hidden />
 												</div>
 												<div className="min-w-0 flex-1">
-													<p className="text-sm text-white truncate">
+													<p className="text-sm text-(--app-fg) truncate">
 														{u.name ?? "Unknown user"}
 													</p>
-													<p className="text-xs text-gray-400 truncate">View profile</p>
+													<p className="text-xs text-(--app-fg-muted) truncate">View profile</p>
 												</div>
 											</Link>
 										))}

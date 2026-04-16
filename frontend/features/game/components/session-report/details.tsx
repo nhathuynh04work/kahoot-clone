@@ -45,7 +45,7 @@ export function SessionReportDetails({
 
 	const StatusIcon = CheckCircle2;
 	const statusText = "Completed";
-	const statusTone = "text-emerald-500";
+	const statusTone = "text-emerald-600 dark:text-emerald-400";
 
 	const createdAt = report.session.createdAt
 		? new Date(report.session.createdAt).getTime()
@@ -61,19 +61,19 @@ export function SessionReportDetails({
 			{showBack && (
 				<Link
 					href={backHref}
-					className="inline-flex items-center gap-2 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+					className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
 				>
 					<ArrowLeft className="w-4 h-4" />
 					Back to reports
 				</Link>
 			)}
 
-			<div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+			<div className="rounded-lg border border-(--app-border) bg-(--app-surface-muted)/80 p-4">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0">
 						<div className="flex items-center gap-2">
 							<StatusIcon className={cn("w-5 h-5", statusTone)} />
-							<h1 className="text-lg sm:text-xl font-semibold text-white truncate">
+							<h1 className="text-lg sm:text-xl font-semibold text-(--app-fg) truncate">
 								<button
 									type="button"
 									disabled={quizLoading}
@@ -92,41 +92,41 @@ export function SessionReportDetails({
 									}}
 									className={cn(
 										"inline-flex items-center gap-2 text-left truncate",
-										"hover:text-indigo-300 transition-colors",
+										"hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors",
 										"disabled:opacity-60 disabled:cursor-not-allowed",
 									)}
 									aria-label={`Open quiz details: ${displayTitle}`}
 								>
 									<span className="truncate">{displayTitle}</span>
 									{quizLoading ? (
-										<Loader2 className="w-4 h-4 animate-spin text-indigo-300 shrink-0" />
+										<Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-300 shrink-0" />
 									) : null}
 								</button>
 							</h1>
 							<span
 								className={cn(
 									"shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border",
-									"bg-gray-900/40 border-gray-700",
+									"bg-(--app-surface-muted)/80 border-(--app-border)",
 									statusTone,
 								)}
 							>
 								{statusText}
 							</span>
 						</div>
-						<div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-400">
+						<div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-(--app-fg-muted)">
 							<div className="inline-flex items-center gap-2">
-								<Calendar className="w-4 h-4 text-gray-500" />
+								<Calendar className="w-4 h-4 text-(--app-fg-muted)" />
 								<span className="tabular-nums">
 									{formatDateTime(report.session.createdAt)}
 								</span>
-								<span className="text-gray-600">→</span>
+								<span className="text-(--app-fg-muted)/60">→</span>
 								<span className="tabular-nums">
 									{formatDateTime(report.session.endedAt)}
 								</span>
 							</div>
-							<span className="hidden sm:inline text-gray-600">•</span>
+							<span className="hidden sm:inline text-(--app-fg-muted)/60">•</span>
 							<div className="inline-flex items-center gap-2">
-								<Clock className="w-4 h-4 text-gray-500" />
+								<Clock className="w-4 h-4 text-(--app-fg-muted)" />
 								<span className="tabular-nums">{formatDurationMs(durationMs)}</span>
 							</div>
 						</div>

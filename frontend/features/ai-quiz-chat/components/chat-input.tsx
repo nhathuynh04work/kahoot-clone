@@ -25,19 +25,19 @@ export function ChatInput({
 	isGenerating,
 }: ChatInputProps) {
 	return (
-		<div className="shrink-0 border-t border-gray-700 bg-gray-800 px-4 py-4">
+		<div className="shrink-0 border-t border-(--app-border) bg-(--app-surface) px-4 py-4">
 			<div className="max-w-2xl mx-auto">
-				<div className="rounded-2xl border border-gray-700 bg-gray-800 focus-within:border-indigo-500 transition-colors overflow-hidden">
+				<div className="rounded-2xl border border-(--app-border) bg-(--app-surface-muted) focus-within:border-indigo-500 transition-colors overflow-hidden">
 					{selectedDoc && (
-						<div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700 bg-gray-700/50">
+						<div className="flex items-center gap-2 px-4 py-2 border-b border-(--app-border) bg-(--app-surface)">
 							<FileText className="w-4 h-4 text-indigo-400 shrink-0" />
-							<span className="text-sm text-gray-200 truncate flex-1 min-w-0">
+							<span className="text-sm text-(--app-fg) truncate flex-1 min-w-0">
 								{selectedDoc.fileName}
 							</span>
 							<button
 								type="button"
 								onClick={onRemoveDoc}
-								className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 transition-colors shrink-0"
+								className="p-1 rounded-md text-(--app-fg-muted) hover:text-(--app-fg) hover:bg-(--app-surface-muted) transition-colors shrink-0"
 								aria-label="Remove document"
 							>
 								<X className="w-4 h-4" />
@@ -60,7 +60,7 @@ export function ChatInput({
 									: "Attach a document, then ask to generate questions..."
 							}
 							rows={1}
-							className="w-full min-h-[44px] max-h-32 py-2.5 px-3 bg-transparent text-white placeholder:text-gray-500 resize-none focus:outline-none text-sm"
+							className="w-full min-h-[44px] max-h-32 py-2.5 px-3 bg-transparent text-(--app-fg) placeholder:text-(--app-fg-muted)/60 resize-none focus:outline-none text-sm"
 						/>
 					</div>
 					<div className="flex items-center justify-end gap-1 px-2 pb-2">
@@ -72,7 +72,7 @@ export function ChatInput({
 								"shrink-0 p-2 rounded-lg transition-colors",
 								selectedDoc
 									? "text-indigo-400 bg-indigo-500/10"
-									: "text-gray-400 hover:text-indigo-400 hover:bg-gray-700/50",
+									: "text-(--app-fg-muted) hover:text-indigo-400 hover:bg-(--app-surface)",
 							)}
 							aria-label="Attach document"
 						>

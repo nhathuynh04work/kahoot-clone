@@ -19,19 +19,19 @@ export function AdminPageHeader({
 	return (
 		<div className="flex flex-col gap-3">
 			{safeCrumbs.length ? (
-				<nav aria-label="Breadcrumb" className="text-base text-gray-200 font-semibold">
+				<nav aria-label="Breadcrumb" className="text-base text-(--app-fg) font-semibold">
 					<ol className="flex items-center gap-2 flex-wrap">
 						{safeCrumbs.map((c, idx) => {
 							const isLast = idx === safeCrumbs.length - 1;
 							const content = c.href ? (
 								<Link
 									href={c.href}
-									className="text-gray-300 hover:text-white transition-colors"
+									className="text-(--app-fg-muted) hover:text-(--app-fg) transition-colors underline-offset-4 hover:underline"
 								>
 									{c.label}
 								</Link>
 							) : (
-								<span className={isLast ? "text-white font-bold" : undefined}>
+								<span className={isLast ? "text-(--app-fg) font-bold" : undefined}>
 									{c.label}
 								</span>
 							);
@@ -39,7 +39,9 @@ export function AdminPageHeader({
 							return (
 								<li key={`${c.label}-${idx}`} className="flex items-center gap-2">
 									{content}
-									{isLast ? null : <span className="text-gray-600">{">"}</span>}
+									{isLast ? null : (
+										<span className="text-(--app-fg-muted)/50">{">"}</span>
+									)}
 								</li>
 							);
 						})}

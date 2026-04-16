@@ -36,10 +36,10 @@ export function QuestionNavItem({
 	return (
 		<div
 			className={`group flex flex-col items-start gap-2 p-3 transition-colors duration-150 cursor-pointer rounded-lg ${
-				isActive ? "bg-gray-700" : ""
+				isActive ? "bg-(--app-surface)" : ""
 			}`}>
 			<div className="w-full flex items-center justify-between">
-				<div className="flex items-center gap-1 text-xs font-semibold text-gray-200">
+				<div className="flex items-center gap-1 text-xs font-semibold text-(--app-fg-muted)">
 					<span className="tabular-nums">{index + 1}</span>
 					<span>{typeLabel}</span>
 				</div>
@@ -50,16 +50,16 @@ export function QuestionNavItem({
                            transition-all
                            ${
 								isActive
-									? "bg-gray-700 ring-2 ring-indigo-400"
-									: "bg-gray-800 ring-1 ring-gray-600 group-hover:ring-2 group-hover:ring-gray-500"
+									? "bg-(--app-surface) ring-2 ring-indigo-400"
+									: "bg-(--app-surface-muted) ring-1 ring-(--app-border) group-hover:ring-2 group-hover:ring-indigo-500/30"
 							}`}>
 				<p
-					className="w-full max-w-xs font-medium truncate text-center text-gray-200 text-xs"
+					className="w-full max-w-xs font-medium truncate text-center text-(--app-fg-muted) text-xs"
 					title={question.text || "Question"}>
 					{question.text || "..."}
 				</p>
 
-				<div className="w-12 h-8 rounded border border-dashed border-gray-500 flex items-center justify-center">
+				<div className="w-12 h-8 rounded border border-dashed border-(--app-border) flex items-center justify-center">
 					{question.imageUrl ? (
 						<Image
 							src={question.imageUrl}
@@ -70,7 +70,7 @@ export function QuestionNavItem({
 						/>
 					) : (
 						<LucideImage
-							className="w-5 h-5 text-gray-500"
+							className="w-5 h-5 text-(--app-fg-muted)/70"
 							strokeWidth={1}
 						/>
 					)}
@@ -78,10 +78,10 @@ export function QuestionNavItem({
 
 				{type === "SHORT_ANSWER" ? (
 					<div className="w-full max-w-xs mt-1 flex flex-col gap-1">
-						<div className="h-6 rounded-xs border border-gray-600 bg-gray-900/40 flex items-center px-2 text-[10px] text-gray-400">
+						<div className="h-6 rounded-xs border border-(--app-border) bg-(--app-bg) flex items-center px-2 text-[10px] text-(--app-fg-muted)">
 							<span className="truncate">Answer</span>
 						</div>
-						<div className="w-full flex items-center justify-between text-[10px] text-gray-500">
+						<div className="w-full flex items-center justify-between text-[10px] text-(--app-fg-muted)/70">
 							<span>
 								{question.caseSensitive
 									? "Case sensitive"
@@ -91,14 +91,14 @@ export function QuestionNavItem({
 					</div>
 				) : type === "NUMBER_INPUT" ? (
 					<div className="w-full max-w-xs mt-1 flex items-center gap-2">
-						<div className="flex-1 h-6 rounded-xs border border-gray-600 bg-gray-900/40 flex items-center justify-between px-2 text-[10px]">
-							<span className="text-gray-400">Number</span>
-							<span className="text-gray-500 font-medium tabular-nums truncate pl-2">
+						<div className="flex-1 h-6 rounded-xs border border-(--app-border) bg-(--app-bg) flex items-center justify-between px-2 text-[10px]">
+							<span className="text-(--app-fg-muted)">Number</span>
+							<span className="text-(--app-fg-muted)/70 font-medium tabular-nums truncate pl-2">
 								—
 							</span>
 						</div>
 						{question.allowRange ? (
-							<div className="shrink-0 w-10 h-6 rounded-xs border border-gray-700 bg-gray-900/20" />
+							<div className="shrink-0 w-10 h-6 rounded-xs border border-(--app-border) bg-(--app-surface-muted)" />
 						) : null}
 					</div>
 				) : (
@@ -111,7 +111,7 @@ export function QuestionNavItem({
 									key={option.id}
 									className={`h-${
 										(question.options?.length ?? 0) > 2 ? "2" : "5"
-									} rounded-xs border border-gray-600 flex items-center justify-end pr-2`}>
+									} rounded-xs border border-(--app-border) flex items-center justify-end pr-2`}>
 									{option.isCorrect && (
 										<CheckCircle2 className="w-2 h-2 text-green-400" />
 									)}

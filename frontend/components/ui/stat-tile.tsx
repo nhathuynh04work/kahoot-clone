@@ -15,14 +15,14 @@ export function StatTile({
 		<div
 			className={cn(
 				"rounded-lg border p-3",
-				"bg-gray-900/40 border-gray-700",
+				"bg-(--app-surface-muted)/80 border-(--app-border)",
 				tone === "accent" && "border-indigo-500/40",
 			)}
 		>
-			<p className="text-gray-400 text-xs">{label}</p>
+			<p className="text-(--app-fg-muted) text-xs">{label}</p>
 			<p
 				className={cn(
-					"mt-1 font-semibold text-white tabular-nums",
+					"mt-1 font-semibold text-(--app-fg) tabular-nums",
 					tone === "accent" && "text-indigo-300",
 				)}
 			>

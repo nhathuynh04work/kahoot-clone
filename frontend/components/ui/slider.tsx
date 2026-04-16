@@ -16,15 +16,15 @@ export function Slider({
 			)}
 			{...props}
 		>
-			<SliderPrimitive.Track className="relative h-3 w-full grow overflow-hidden rounded-full bg-gray-800 border border-gray-700">
+			<SliderPrimitive.Track className="relative h-3 w-full grow overflow-hidden rounded-full bg-(--app-surface-muted) border border-(--app-border)">
 				<SliderPrimitive.Range className="absolute h-full bg-indigo-500" />
 			</SliderPrimitive.Track>
 			{(props.value ?? props.defaultValue ?? []).map((_, i) => (
 				<SliderPrimitive.Thumb
 					key={i}
 					className={cn(
-						"block h-6 w-6 rounded-full border border-gray-700 bg-gray-100 shadow",
-						"ring-offset-gray-950 transition-colors",
+						"block h-6 w-6 rounded-full border border-(--app-border) bg-(--app-elevated) shadow",
+						"ring-offset-(--app-bg) transition-colors",
 						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2",
 					)}
 				/>
