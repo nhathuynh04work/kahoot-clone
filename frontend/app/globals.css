@@ -1,3 +1,6 @@
+/* Tailwind v4: make `dark:` follow our app theme (data-theme), not OS media. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @import "tailwindcss";
 
 :root {

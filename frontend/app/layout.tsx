@@ -29,11 +29,9 @@ export default function RootLayout({
 			<head>
 				<Script id="theme-init" strategy="beforeInteractive">{`(() => {
   try {
-    const stored = localStorage.getItem("app-theme");
-    const pref = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-    const sysDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const resolved = pref === "system" ? (sysDark ? "dark" : "light") : pref;
+    const resolved = "light";
     document.documentElement.dataset.theme = resolved;
+    document.documentElement.classList.remove("dark");
   } catch {}
 })();`}</Script>
 			</head>

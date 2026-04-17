@@ -46,7 +46,7 @@ export class GameGateway
     }
 
     async handleDisconnect(client: Socket) {
-        const { isHost, lobbyId, nickname } = client.data || {};
+        const { isHost, lobbyId, nickname, hostId } = client.data || {};
 
         if (!lobbyId) {
             this.logger.log(`Client disconnected: ${client.id}`);
@@ -54,10 +54,22 @@ export class GameGateway
         }
 
         if (isHost) {
+            // Close all active lobbies for this host to avoid orphans from duplicate requests.
+            const hostNumericId = Number(hostId);
+            if (Number.isFinite(hostNumericId) && hostNumericId > 0) {
+                const closedLobbyIds =
+                    await this.lobbyService.closeActiveLobbiesForHost(hostNumericId);
+                for (const id of closedLobbyIds) {
+                    this.socketService.emitToRoom(id.toString(), "hostLeft");
+                }
+                this.logger.log(
+                    `Host disconnected. Closed lobbies: ${closedLobbyIds.join(", ") || "(none)"}`,
+                );
+                return;
+            }
+
             this.logger.log(`Host disconnected. Destroying lobby ${lobbyId}`);
-
             this.socketService.emitToRoom(lobbyId.toString(), "hostLeft");
-
             await this.lobbyService.closeLobbyWithoutReport(lobbyId);
 
             return;
@@ -82,9 +94,14 @@ export class GameGateway
         @MessageBody() payload: { quizId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        const { quizId } = payload;
+        const quizId = Number(payload?.quizId);
 
         try {
+            if (client.data.isCreatingLobby) {
+                return { success: false, message: "Lobby creation in progress" };
+            }
+            client.data.isCreatingLobby = true;
+
             const lobby = await this.lobbyService.createLobby({
                 quizId,
                 hostId: user.id,
@@ -92,6 +109,7 @@ export class GameGateway
 
             client.data.isHost = true;
             client.data.lobbyId = lobby.id;
+            client.data.hostId = user.id;
 
             await this.lobbyService.updateLobbyStatus(
                 lobby.id,
@@ -111,6 +129,8 @@ export class GameGateway
                         ? error.message
                         : "Could not create lobby",
             };
+        } finally {
+            client.data.isCreatingLobby = false;
         }
     }
 
@@ -207,10 +227,18 @@ export class GameGateway
 
     @UseGuards(JwtWsGuard)
     @SubscribeMessage("startGame")
-    async handleStartGame(@MessageBody() payload: { pin: string }) {
+    async handleStartGame(
+        @User() user: JwtUser,
+        @MessageBody() payload: { pin: string },
+    ) {
         const { pin } = payload;
 
         const lobby = await this.lobbyService.findActiveLobbyByPin(pin);
+
+        // Only the lobby host can start the game (private or public).
+        if (lobby.hostId !== user.id) {
+            return { success: false, message: "Only the host can start this game." };
+        }
 
         // Cannot start a lobby that has already started
         if (lobby.status === LobbyStatus.IN_PROGRESS) {
@@ -307,6 +335,9 @@ export class GameGateway
                 mcSelectedIndex: mcSelectedIndex ?? null,
                 textAnswer: textAnswer ?? null,
                 numericAnswer: numericAnswer ?? null,
+                shortAnswerCaseSensitive:
+                    (result as { shortAnswerCaseSensitive?: boolean })
+						.shortAnswerCaseSensitive ?? undefined,
             });
 
             await this.lobbyService.markPlayerAsAnswered({

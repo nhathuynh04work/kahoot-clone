@@ -44,7 +44,7 @@ export const HostResultScreen = ({
 		meta?.questionType ?? question.type ?? "MULTIPLE_CHOICE";
 
 	const mcLike = qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE";
-	const hideSubmittedAnswerStats =
+	const showSubmittedAnswerCards =
 		qType === "SHORT_ANSWER" || qType === "NUMBER_INPUT";
 
 	if (mcLike) {
@@ -63,7 +63,7 @@ export const HostResultScreen = ({
 		const maxCount = Math.max(...values, 1);
 
 		return (
-			<div className="flex flex-col min-h-dvh bg-(--app-bg) p-4 sm:p-6 md:p-8">
+			<div className="flex flex-col min-h-dvh bg-transparent p-4 sm:p-6 md:p-8">
 				<div className="flex justify-between items-center mb-4">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-(--app-surface-muted) rounded-lg border border-(--app-border)">
@@ -137,6 +137,49 @@ export const HostResultScreen = ({
 		.sort((a, b) => b.count - a.count);
 	const maxCount = Math.max(...rows.map((r) => r.count), 1);
 
+	const caseSensitive = meta?.caseSensitive === true;
+	const allowRange = meta?.allowRange === true;
+	const correctText = (meta?.correctText ?? "").trim();
+
+	const correctNumber =
+		typeof meta?.correctNumber === "number" && Number.isFinite(meta.correctNumber)
+			? meta.correctNumber
+			: null;
+
+	const rangeProximity =
+		typeof meta?.rangeProximity === "number" &&
+		Number.isFinite(meta.rangeProximity)
+			? meta.rangeProximity
+			: null;
+
+	const isCorrectShortKey = (statKey: string) => {
+		const got = statKey.trim();
+		if (!correctText.length) return false;
+		return caseSensitive
+			? got === correctText
+			: got.toLowerCase() === correctText.toLowerCase();
+	};
+
+	const isCorrectNumberKey = (statKey: string) => {
+		const n = parseFloat(statKey);
+		if (!Number.isFinite(n)) return false;
+
+		if (allowRange === true) {
+			if (correctNumber == null || rangeProximity == null) return false;
+			const min = correctNumber - rangeProximity;
+			const max = correctNumber + rangeProximity;
+			return n >= min && n <= max;
+		}
+
+		return correctNumber != null && n === correctNumber;
+	};
+
+	const rowsWithCorrect = rows.map((r) => ({
+		...r,
+		isCorrect:
+			qType === "SHORT_ANSWER" ? isCorrectShortKey(r.key) : isCorrectNumberKey(r.key),
+	}));
+
 	let heroLabel = "";
 	let heroValue = "";
 	let heroBadge: string | null = null;
@@ -163,8 +206,12 @@ export const HostResultScreen = ({
 		}
 	}
 
+	const rowsToRender = (() => {
+		return rowsWithCorrect;
+	})();
+
 	return (
-		<div className="flex flex-col min-h-dvh bg-(--app-bg) p-4 sm:p-6 md:p-8">
+		<div className="flex flex-col min-h-dvh bg-transparent p-4 sm:p-6 md:p-8">
 			<div className="flex justify-between items-start gap-4 mb-6">
 				<div className="flex items-center gap-3 min-w-0">
 					<div className="p-2 bg-(--app-surface-muted) rounded-lg border border-(--app-border) shrink-0">
@@ -201,33 +248,55 @@ export const HostResultScreen = ({
 					) : null}
 				</div>
 
-				{hideSubmittedAnswerStats ? null : (
-					<div className="max-w-2xl mx-auto w-full space-y-2">
-						{rows.length === 0 ? (
+				{showSubmittedAnswerCards ? (
+					<div className="mt-2 max-w-4xl mx-auto w-full">
+						{rowsToRender.length === 0 ? (
 							<p className="text-(--app-fg-muted) text-sm">No answers recorded.</p>
 						) : (
-							rows.map((r) => (
-								<div
-									key={r.key}
-									className="flex items-center gap-3 rounded-lg bg-(--app-surface-muted)/90 border border-(--app-border) p-3">
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+								{rowsToRender.map((r) => (
 									<div
-										className="h-2 rounded-full bg-indigo-500 transition-all"
-										style={{
-											width: `${Math.max(8, (r.count / maxCount) * 100)}%`,
-											minWidth: "2rem",
-										}}
-									/>
-									<span className="flex-1 text-sm text-(--app-fg) truncate font-mono">
-										{r.key}
-									</span>
-									<span className="text-sm font-semibold text-indigo-600 dark:text-indigo-300 tabular-nums">
-										{r.count}
-									</span>
-								</div>
-							))
+										key={r.key}
+										className={`relative rounded-2xl border border-(--app-border) bg-(--app-surface-muted)/80 p-4 ${
+											r.isCorrect
+												? "ring-2 ring-inset ring-green-500/40 border-green-500/30"
+												: ""
+										}`}>
+										{r.isCorrect ? (
+											<div className="pointer-events-none absolute -top-3 -right-3 z-10 rounded-full bg-(--app-surface) p-1 border border-green-500/40 shadow-sm">
+												<Check
+													className="text-green-400 w-4 h-4"
+													strokeWidth={4}
+												/>
+											</div>
+										) : null}
+										<div className="flex items-start justify-between gap-3">
+											<div className="min-w-0">
+												<p className="text-xs uppercase tracking-widest text-(--app-fg-muted) font-semibold">
+													Submitted
+												</p>
+												<div className="mt-1 text-sm font-mono text-(--app-fg) line-clamp-2">
+													{r.key}
+												</div>
+											</div>
+											<span className="text-2xl font-bold tabular-nums text-(--app-fg)">
+												{r.count}
+											</span>
+										</div>
+										<div className="mt-3 h-2 rounded-full bg-indigo-500/15">
+											<div
+												className="h-full rounded-full bg-indigo-500/60 transition-all"
+												style={{
+													width: `${Math.max(8, (r.count / maxCount) * 100)}%`,
+												}}
+											/>
+										</div>
+									</div>
+								))}
+							</div>
 						)}
 					</div>
-				)}
+				) : null}
 			</div>
 		</div>
 	);

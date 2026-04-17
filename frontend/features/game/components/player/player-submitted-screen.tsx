@@ -4,7 +4,7 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 
 export const PlayerSubmittedScreen = () => {
 	return (
-		<div className="min-h-screen bg-(--app-bg) flex flex-col items-center justify-center p-6">
+		<div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6">
 			<div className="w-full max-w-md bg-(--app-elevated) border border-(--app-border) rounded-xl p-8 shadow-lg flex flex-col items-center text-center">
 				<div className="w-16 h-16 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mb-6">
 					<CheckCircle2 size={32} />

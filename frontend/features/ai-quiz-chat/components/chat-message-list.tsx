@@ -77,7 +77,7 @@ export function ChatMessageList({
 								<button
 									type="button"
 									onClick={() => onOpenCanvas(msg.id)}
-									className="self-start mt-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
+									className="self-start mt-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline"
 								>
 									View {msg.generatedCount} question{msg.generatedCount !== 1 ? "s" : ""}
 								</button>

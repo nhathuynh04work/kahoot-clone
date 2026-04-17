@@ -28,10 +28,10 @@ export const HostWaitingScreen = ({
 	};
 
 	return (
-		<div className="min-h-dvh bg-(--app-bg) p-4 md:p-8 relative overflow-hidden">
+		<div className="h-dvh bg-transparent p-4 md:p-8 relative overflow-hidden">
 			<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-indigo-500/12 via-transparent to-indigo-500/8" />
 
-			<div className="w-full max-w-6xl mx-auto flex flex-col gap-6 relative z-10">
+			<div className="w-full max-w-6xl mx-auto h-full flex flex-col gap-6 relative z-10 overflow-hidden">
 				{!joinExpanded && (
 					/* Top strip: PIN + QR (no links/copy) */
 					<div className="flex justify-center">
@@ -95,7 +95,12 @@ export const HostWaitingScreen = ({
 					<>
 						{/* Logo + Start on same row, logo centered */}
 						<div className="mt-8 sm:mt-10 flex flex-col gap-4 items-center md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-4">
-							<div className="hidden md:block" />
+							<div className="hidden md:flex items-center justify-start">
+								<div className="inline-flex items-center gap-2 rounded-full border border-(--app-border) bg-(--app-surface-muted)/70 px-3 py-1.5 text-indigo-600 dark:text-indigo-300 font-semibold">
+									<Users size={20} />
+									<span>{players.length} joined</span>
+								</div>
+							</div>
 							<AppLogo className="text-4xl md:text-5xl font-extrabold tracking-tight select-none md:justify-self-center" />
 							<div className="justify-self-center md:justify-self-end flex items-center gap-3">
 								<ThemeToggle compact />
@@ -118,14 +123,10 @@ export const HostWaitingScreen = ({
 
 				{!joinExpanded && (
 					/* Player List & Action */
-					<div className="w-full flex justify-center">
-						<div className="w-full rounded-3xl border border-(--app-border) bg-(--app-elevated) p-6 md:p-8 flex flex-col items-center gap-6 shadow-sm">
-							<div className="inline-flex items-center gap-2 rounded-full border border-(--app-border) bg-(--app-surface-muted)/70 px-3 py-1.5 text-indigo-600 dark:text-indigo-300 font-semibold">
-								<Users size={20} />
-								<span>{players.length} joined</span>
-							</div>
-
-							<div className="w-full min-h-[200px] flex flex-wrap justify-center content-start gap-4">
+					<div className="w-full flex justify-center flex-1 min-h-0 overflow-hidden">
+						<div className="w-full rounded-3xl border border-(--app-border) bg-(--app-elevated) p-6 md:p-8 flex flex-col items-center gap-6 shadow-sm flex-1 min-h-0 overflow-hidden">
+							<div className="w-full flex-1 min-h-0 overflow-y-auto">
+								<div className="w-full flex flex-wrap justify-center content-start gap-4">
 								{players.length === 0 ? (
 									<div className="flex flex-col items-center justify-center w-full h-32 gap-2">
 										<div className="rounded-xl bg-indigo-600 px-4 py-2 text-white font-black">
@@ -137,6 +138,7 @@ export const HostWaitingScreen = ({
 										<PlayerChip key={player.nickname} nickname={player.nickname} />
 									))
 								)}
+								</div>
 							</div>
 						</div>
 					</div>

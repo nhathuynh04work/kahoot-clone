@@ -119,15 +119,6 @@ export function GameJoinClient() {
 						onStartFresh={handleStartFresh}
 					/>
 				)}
-
-				{state === "pin" && !urlFlow && (
-					<div className="mt-4">
-						Wanting to host instead?{" "}
-						<Link href={"/auth/login"} className="text-indigo-500 underline">
-							Login
-						</Link>
-					</div>
-				)}
 			</div>
 		</div>
 	);

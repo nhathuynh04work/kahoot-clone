@@ -18,6 +18,7 @@ interface HeaderProps {
 export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 	const { watch, control } = useFormContext<QuizFullDetails>();
 	const title = watch("title");
+	const coverUrl = watch("coverUrl");
 	const questions = watch("questions") ?? [];
 	const { append } = useFieldArray({ control, name: "questions" });
 
@@ -176,6 +177,7 @@ export function Header({ isSaving, onAiPanelOpenChange }: HeaderProps) {
 						onAiPanelOpenChange?.(false);
 					}}
 					quizId={watch("id")}
+					coverUrl={coverUrl}
 					onAddQuestion={handleAddQuestion}
 				/>
 			)}

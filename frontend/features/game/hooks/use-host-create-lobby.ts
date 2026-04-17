@@ -13,6 +13,7 @@ export function useHostCreateLobby(
 ) {
 	const router = useRouter();
 	const onCreatedRef = useRef(onCreated);
+	const didRequestRef = useRef(false);
 
 	useEffect(() => {
 		onCreatedRef.current = onCreated;
@@ -23,6 +24,11 @@ export function useHostCreateLobby(
 			router.push("/");
 			return;
 		}
+
+		// In dev, React Strict Mode can run effects twice.
+		// Prevent creating multiple lobbies for the same mount.
+		if (didRequestRef.current) return;
+		didRequestRef.current = true;
 
 		socket.emit(
 			"hostCreateLobby",

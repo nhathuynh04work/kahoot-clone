@@ -46,24 +46,9 @@ export const PlayerQuestionScreen = ({
 	];
 
 	return (
-		<div className="min-h-screen bg-(--app-bg) p-4 flex flex-col">
-			<div className="bg-(--app-surface-muted) border-b border-(--app-border) p-4 -mx-4 -mt-4 mb-4 text-center">
-				<p className="text-(--app-fg) font-medium text-sm md:text-base line-clamp-4">
-					{question.text}
-				</p>
-				{qType === "SHORT_ANSWER" ? (
-					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">Short answer</p>
-				) : null}
-				{qType === "NUMBER_INPUT" ? (
-					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">Enter a number</p>
-				) : null}
-				{qType === "TRUE_FALSE" ? (
-					<p className="text-xs text-indigo-600 dark:text-indigo-300 mt-2">True or false</p>
-				) : null}
-			</div>
-
+		<div className="min-h-screen bg-transparent p-4 flex flex-col">
 			{qType === "MULTIPLE_CHOICE" || qType === "TRUE_FALSE" ? (
-				<div className="flex-1 grid grid-cols-2 gap-4">
+				<div className="flex-1 grid grid-cols-2 gap-4 place-content-center items-center">
 					{question.options.map((o, i) => {
 						const Icon = icons[i % 4];
 						return (
@@ -88,36 +73,43 @@ export const PlayerQuestionScreen = ({
 			) : null}
 
 			{qType === "SHORT_ANSWER" ? (
-				<div className="flex-1 flex flex-col gap-4 max-w-md mx-auto w-full">
-					<input
-						type="text"
-						value={textDraft}
-						onChange={(e) => setTextDraft(e.target.value)}
-						className="w-full rounded-xl bg-(--app-input-bg) border border-(--app-border) px-4 py-3 text-(--app-fg) text-lg"
-						placeholder="Your answer"
-						autoComplete="off"
-					/>
-					<button
-						type="button"
-						onClick={() => onSubmitText(textDraft)}
-						disabled={!textDraft.trim()}
-						className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 font-semibold text-white">
-						Submit
-					</button>
+				<div className="flex-1 flex items-center justify-center w-full">
+					<div className="w-full max-w-xl bg-(--app-elevated) border border-(--app-border) rounded-3xl shadow-2xl px-6 py-8 text-center">
+						<p className="text-xs text-(--app-fg-muted) uppercase tracking-widest font-semibold">
+							Your answer
+						</p>
+						<input
+							type="text"
+							value={textDraft}
+							onChange={(e) => setTextDraft(e.target.value)}
+							autoFocus
+							className="mt-5 w-full rounded-2xl bg-(--app-input-bg) border border-(--app-border) px-6 py-5 text-(--app-fg) text-2xl"
+							placeholder="Your answer"
+							autoComplete="off"
+							aria-label="Short answer input"
+						/>
+						<button
+							type="button"
+							onClick={() => onSubmitText(textDraft)}
+							disabled={!textDraft.trim()}
+							className="mt-8 w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 font-semibold text-white text-lg">
+							Submit
+						</button>
+					</div>
 				</div>
 			) : null}
 
 			{qType === "NUMBER_INPUT" ? (
-				<div className="flex-1 flex flex-col gap-4 max-w-md mx-auto w-full">
-					<div className="rounded-2xl border border-(--app-border) bg-(--app-surface-muted)/70 p-5">
-						<p className="text-center text-(--app-fg-muted) text-xs uppercase tracking-wider">
+				<div className="flex-1 flex items-center justify-center w-full">
+					<div className="w-full max-w-lg bg-(--app-elevated) border border-(--app-border) rounded-3xl shadow-2xl px-6 py-8">
+						<p className="text-center text-(--app-fg-muted) text-xs uppercase tracking-wider font-semibold">
 							Your answer
 						</p>
 						<p className="text-center text-(--app-fg) font-extrabold text-5xl mt-2 tabular-nums">
 							{numValue}
 						</p>
 
-						<div className="mt-6 grid grid-cols-3 gap-3 items-center">
+						<div className="mt-8 grid grid-cols-3 gap-4 items-center">
 							<button
 								type="button"
 								onClick={() => {
@@ -126,7 +118,7 @@ export const PlayerQuestionScreen = ({
 									setNumDraft(String(next));
 								}}
 								className={cn(
-									"h-12 rounded-xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-2xl",
+									"h-14 rounded-2xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-3xl",
 								)}
 								aria-label="Decrease"
 							>
@@ -147,7 +139,8 @@ export const PlayerQuestionScreen = ({
 									setNumValue(n);
 									setNumDraft(String(n));
 								}}
-								className="h-12 w-full rounded-xl bg-(--app-input-bg) border border-(--app-border) px-4 text-(--app-fg) text-lg text-center tabular-nums"
+								autoFocus
+								className="h-14 w-full rounded-2xl bg-(--app-input-bg) border border-(--app-border) px-5 text-(--app-fg) text-2xl text-center tabular-nums"
 								aria-label="Number input"
 							/>
 
@@ -159,7 +152,7 @@ export const PlayerQuestionScreen = ({
 									setNumDraft(String(next));
 								}}
 								className={cn(
-									"h-12 rounded-xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-2xl",
+									"h-14 rounded-2xl border border-(--app-border) bg-(--app-surface-muted) hover:bg-(--app-surface) text-(--app-fg) font-extrabold text-3xl",
 								)}
 								aria-label="Increase"
 							>
@@ -168,20 +161,20 @@ export const PlayerQuestionScreen = ({
 						</div>
 
 						{allowRange ? (
-							<p className="mt-3 text-xs text-(--app-fg-muted) text-center">
+							<p className="mt-4 text-xs text-(--app-fg-muted) text-center">
 								Answers within the allowed range are accepted.
 							</p>
 						) : null}
+						<button
+							type="button"
+							onClick={() => {
+								if (Number.isFinite(numValue)) onSubmitNumeric(numValue);
+							}}
+							disabled={!Number.isFinite(numValue)}
+							className="mt-8 w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 font-semibold text-white text-lg">
+							Submit
+						</button>
 					</div>
-					<button
-						type="button"
-						onClick={() => {
-							if (Number.isFinite(numValue)) onSubmitNumeric(numValue);
-						}}
-						disabled={!Number.isFinite(numValue)}
-						className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 font-semibold text-white">
-						Submit
-					</button>
 				</div>
 			) : null}
 		</div>

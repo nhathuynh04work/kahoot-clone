@@ -7,15 +7,23 @@ import { ChatInput } from "./chat-input";
 import { DocumentAttachMenu } from "./document-attach-menu";
 import { GeneratedQuestionsCanvas } from "./generated-questions-canvas";
 import type { GeneratedQuestion } from "../api/client-actions";
+import Image from "next/image";
 
 interface AiChatbotPanelProps {
 	onClose: () => void;
 	quizId?: number | null;
+	coverUrl?: string | null;
 	onFileSelect?: (doc: { id: number; fileName: string } | null) => void;
 	onAddQuestion?: (question: GeneratedQuestion) => void;
 }
 
-export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }: AiChatbotPanelProps) {
+export function AiChatbotPanel({
+	onClose,
+	quizId,
+	coverUrl,
+	onFileSelect,
+	onAddQuestion,
+}: AiChatbotPanelProps) {
 	const state = useAiChatState({ quizId, onFileSelect, onAddQuestion });
 	const {
 		docPopupOpen,
@@ -56,10 +64,36 @@ export function AiChatbotPanel({ onClose, quizId, onFileSelect, onAddQuestion }:
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex flex-col bg-(--app-bg) text-(--app-fg)"
+			className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-(--app-bg) text-(--app-fg) overflow-hidden"
 			aria-modal
 			role="dialog"
 		>
+			{coverUrl ? (
+				<>
+					<div
+						aria-hidden
+						className="pointer-events-none absolute inset-0 -z-10"
+					>
+						<Image
+							src={coverUrl}
+							alt=""
+							fill
+							priority
+							className="object-cover opacity-40 scale-105"
+							sizes="100vw"
+						/>
+					</div>
+					<div
+						aria-hidden
+						className="pointer-events-none absolute inset-0 -z-10 bg-white/55 dark:bg-(--app-bg)/50"
+					/>
+					<div
+						aria-hidden
+						className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-black/10 via-transparent to-black/20"
+					/>
+				</>
+			) : null}
+
 			<ChatHeader onClose={onClose} />
 
 			<div className="flex-1 flex min-h-0">

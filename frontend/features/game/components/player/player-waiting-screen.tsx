@@ -14,7 +14,7 @@ export const PlayerWaitingScreen = ({
 	pin,
 }: PlayerWaitingScreenProps) => {
 	return (
-		<div className="min-h-screen bg-(--app-bg) p-4 flex items-center justify-center relative overflow-hidden">
+		<div className="min-h-screen bg-transparent p-4 flex items-center justify-center relative overflow-hidden">
 			<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-indigo-500/12 via-transparent to-indigo-500/8" />
 
 			<div className="fixed bottom-4 left-4 z-50">

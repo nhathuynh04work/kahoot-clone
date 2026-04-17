@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { HostCoverBackground } from "@/features/game/components/host/host-cover-background";
 
 export const metadata: Metadata = {
 	title: "Join a game",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function GameJoinLayout({ children }: { children: ReactNode }) {
-	return children;
+	return <HostCoverBackground>{children}</HostCoverBackground>;
 }

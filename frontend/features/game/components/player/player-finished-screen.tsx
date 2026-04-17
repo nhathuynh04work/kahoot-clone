@@ -35,7 +35,7 @@ export const PlayerFinishedScreen = ({
 	}
 
 	return (
-		<div className="min-h-screen bg-(--app-bg) flex flex-col items-center justify-center p-6">
+		<div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6">
 			<div className="w-full max-w-md bg-(--app-elevated) border border-(--app-border) rounded-xl overflow-hidden shadow-2xl">
 				{/* Header Section */}
 				<div className="bg-(--app-surface-muted) p-8 flex flex-col items-center border-b border-(--app-border)">

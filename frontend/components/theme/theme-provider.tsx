@@ -16,10 +16,7 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readStoredPreference(): ThemePreference {
-	if (typeof window === "undefined") return "system";
-	const raw = window.localStorage.getItem(STORAGE_KEY);
-	if (raw === "light" || raw === "dark" || raw === "system") return raw;
-	return "system";
+	return "light";
 }
 
 function getSystemTheme(): ResolvedTheme {
@@ -29,6 +26,7 @@ function getSystemTheme(): ResolvedTheme {
 
 function applyResolvedTheme(resolved: ResolvedTheme) {
 	document.documentElement.dataset.theme = resolved;
+	document.documentElement.classList.toggle("dark", resolved === "dark");
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

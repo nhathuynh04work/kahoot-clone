@@ -53,7 +53,7 @@ export default function TopBar({ user }: { user?: User | null }) {
 					<>
 						{user.vip?.isVip ? (
 							<span
-								className="hidden sm:inline-flex items-center rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-800 tabular-nums"
+								className="hidden sm:inline-flex items-center rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-300 tabular-nums"
 								title="VIP active"
 							>
 								VIP

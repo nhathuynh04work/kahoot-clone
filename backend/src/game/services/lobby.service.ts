@@ -120,6 +120,33 @@ export class LobbyService {
         await this.redis.del(lobbyCurrentQuestionIndexKey(lobbyId));
     }
 
+    async closeActiveLobbiesForHost(hostId: number) {
+        const id = Number(hostId);
+        if (!Number.isFinite(id) || id <= 0) return [];
+
+        const lobbies = await this.prisma.gameLobby.findMany({
+            where: {
+                hostId: id,
+                status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
+            },
+            select: { id: true, pin: true },
+        });
+
+        if (lobbies.length === 0) return [];
+
+        await this.prisma.gameLobby.updateMany({
+            where: { id: { in: lobbies.map((l) => l.id) } },
+            data: { status: LobbyStatus.CLOSED, endedAt: new Date() },
+        });
+
+        for (const l of lobbies) {
+            await this.redis.del(lobbyPinKey(l.pin));
+            await this.redis.del(lobbyCurrentQuestionIndexKey(l.id));
+        }
+
+        return lobbies.map((l) => l.id);
+    }
+
     async persistCompletedLobbyReport(lobbyId: number) {
         const existingReport = await this.prisma.gameLobbyReport.findUnique({
             where: { lobbyId },
@@ -545,7 +572,15 @@ export class LobbyService {
     }
 
     async createLobby(params: { quizId: number; hostId: number }) {
-        const { quizId, hostId } = params;
+        const quizId = Number(params.quizId);
+        const hostId = Number(params.hostId);
+
+        if (!Number.isFinite(quizId) || quizId <= 0) {
+            throw new BadRequestException("Quiz not valid to start new game.");
+        }
+        if (!Number.isFinite(hostId) || hostId <= 0) {
+            throw new BadRequestException("Host not valid to start new game.");
+        }
 
         const quiz = await this.prisma.quiz.findUnique({
             where: { id: quizId },
@@ -557,8 +592,25 @@ export class LobbyService {
         }
 
         // Prevent hosting private quizzes unless the requester is the owner.
-        if (quiz.visibility === "PRIVATE" && quiz.userId !== hostId) {
+        const quizOwnerId = Number(quiz.userId);
+        if (quiz.visibility === "PRIVATE" && quizOwnerId !== hostId) {
+            this.logger.warn(
+                `Rejected private quiz hostCreateLobby (quizId=${quizId}, quizOwnerId=${quizOwnerId}, hostId=${hostId})`,
+            );
             throw new ForbiddenException("Cannot start a private quiz.");
+        }
+
+        // Idempotency: if the host already has an active lobby for this quiz, reuse it.
+        const existing = await this.prisma.gameLobby.findFirst({
+            where: {
+                quizId,
+                hostId,
+                status: { in: [LobbyStatus.WAITING, LobbyStatus.IN_PROGRESS] },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+        if (existing) {
+            return existing;
         }
 
         const pin = await this.getUniquePin();
@@ -786,16 +838,25 @@ export class LobbyService {
 
         if (question.type === QuestionType.SHORT_ANSWER) {
             const sa = parseQuestionData(question.type, question.data) as ShortAnswerData;
+			const shortAnswerCaseSensitive = sa.caseSensitive === true;
             const got = (textAnswer ?? "").trim();
             const expected = (sa.correctText ?? "").trim();
             if (!got.length) {
-                return { isCorrect: false, points: 0 };
+				return {
+					isCorrect: false,
+					points: 0,
+					shortAnswerCaseSensitive,
+				};
             }
             const isCorrect =
-                sa.caseSensitive === true
+				shortAnswerCaseSensitive
                     ? got === expected
                     : got.toLowerCase() === expected.toLowerCase();
-            return { isCorrect, points: isCorrect ? question.points : 0 };
+			return {
+				isCorrect,
+				points: isCorrect ? question.points : 0,
+				shortAnswerCaseSensitive,
+			};
         }
 
         if (question.type === QuestionType.NUMBER_INPUT) {
@@ -885,16 +946,26 @@ export class LobbyService {
         mcSelectedIndex?: number | null;
         textAnswer?: string | null;
         numericAnswer?: number | null;
+		shortAnswerCaseSensitive?: boolean;
     }) {
-        const { lobbyId, questionId, mcSelectedIndex, textAnswer, numericAnswer } =
-            params;
+		const {
+			lobbyId,
+			questionId,
+			mcSelectedIndex,
+			textAnswer,
+			numericAnswer,
+			shortAnswerCaseSensitive,
+		} = params;
         const key = questionStatsKey(lobbyId, questionId);
 
         if (mcSelectedIndex != null) {
             await this.redis.hincrby(key, mcSelectedIndex.toString(), 1);
         } else if (textAnswer != null) {
+			const normalized = textAnswer.trim();
+			const fieldSource =
+				shortAnswerCaseSensitive === true ? normalized : normalized.toLowerCase();
             const field = this.truncateStatField(
-                textAnswer.trim().toLowerCase() || "(empty)",
+				fieldSource || "(empty)",
                 200,
             );
             await this.redis.hincrby(key, field, 1);

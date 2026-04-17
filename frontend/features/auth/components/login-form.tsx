@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { appInputClassName } from "@/components/ui/app-input";
 import { appButtonClassName } from "@/components/ui/app-button";
 import { cn } from "@/lib/utils";
+import { reconnectSocket } from "@/features/game/lib/socket";
 
 type LoginInput = {
 	email: string;
@@ -39,6 +40,7 @@ export function LoginForm() {
 
 		try {
 			await apiClient.post("/auth/login", values);
+			reconnectSocket();
 			const returnTo = getValidatedReturnTo(searchParams.get("returnTo"));
 			router.replace(returnTo ?? "/library/quizzes");
 		} catch (error: any) {

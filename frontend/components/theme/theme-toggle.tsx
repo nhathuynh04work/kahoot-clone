@@ -9,7 +9,6 @@ export function ThemeToggle({
 	compact = false,
 }: {
 	className?: string;
-	/** Icon-only control for toolbars / floating game HUD (default: full-width sidebar row). */
 	compact?: boolean;
 }) {
 	const { resolvedTheme, setTheme } = useTheme();

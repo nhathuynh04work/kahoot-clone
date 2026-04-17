@@ -7,6 +7,7 @@ import { apiClient } from "@/lib/apiClient";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { appInputClassName } from "@/components/ui/app-input";
+import { reconnectSocket } from "@/features/game/lib/socket";
 
 type AdminLoginInput = {
 	email: string;
@@ -28,6 +29,7 @@ export function AdminLoginForm() {
 
 		try {
 			await apiClient.post("/auth/admin/login", values);
+			reconnectSocket();
 			router.push("/admin");
 		} catch (error: any) {
 			setApiError(error?.message);

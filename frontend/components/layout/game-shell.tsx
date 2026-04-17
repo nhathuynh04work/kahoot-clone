@@ -8,7 +8,7 @@ export function GameShell({ children }: { children: ReactNode }) {
 	return (
 		<>
 			{children}
-			<div className="pointer-events-none fixed inset-0 z-[60] flex justify-end items-start p-3 md:p-4">
+			<div className="pointer-events-none fixed inset-0 z-60 flex justify-end items-start p-3 md:p-4">
 				<div className="pointer-events-auto">
 					<ThemeToggle compact />
 				</div>

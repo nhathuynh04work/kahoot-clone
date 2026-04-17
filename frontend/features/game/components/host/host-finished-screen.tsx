@@ -14,7 +14,7 @@ export const HostFinishedScreen = ({
 	const top3 = leaderboard.slice(0, 3);
 
 	return (
-		<div className="min-h-dvh bg-(--app-bg) flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
+		<div className="min-h-dvh bg-transparent flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-hidden">
 			<div className="text-center mb-8 sm:mb-12 animate-in fade-in slide-in-from-top-10 duration-700">
 				<h1 className="text-4xl sm:text-5xl font-black text-(--app-fg) mb-3 sm:mb-4 tracking-tight">
 					Podium
